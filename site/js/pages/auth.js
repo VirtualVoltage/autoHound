@@ -1,20 +1,13 @@
 import { $, esc, countChars } from '../util.js';
+import { view } from '../theme.js';
 import { api, passwordProof, refreshSession, session, getOptions } from '../api.js';
 import { go, renderHeader } from '../app.js';
 
 export async function authPage(mode) {
   const next = new URLSearchParams(location.search).get('next') || '/', safeNext = next.startsWith('/') && !next.startsWith('//') ? next : '/';
   if (session.account) { go(safeNext, true); return; }
-  const signup = mode === 'signup', L = (await getOptions()).limits, other = signup ? 'login' : 'signup', q = location.search;
-  $('main').innerHTML = `<div class="wrap page"><form class="panel auth" id="authForm" novalidate>
-    <h1 class="main-title">${signup ? 'Make an account' : 'Log in'}</h1>
-    <label class="field"><span>Username</span><input id="username" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" maxlength="80"></label>
-    <label class="field"><span>Password</span><input id="password" type="password" autocomplete="${signup ? 'new-password' : 'current-password'}" maxlength="40"></label>
-    ${signup ? `<p class="note">Username: ${L.usernameMin} to ${L.usernameMax} characters. No underscores. Password: ${L.passwordMin} to ${L.passwordMax} characters. There's no email, so a lost password can't be reset yet.</p>` : ''}
-    <p class="err" id="authErr" role="alert" hidden></p>
-    <button class="btn" type="submit">${signup ? 'Sign up' : 'Log in'}</button>
-    <p class="note">${signup ? 'Already have an account?' : 'New here?'} <a href="/${other}${esc(q)}">${signup ? 'Log in' : 'Sign up'}</a></p>
-  </form></div>`;
+  const signup = mode === 'signup', L = (await getOptions()).limits;
+  $('main').innerHTML = view.authPage({ signup, limits: L, otherLink: `/${signup ? 'login' : 'signup'}${location.search}` });
   $('username').focus();
   $('authForm').addEventListener('submit', async e => {
     e.preventDefault();

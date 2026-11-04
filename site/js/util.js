@@ -4,8 +4,6 @@ export const money = n => '$' + Math.round(n).toLocaleString('en-US');
 export const $ = id => document.getElementById(id);
 export const MILES = { Lynden: 2, Everson: 6, Sumas: 11, Ferndale: 11, Blaine: 14, Bellingham: 15, Burlington: 38, 'Mount Vernon': 43, Anacortes: 50, Arlington: 60, Marysville: 72, Everett: 78 };
 export const townLine = city => `${esc(city)}${MILES[city] !== undefined ? `, ${MILES[city]} mi` : ''}`;
-export const ph = (src, cover, alt = '') => src ? `<span class="ph ${cover ? 'cover' : ''}"><img src="${esc(src)}" alt="${esc(alt)}" loading="lazy"></span>` : `<span class="ph missing">Photo unavailable</span>`;
-export const avatar = (src, alt = '') => `<img class="avatar" src="${esc(src || profileAsset('brand-profile.webp'))}" alt="${esc(alt)}">`;
 export function timeLeft(ms) {
   if (ms <= 0) return 'ended';
   const m = Math.floor(ms / 6e4), h = Math.floor(m / 60), d = Math.floor(h / 24);
@@ -15,7 +13,8 @@ export const shortDate = iso => new Date(iso).toLocaleDateString('en-US', { mont
 export const clock = iso => new Date(iso).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
 let toastTimer;
 export function toast(msg) {
-  const t = $('toast'); t.textContent = msg; t.hidden = false;
+  const t = $('toast'); if (!t) return;
+  t.textContent = msg; t.hidden = false;
   clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; }, 3000);
 }
 export const countChars = s => [...s].length;

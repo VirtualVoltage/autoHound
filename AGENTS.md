@@ -16,7 +16,7 @@ Unless the owner says a big change is coming, act as if real people depend on th
 
 ## Rules decided by the owner
 
-- Visual files live in `site/profiles/`, and `site/js/profile.js` picks the active one. `profile1` is the original look.
+- Everything visual lives in `site/profiles/`, including page HTML in `views.js`. `site/js/profile.js` picks the active one. Shared logic in `site/js` must not write page HTML. `profile1` is the original look.
 - `profile1` theme: black and neon green, early 2000s tuner. White text and titles, green main title and prices, yellow towns, gray counts.
 - Text goes in `records/`. Photos, videos and PDFs go in `data/`, using the same layout.
 - IDs look like `L.26.11.04.00000`. Folder names are `ID__title`, and `__` only ever separates the two. Titles use `_` for spaces in folder names.

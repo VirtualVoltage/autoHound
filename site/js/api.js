@@ -1,8 +1,8 @@
 import { $ } from './util.js';
+import { view } from './theme.js';
 
 async function runSetup() {
-  const main = $('main');
-  main.innerHTML = `<div class="setup"><h1 class="main-title">Setting up the demo</h1><div class="bar"><i id="setupBar" style="width:0"></i></div><p class="muted">This only happens once.</p></div>`;
+  $('main').innerHTML = view.setupScreen();
   for (let i = 0; i < 400; i++) {
     const r = await fetch('/api/setup', { method: 'POST' }), d = await r.json();
     if (!r.ok) throw new Error(d.error || 'Setup failed.');
