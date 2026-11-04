@@ -464,7 +464,7 @@ input::placeholder,textarea::placeholder{color:#8f998f}
 @media (max-width:520px){.up-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 </style>
 
-<div class="demo-strip"><div class="wrap">Demo. All posts, prices, people, shops and events are imaginary. Nothing is sent or charged.</div></div>
+<div class="demo-strip"><div class="wrap">Demo. Sample listings, shops and events are imaginary, but posts people upload are public. Nothing is charged.</div></div>
 <header class="site-head">
   <div class="wrap head-row">
     <a class="logo" href="#home" aria-label="Autohound home"><img id="logoMark" class="avatar" alt="" width="40" height="40"><b class="chrome">auto</b><span>hound</span></a>
@@ -660,13 +660,14 @@ const DEVICE_KEY='autohound-device-trial';
 /* ---------- Helpers ---------- */
 const $=id=>document.getElementById(id);
 const byId=id=>LISTINGS.find(l=>l.id===+id);
-const sellerOf=l=>l.seller===0&&S.account?{...SELLERS[0],name:S.account.name}:SELLERS[l.seller];
+const sellerOf=l=>l.sellerName?{name:l.sellerName,type:'Private',tier:0,city:cityOf0(l),sold:0,rating:0}:l.seller===0&&S.account?{...SELLERS[0],name:S.account.name}:SELLERS[l.seller];
+const cityOf0=l=>l.city||'Lynden';
 const cityOf=l=>l.city||sellerOf(l).city;
 const areaOf=c=>CITY[c][0];
 const milesOf=c=>CITY[c][1];
 const inArea=c=>areaOf(c)===S.area;
 const areaName=()=>AREAS[S.area];
-const imgSrc=x=>String(x).startsWith('data:')?x:IMG[x];
+const imgSrc=x=>/^(data:|\/api\/)/.test(String(x))?x:IMG[x];
 const ph=(img,cover,alt)=>img?`<span class="ph ${cover?'cover':''}"><img src="${imgSrc(img)}" alt="${esc(alt||'')}"></span>`:`<span class="ph empty-ph"><span>Your photo goes here</span></span>`;
 const tierBadge=t=>`<span class="badge t${t}">${SELLER_TIERS[t].name}</span>`;
 const pct=r=>{const p=Math.round(Math.abs(1-r)*100);return p===0?'At market':p+'% '+(r<1?'under':'over')+' market'};
@@ -814,7 +815,7 @@ function vBrowse(kind){
       ${results}</div></div></div>`;
 }
 function vItem(id){
-  const l=byId(id); if(!l)return vMissing();
+  const l=byId(id); if(!l)return S.loading?'<div class="wrap" style="padding-block:30px"><div class="empty"><b>Loading post...</b></div></div>':vMissing();
   const s=sellerOf(l),c=cityOf(l),r=l.price/l.emv,fav=S.watch.has(l.id);
   const installers=Object.entries(SELLERS).filter(([i,x])=>x.partner&&+i!==l.seller&&['Mechanic','Tuning shop','Solo shop'].includes(x.type)&&areaOf(x.city)===areaOf(c)).slice(0,3);
   const attrs=[['condition',l.cond],...(l.kind==='cars'?[]:[['fits',l.fit]]),...(l.kind==='cars'?[['year',l.year],['odometer',l.miles.toLocaleString('en-US')],['title status',l.titleS]]:[]),[l.kind==='cars'?'tier':'category',l.cat],['handoff',l.meetup]];
@@ -823,17 +824,17 @@ function vItem(id){
     box=`<div class="bidbox"><div class="lab">${won?'You won this auction':'Auction closed'}</div><div class="lab">Final price</div><div class="big-price">${money(R.final)}</div>${won?'<p>Press reply to set up pickup with the seller.</p>':''}${mine?`<div class="result"><div><span>Autohound fee</span><b>${money2(R.fee)}</b></div><div class="total"><span>You receive</span><b>${money2(R.final-R.fee)}</b></div></div>`:''}</div>`}
   else if(l.auction){const inc=Math.max(5,Math.round(l.price*.025/5)*5);box=`<div class="bidbox"><div class="lab">current bid · ${l.bids} bids · <span data-end="${l.ends}">${timeLeft(l.ends-Date.now())}</span></div><div class="big-price">${money(l.price)}</div>
     <form id="bidForm" novalidate data-id="${l.id}" style="display:grid;gap:6px"><label class="field"><span>Your bid, ${money(l.price+inc)} or more</span><input id="bidAmt" type="number" min="${l.price+inc}" value="${l.price+inc}" inputmode="numeric"></label><p class="note-err" id="bidErr" hidden></p><button class="btn full" type="submit">place bid</button></form>
-    <button class="btn ghost full" data-act="endAuction" data-id="${l.id}">demo: end auction now</button></div>`}
+    ${l.rid?'':`<button class="btn ghost full" data-act="endAuction" data-id="${l.id}">demo: end auction now</button>`}</div>`}
   const near=LISTINGS.filter(x=>x.id!==l.id&&x.cat===l.cat).sort((a,b)=>(areaOf(cityOf(b))===areaOf(c))-(areaOf(cityOf(a))===areaOf(c))).slice(0,6);
   return `<div class="wrap">${crumb(`<a href="#${l.kind}">${l.kind==='cars'?'cars and trucks':'parts'}</a>`,esc(l.cat.toLowerCase()))}
-    <div class="post-bar">${l.seller===0?'':`<button class="btn" data-act="reply" data-id="${l.id}">reply</button>`}<button class="btn ghost ${fav?'on':''}" data-act="watch" data-id="${l.id}">${fav?'★ favorited':'☆ favorite'}</button>${l.seller===0?`<button class="btn ghost" data-act="deletePost" data-id="${l.id}">delete my post</button>`:'<button class="btn ghost" data-act="flag">flag</button>'}</div>
+    <div class="post-bar">${l.seller===0?'':`<button class="btn" data-act="reply" data-id="${l.id}">reply</button>`}<button class="btn ghost ${fav?'on':''}" data-act="watch" data-id="${l.id}">${fav?'★ favorited':'☆ favorite'}</button>${l.seller===0?`<button class="btn ghost" data-act="deletePost" data-id="${l.id}">delete my post</button>`:'<button class="btn ghost" data-act="flag" data-id="${l.id}">flag</button>'}</div>
     <div class="post-title">${esc(l.title)} <span class="pr">${money(l.price)}</span> <span class="pl">(${esc(c)})</span></div>
     <div class="post">
       <div>${l.photos?ph(l.photos[S.photoFor===l.id?S.photoIdx:0]||l.img,false,l.title):ph(l.img,l.cover,l.title)}${l.photos&&l.photos.length>1?`<div class="thumbs">${l.photos.map((x,i)=>`<button data-act="photoPick" data-id="${l.id}" data-i="${i}" aria-label="Show photo ${i+1}">${ph(x,true,'')}</button>`).join('')}</div>`:''}</div>
       <div class="side-info">
         ${box}${l.auction||l.noEmv?'':meter(r,{emv:l.emv})}
         <div class="attrs">${attrs.map(([a,b])=>`<div><span class="muted">${a}:</span> <b>${esc(b)}</b></div>`).join('')}</div>
-        <div class="attrs"><div><a href="#seller-${l.seller}"><b>${esc(s.name)}</b></a> ${tierBadge(s.tier)}</div><div class="muted">${esc(s.type)}, <span class="loc">${esc(c)}, about ${milesOf(c)} miles from ${ZIP}</span>${s.rating?`, ${s.rating} rating`:''}</div></div>
+        <div class="attrs"><div>${l.seller>=0?`<a href="#seller-${l.seller}"><b>${esc(s.name)}</b></a>`:`<b>${esc(s.name)}</b>`} ${tierBadge(s.tier)}</div><div class="muted">${esc(s.type)}, <span class="loc">${esc(c)}, about ${milesOf(c)} miles from ${ZIP}</span>${s.rating?`, ${s.rating} rating`:''}</div></div>
         ${l.build?`<a class="btn ghost" href="#build-${l.build}">see the build and dyno numbers</a>`:''}
         ${l.partout?`<a class="btn ghost" href="#partouts">more from this part-out</a>`:''}
       </div>
@@ -894,18 +895,18 @@ function vMeets(){
     ${S.meetOpen&&LISTINGS.some(l=>l.meet===S.meetOpen)?`<section class="section"><div class="sec-head"><h2>Items at ${esc(MEETS[S.meetOpen].name)}</h2></div><div class="grid">${LISTINGS.filter(l=>l.meet===S.meetOpen).map(card).join('')}</div></section>`:''}</div>`;
 }
 const MAX_PHOTOS=8, MY_KEY='autohound-my-listings';
-const blankDraft=()=>({kind:'parts',type:'0',tier:'Daily',year:'',miles:'',titleS:'Clean',cond:'2',mode:'buy',price:'',title:'',fit:'',city:'',meetup:'Meet up or pick up',d:'',photos:[]});
+const blankDraft=()=>({sName:'',kind:'parts',type:'0',tier:'Daily',year:'',miles:'',titleS:'Clean',cond:'2',mode:'buy',price:'',title:'',fit:'',city:'',meetup:'Meet up or pick up',d:'',photos:[]});
 S.draft=blankDraft();
 const partTypes=()=>[...CATALOG.map(c=>({name:c[0],cat:c[3],base:c[1],comps:c[2]})),...PART_CATS.map(c=>({name:`Something else: ${c.toLowerCase()}`,cat:c}))];
 function readDraft(){
   const D=S.draft,v=id=>$(id)?$(id).value:undefined;
-  for(const[k,id]of[['kind','sKind'],['type','sType'],['tier','sTier'],['year','sYear'],['miles','sMiles'],['titleS','sTitleS'],['cond','sCond'],['mode','sMode'],['price','sPrice'],['title','sTitle'],['fit','sFit'],['city','sCity'],['meetup','sMeetup'],['d','sDesc']]){const x=v(id);if(x!==undefined)D[k]=x}
+  for(const[k,id]of[['sName','sName'],['kind','sKind'],['type','sType'],['tier','sTier'],['year','sYear'],['miles','sMiles'],['titleS','sTitleS'],['cond','sCond'],['mode','sMode'],['price','sPrice'],['title','sTitle'],['fit','sFit'],['city','sCity'],['meetup','sMeetup'],['d','sDesc']]){const x=v(id);if(x!==undefined)D[k]=x}
   return D;
 }
 function draftListing(){
   const D=S.draft,car=D.kind==='cars',pt=partTypes()[+D.type]||partTypes()[0],cond=CONDS[+D.cond],price=Math.max(0,+D.price||0);
   const emv=!car&&pt.base?Math.round(pt.base*cond[1]/5)*5:0;
-  return {id:0,kind:D.kind,seller:0,title:D.title.trim()||'Your listing title',img:D.photos[0]||null,cover:true,cat:car?D.tier:pt.cat,price,emv:emv||price||1,noEmv:!emv,cond:cond[0],city:D.city||Object.keys(CITY).find(inArea),fit:D.fit.trim()||'Universal',meetup:D.meetup,d:D.d.trim()||'Your description shows up here.',year:D.year,miles:+D.miles||0,titleS:D.titleS,auction:D.mode==='auction'?72:0,bids:0,ends:Date.now()+72*3600e3,views:1,watching:0,updated:0};
+  return {id:0,kind:D.kind,seller:0,sellerName:D.sName.trim(),title:D.title.trim()||'Your listing title',img:D.photos[0]||null,cover:true,cat:car?D.tier:pt.cat,price,emv:emv||price||1,noEmv:!emv,cond:cond[0],city:D.city||Object.keys(CITY).find(inArea),fit:D.fit.trim()||'Universal',meetup:D.meetup,d:D.d.trim()||'Your description shows up here.',year:D.year,miles:+D.miles||0,titleS:D.titleS,auction:D.mode==='auction'?72:0,bids:0,ends:Date.now()+72*3600e3,views:1,watching:0,updated:0};
 }
 function photoGrid(){
   const P=S.draft.photos;
@@ -926,9 +927,10 @@ function syncKindFields(){
 }
 function vSell(){
   const D=S.draft,cities=Object.keys(CITY).filter(inArea),opt=(v,t,cur)=>`<option value="${esc(v)}" ${String(cur)===String(v)?'selected':''}>${esc(t)}</option>`;
-  return `<div class="wrap page-top"><div class="sec-head"><h1>Sell it on Autohound</h1><span class="muted">Demo: your post saves in this browser only, so other people can't see it yet.</span></div>
+  return `<div class="wrap page-top"><div class="sec-head"><h1>Sell it on Autohound</h1><span class="muted">${SHARED?'Everyone on Autohound can see what you post. No personal info, and nothing illegal or stolen.':"This preview saves in your browser only. Post from the live site to share it."}</span></div>
     <div class="sell-grid"><form class="form-panel" id="sellForm" novalidate>
       <div class="field"><span>Photos</span><div class="up-grid" id="upGrid">${photoGrid()}</div><input id="sPhotos" class="sr" type="file" accept="image/*" multiple><p class="note-err" id="photoErr" hidden></p></div>
+      <label class="field"><span>Your name or handle</span><input id="sName" type="text" maxlength="24" data-calc="sell" placeholder="boosted_buyer" value="${esc(D.sName)}"></label>
       <div class="two"><label class="field"><span>What are you selling?</span><select id="sKind" data-calc="sell">${opt('parts','A part',D.kind)}${opt('cars','A car or truck',D.kind)}</select></label>
       <label class="field" data-for="parts"><span>Part type</span><select id="sType" data-calc="sell">${partTypes().map((t,i)=>opt(i,t.name,D.type)).join('')}</select></label>
       <label class="field" data-for="cars"><span>Car tier</span><select id="sTier" data-calc="sell">${CAR_TIERS.map(t=>opt(t.name,`${t.name} (${t.band})`,D.tier)).join('')}</select></label></div>
@@ -963,6 +965,47 @@ async function addPhotos(files){
   for(const f of list.slice(0,room)){try{P.push(await shrinkPhoto(f))}catch(e){msgs.push(e.message)}}
   if($('upGrid')){$('upGrid').innerHTML=photoGrid();$('sellPreview').innerHTML=sellPreview()}
   if(msgs.length&&$('photoErr')){$('photoErr').textContent=msgs.join(' ');$('photoErr').hidden=false}
+}
+const SHARED=/(^|\.)(autohound-site\.pages\.dev|autohound\.online)$|^localhost$|^127\.0\.0\.1$/.test(location.hostname);
+const TOKENS_KEY='autohound-post-tokens';
+const tokens=()=>{try{return JSON.parse(localStorage.getItem(TOKENS_KEY)||'{}')}catch(e){return S.tokMem||{}}};
+const setToken=(rid,t)=>{const o=tokens();if(t)o[rid]=t;else delete o[rid];S.tokMem=o;try{localStorage.setItem(TOKENS_KEY,JSON.stringify(o))}catch(e){}};
+async function api(path,opts={}){
+  const r=await fetch('/api/'+path,opts);let d={};try{d=await r.json()}catch(e){}
+  if(!r.ok)throw new Error(d.error||'The server had a problem. Try again in a minute.');
+  return d;
+}
+function fromServer(x){
+  const mine=tokens()[x.rid];
+  const l={...x,id:100000+x.rid,seller:mine?0:-1,img:x.photos[0],cover:true,views:x.views||1,watching:x.watching||0,updated:Math.max(0,Math.floor((Date.now()-x.created)/864e5))};
+  if(l.auction&&l.ends<=Date.now()){const rate=SELLER_TIERS[0].fee;l.result={final:l.price,rate,fee:auctionFee(l.price,l.emv,rate)}}
+  return l;
+}
+async function loadShared(){
+  S.loading=true;
+  try{
+    const d=await api('listings');
+    S.loadedAt=Date.now();
+    const live=new Set(d.listings.map(x=>x.rid));
+    for(let i=LISTINGS.length-1;i>=0;i--)if(LISTINGS[i].rid&&!live.has(LISTINGS[i].rid))LISTINGS.splice(i,1);
+    d.listings.filter(x=>CITY[x.city]).forEach(x=>{const l=fromServer(x),i=LISTINGS.findIndex(y=>y.id===l.id);if(i>=0)LISTINGS[i]=l;else LISTINGS.unshift(l)});
+  }catch(e){toast('Could not load posted listings right now.')}
+  S.loading=false;
+  if($('sellForm'))readDraft();
+  render(true);
+}
+function dataToBlob(u){const b=atob(u.split(',')[1]),a=new Uint8Array(b.length);for(let i=0;i<b.length;i++)a[i]=b.charCodeAt(i);return new Blob([a],{type:'image/jpeg'})}
+async function publishShared(l,D,status){
+  const{img,photos,...fields}=l;
+  const c=await api('listings',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(fields)});
+  const h={'x-post-token':c.token};
+  try{
+    for(let i=0;i<D.photos.length;i++){status(`Uploading photo ${i+1} of ${D.photos.length}...`);await api(`listings/${c.rid}/photos`,{method:'POST',headers:{...h,'content-type':'image/jpeg'},body:dataToBlob(D.photos[i])})}
+    await api(`listings/${c.rid}/publish`,{method:'POST',headers:h});
+  }catch(e){api(`listings/${c.rid}`,{method:'DELETE',headers:h}).catch(()=>{});throw e}
+  setToken(c.rid,c.token);
+  const d=await api('listings'),x=d.listings.find(y=>y.rid===c.rid);
+  const nl=fromServer(x);LISTINGS.unshift(nl);return nl;
 }
 function saveMine(){
   const mine=LISTINGS.filter(l=>l.seller===0);
@@ -1039,7 +1082,7 @@ document.addEventListener('click',e=>{
     case 'watch':e.preventDefault();{const n=+id;S.watch.has(n)?S.watch.delete(n):S.watch.add(n);toast(S.watch.has(n)?'Added to favorites':'Removed from favorites');render(true);}break;
     case 'reply':{const l=byId(id);replyDialog(l.title,sellerOf(l).name);}break;
     case 'replyPiece':replyDialog(t.dataset.name,t.dataset.seller);break;
-    case 'flag':toast('Flagged for review in the demo');break;
+    case 'flag':{const l=byId(t.dataset.id);if(l&&l.rid){t.disabled=true;api(`listings/${l.rid}/flag`,{method:'POST'}).then(()=>toast('Thanks. We hide posts that get several flags.')).catch(er=>toast(er.message))}else toast('Flagged for review in the demo');}break;
     case 'account':accountDialog();break;
     case 'closeDlg':t.closest('dialog').close();break;
     case 'signOut':S.account=null;$('dlgAccount').close();render(true);toast('Signed out. Join again to see the device check.');break;
@@ -1055,7 +1098,8 @@ document.addEventListener('click',e=>{
     case 'removePhoto':S.draft.photos.splice(+t.dataset.i,1);$('upGrid').innerHTML=photoGrid();calc('sell');break;
     case 'coverPhoto':{const P=S.draft.photos,[x]=P.splice(+t.dataset.i,1);P.unshift(x);$('upGrid').innerHTML=photoGrid();calc('sell');}break;
     case 'photoPick':S.photoFor=+id;S.photoIdx=+t.dataset.i;render(true);break;
-    case 'deletePost':{const i=LISTINGS.findIndex(l=>l.id===+id);if(i>=0)LISTINGS.splice(i,1);S.watch.delete(+id);saveMine();toast('Post deleted');go('home');}break;
+    case 'deletePost':{const l=byId(id),done=()=>{const i=LISTINGS.findIndex(x=>x.id===+id);if(i>=0)LISTINGS.splice(i,1);S.watch.delete(+id);saveMine();toast('Post deleted');go('home')};
+      if(l&&l.rid){t.disabled=true;api(`listings/${l.rid}`,{method:'DELETE',headers:{'x-post-token':tokens()[l.rid]||''}}).then(()=>{setToken(l.rid);done()}).catch(er=>{t.disabled=false;toast(er.message)})}else done();}break;
     case 'endAuction':{const l=byId(id),rate=SELLER_TIERS[sellerOf(l).tier].fee;l.result={final:l.price,rate,fee:auctionFee(l.price,l.emv,rate)};l.ends=Date.now();render(true);}break;
   }
 });
@@ -1079,7 +1123,9 @@ document.addEventListener('submit',e=>{
   e.preventDefault();const f=e.target;
   if(f.id==='searchForm'){S.q=$('searchInput').value;S.f=blankFilters();go('search');}
   else if(f.id==='replyForm'){$('dlgReply').close();toast('Demo only: no message was sent');}
-  else if(f.id==='bidForm'){const l=byId(f.dataset.id),v=+$('bidAmt').value,min=+$('bidAmt').min;if(!v||v<min){const m=$('bidErr');m.textContent=`Enter ${money(min)} or more to lead this auction.`;m.hidden=false;return}l.price=v;l.myBid=v;l.bids++;l.watching++;render(true);toast(`You lead at ${money(v)}`);}
+  else if(f.id==='bidForm'){const l=byId(f.dataset.id),v=+$('bidAmt').value,min=+$('bidAmt').min;if(!v||v<min){const m=$('bidErr');m.textContent=`Enter ${money(min)} or more to lead this auction.`;m.hidden=false;return}
+    if(l.rid){api(`listings/${l.rid}/bid`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({amount:v})}).then(()=>{l.price=v;l.myBid=v;l.bids++;render(true);toast(`You lead at ${money(v)}`)}).catch(er=>{const m=$('bidErr');if(m){m.textContent=er.message;m.hidden=false}});return}
+    l.price=v;l.myBid=v;l.bids++;l.watching++;render(true);toast(`You lead at ${money(v)}`);}
   else if(f.id==='joinForm'){const n=$('joinName').value.trim();if(n.length<3){const m=$('joinErr');m.textContent='Usernames need at least 3 characters.';m.hidden=false;return}
     if(store.get(DEVICE_KEY))return accountDialog();
     const start=Date.now();store.set(DEVICE_KEY,{name:n,start});S.account={name:n,start};S.latest=n;$('dlgAccount').close();render(true);toast(`Device check passed. Your ${TRIAL_DAYS} day trial is running.`);}
@@ -1091,8 +1137,15 @@ document.addEventListener('submit',e=>{
     if(D.kind==='cars'&&!(+D.year>=1900))bad.push('the year');
     if(D.kind==='cars'&&!(+D.miles>=0&&D.miles!==''))bad.push('the miles');
     if(D.d.trim().length<10)bad.push('a short description');
+    if(SHARED&&D.sName.trim().length<2)bad.push('your name or handle');
     if(bad.length){err.textContent=`Add ${bad.join(', ')} to publish.`;err.hidden=false;return}
-    const l=draftListing(),id=Math.max(1000,...LISTINGS.map(x=>x.id))+1;
+    const btn=f.querySelector('button[type=submit]');
+    if(SHARED){
+      err.hidden=true;btn.disabled=true;const old=btn.textContent;
+      publishShared(draftListing(),D,m=>{btn.textContent=m}).then(nl=>{S.draft=blankDraft();go('item-'+nl.id);toast('Your listing is live for everyone')}).catch(er=>{err.textContent=er.message;err.hidden=false;btn.disabled=false;btn.textContent=old});
+      return;
+    }
+    const l=draftListing(),id=Math.max(1000,...LISTINGS.filter(x=>x.id<100000).map(x=>x.id))+1;
     Object.assign(l,{id,photos:[...D.photos],cover:true,d:D.d.trim(),meet:undefined},l.auction?{ends:Date.now()+72*3600e3}:{ends:undefined});
     LISTINGS.unshift(l);S.draft=blankDraft();
     const ok=saveMine();
@@ -1104,10 +1157,13 @@ addEventListener('hashchange',()=>{
   if(h!=='search'&&!h.startsWith('item-')){S.q='';$('searchInput').value=''}
   if(['parts','cars','auctions'].includes(h)){if(S.lastBrowse!==h&&!S.keepF)S.f=blankFilters();S.lastBrowse=h}
   if(h==='search')S.lastBrowse=h;
-  S.keepF=false;render();
+  S.keepF=false;
+  const m=h.match(/^item-(\d+)$/),stale=Date.now()-(S.loadedAt||0)>15000;
+  if(SHARED&&(stale||(m&&+m[1]>100000&&!byId(m[1]))))loadShared();
+  render();
 });
 setInterval(()=>{document.querySelectorAll('[data-end]').forEach(n=>{n.textContent=timeLeft(+n.dataset.end-Date.now())})},1000);
-loadMine();
+if(SHARED)loadShared();else loadMine();
 document.addEventListener('dragover',e=>{if(e.target.closest&&e.target.closest('#upGrid')){e.preventDefault();$('upGrid').classList.add('drag')}});
 document.addEventListener('dragleave',e=>{if($('upGrid'))$('upGrid').classList.remove('drag')});
 document.addEventListener('drop',e=>{if(e.target.closest&&e.target.closest('#upGrid')){e.preventDefault();$('upGrid').classList.remove('drag');readDraft();addPhotos(e.dataTransfer.files)}});

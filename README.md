@@ -1,5 +1,7 @@
 # Autohound
 
-Demo of a local car parts and project car marketplace. All listings are imaginary and sample photos must be replaced before a real launch.
+Demo of a local car parts and project car marketplace. Sample listings are imaginary, and sample photos must be replaced before a real launch.
 
-Static site: `index.html` plus `img/`. No build step.
+- `public/`: the site
+- `functions/` and `lib/`: server code for shared posts (Cloudflare Pages Functions)
+- Database: Cloudflare D1, bound as `DB`
