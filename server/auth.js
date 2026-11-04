@@ -3,7 +3,7 @@ import { ApiError, fail, hit, json, readJson, readJsonFile, writeJsonFile, sha25
 import { nextId, folderName, letterFolder } from './ids.js';
 
 const COOKIE = 'ah_session';
-export const usernameKey = u => u.normalize('NFKC').toLowerCase();
+export const usernameKey = u => u.normalize('NFKC').replace(/[_\s]+/g, ' ').trim().toLowerCase();
 const countChars = s => [...s].length;
 const randomHex = n => [...crypto.getRandomValues(new Uint8Array(n))].map(x => x.toString(16).padStart(2, '0')).join('');
 
@@ -32,7 +32,8 @@ export async function requireAccount(db, request) {
 export const publicAccount = a => a && ({ id: a.id, username: a.username, joined: a.joined, photo: a.photo ? `/api/files/${a.photo}` : null });
 
 export async function signup({ db, store, request }) {
-  const b = await readJson(request), username = String(b.username || '').replace(/[\u0000-\u001f\u007f]/g, '').trim();
+  const b = await readJson(request), username = String(b.username || '').replace(/[\u0000-\u001f\u007f]/g, '').replace(/\s+/g, ' ').trim();
+  if (username.includes('_')) fail(400, 'Usernames can\'t have underscores right now. Use a space instead.');
   const n = countChars(username);
   if (n < LIMITS.usernameMin || n > LIMITS.usernameMax) fail(400, `Usernames must be ${LIMITS.usernameMin} to ${LIMITS.usernameMax} characters.`);
   checkProof(b.proof);

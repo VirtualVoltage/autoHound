@@ -16,11 +16,11 @@ scripts/   Index rebuild and demo account builder
 `records/` holds text and `data/` holds photos, videos and PDFs. Both use the same layout.
 
 ```text
-records/accounts/U/A.26.11.04.00000__username/
+records/accounts/U/A.26.11.04.00000__user_name/
   account.json
   private.json                 hashed password, never sent to visitors
   favorites.json
-  listings/L.26.11.04.00000__title/
+  listings/L.26.11.04.00000__listing_title/
     listing.json
     bids.jsonl
     reports.jsonl
@@ -29,9 +29,9 @@ records/accounts/U/A.26.11.04.00000__username/
       sellerID.jsonl           one message per line
       buyerID.jsonl
 
-data/accounts/U/A.26.11.04.00000__username/
+data/accounts/U/A.26.11.04.00000__user_name/
   P.26.11.04.00000__profile/original.jpg
-  listings/L.26.11.04.00000__title/
+  listings/L.26.11.04.00000__listing_title/
     P.26.11.04.00001__photo/original.jpg, thumb.jpg
     conversations/C.26.11.04.00000__sellerID_buyerID_attachments/
       P.26.11.04.00002__attachment/original.jpg
@@ -50,7 +50,8 @@ data/backups/conversations/26.11.04__conversations/C.26.11.04.00000__sellerID_bu
 - Accounts sort into `A` to `Z` by the username's first letter. Usernames that start with anything else go in `_other`.
 - Other folders that could get crowded are split by the date in the ID, with a generic title like `26.11.04__conversations`.
 - IDs are type, date, then a daily count: `L.26.11.04.00000`. Types: A account, L listing, P photo, F other file, C conversation, M message.
-- Only the part before the first `__` matters to the code. Labels and file names can change.
+- Folder names are `ID__title`. `parseName` in `server/ids.js` splits them at the first `__`. Titles use `_` for spaces in folder names, and people only ever see the title with spaces, never the ID.
+- Usernames can't contain underscores. Labels and file names can change.
 - Message lines follow `message_template`: `[attachment, id, text, time]`. An attachment is its own line.
 - Each new message restarts a 7-day timer. The newest message's `time` in the files decides when a chat becomes the next backup.
 - The search index can always be rebuilt from `records/` and `data/`. Only logins and rate limits are lost, and those are temporary.

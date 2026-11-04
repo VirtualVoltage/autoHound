@@ -32,7 +32,7 @@ export async function listingPage(id) {
     <div class="post">
       <div class="gallery"><div id="mainPhoto">${ph(l.photos[0], false, l.title)}</div>${l.photos.length > 1 ? `<div class="thumbs">${l.photos.map((p, i) => `<button data-i="${i}" aria-label="Show photo ${i + 1}">${ph(p + '?size=thumb', true)}</button>`).join('')}</div>` : ''}
         <p class="body-text">${esc(l.description)}</p>
-        <p class="meta-line">${esc(l.id)} · posted ${shortDate(l.created)}</p>
+        <p class="meta-line">Posted ${shortDate(l.created)}</p>
       </div>
       <div class="side">
         ${buyBox(l)}

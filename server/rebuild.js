@@ -1,7 +1,7 @@
 import { SCHEMA, REBUILDABLE_TABLES } from './schema.js';
 import { LIMITS } from './config.js';
 import { readJsonFile, readLines } from './http.js';
-import { idOf, isId, dayFolder } from './ids.js';
+import { idOf, isId, dayFolder, parseName, folderTitle } from './ids.js';
 import { usernameKey } from './auth.js';
 import { indexRow, INSERT_LISTING } from './listings.js';
 
@@ -32,6 +32,8 @@ async function indexAccount(ctx, folder, problems) {
   const keys = await store.listAll(path + '/');
   for (const k of keys.filter(k => k.endsWith('/listing.json'))) {
     const lPath = k.slice(0, -'/listing.json'.length), l = await readJsonFile(store, k), lFolder = lPath.split('/').pop();
+    // A folder renamed by hand wins, so a title can be changed from the file system.
+    if (folderTitle(l.title, 'listing') !== lFolder.slice(lFolder.indexOf('__') + 2)) l.title = parseName(lFolder).title || l.title;
     const bids = (await readLines(store, `${lPath}/bids.jsonl`)), top = bids.reduce((m, b) => (!m || b[1] > m[1]) ? b : m, null);
     await db.run(INSERT_LISTING, ...indexRow(l, a, lPath, `${dataPath}/listings/${lFolder}`, { price: top ? top[1] : l.price, bids: bids.length, top_bidder: top ? top[0] : null }));
     for (const p of l.photos) if (!files.has(p)) problems.push(`${l.id}: photo ${p} is missing`);

@@ -10,7 +10,7 @@ export async function authPage(mode) {
     <h1 class="main-title">${signup ? 'Make an account' : 'Log in'}</h1>
     <label class="field"><span>Username</span><input id="username" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" maxlength="80"></label>
     <label class="field"><span>Password</span><input id="password" type="password" autocomplete="${signup ? 'new-password' : 'current-password'}" maxlength="40"></label>
-    ${signup ? `<p class="note">Username: ${L.usernameMin} to ${L.usernameMax} characters. Password: ${L.passwordMin} to ${L.passwordMax} characters. There's no email, so a lost password can't be reset yet.</p>` : ''}
+    ${signup ? `<p class="note">Username: ${L.usernameMin} to ${L.usernameMax} characters. No underscores. Password: ${L.passwordMin} to ${L.passwordMax} characters. There's no email, so a lost password can't be reset yet.</p>` : ''}
     <p class="err" id="authErr" role="alert" hidden></p>
     <button class="btn" type="submit">${signup ? 'Sign up' : 'Log in'}</button>
     <p class="note">${signup ? 'Already have an account?' : 'New here?'} <a href="/${other}${esc(q)}">${signup ? 'Log in' : 'Sign up'}</a></p>
@@ -21,7 +21,8 @@ export async function authPage(mode) {
     const err = $('authErr'), btn = e.target.querySelector('button'), username = $('username').value.trim(), password = $('password').value, show = m => { err.textContent = m; err.hidden = false; };
     err.hidden = true;
     if (signup) {
-      const u = countChars(username), p = countChars(password);
+      if (username.includes('_')) return show('Usernames can\'t have underscores right now. Use a space instead.');
+      const u = countChars(username.replace(/\s+/g, ' ')), p = countChars(password);
       if (u < L.usernameMin || u > L.usernameMax) return show(`Usernames must be ${L.usernameMin} to ${L.usernameMax} characters.`);
       if (p < L.passwordMin || p > L.passwordMax) return show(`Passwords must be ${L.passwordMin} to ${L.passwordMax} characters.`);
     } else if (!username || !password) return show('Enter your username and password.');

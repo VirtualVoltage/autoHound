@@ -1,6 +1,6 @@
 import { LIMITS, CITIES, PART_CATEGORIES, CAR_CATEGORIES, CONDITIONS, HANDOFFS, BID_TEMPLATE, AUCTION } from './config.js';
 import { ApiError, fail, hit, json, readJson, readImage, readJsonFile, writeJsonFile, appendLine } from './http.js';
-import { nextId, folderName, isId } from './ids.js';
+import { nextId, folderName, isId, cleanWords } from './ids.js';
 import { requireAccount, publicAccount } from './auth.js';
 import { saveImage } from './files.js';
 import { closeListingConversations } from './conversations.js';
@@ -17,7 +17,7 @@ export function indexRow(l, a, path, dataPath, extra = {}) {
 export const INSERT_LISTING = 'INSERT OR REPLACE INTO listings(id,account_id,title,kind,category,city,price,description,photo,sell_type,auction_ends,bids,top_bidder,status,created,path,data_path,search) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)';
 
 function cleanFields(b) {
-  const kind = b.kind === 'cars' ? 'cars' : 'parts', title = str(b.title, 70), description = str(b.description, 1500), price = int(b.price, 1, 10000000);
+  const kind = b.kind === 'cars' ? 'cars' : 'parts', title = cleanWords(str(b.title, 70)), description = str(b.description, 1500), price = int(b.price, 1, 10000000);
   if (title.length < 4) fail(400, 'Add a title.');
   if (description.length < 10) fail(400, 'Add a short description.');
   if (!price) fail(400, 'Add a price between $1 and $10,000,000.');

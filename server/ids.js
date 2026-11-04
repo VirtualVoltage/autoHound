@@ -13,14 +13,18 @@ export async function nextId(db, type) {
 export const ID_PATTERN = /^[ALPFCM]\.\d\d\.\d\d\.\d\d\.\d{5,}$/;
 export const isId = (s, type) => ID_PATTERN.test(s || '') && (!type || s[0] === type);
 
-// Everything after the first __ is a label and is free to change.
-export function slug(text, fallback = 'untitled') {
-  const s = String(text).normalize('NFKD').replace(/[̀-ͯ]/g, '')
-    .replace(/[^A-Za-z0-9_-]+/g, '-').replace(/_{2,}/g, '_').replace(/-{2,}/g, '-')
-    .replace(/^[-_]+|[-_]+$/g, '').slice(0, 40).replace(/[-_]+$/, '');
-  return s || fallback;
+// Folder names are ID__title. The title keeps real words, with _ in place of spaces.
+export function folderTitle(text, fallback = 'untitled') {
+  const t = String(text).replace(/[\/\\:*?"<>|\u0000-\u001f\u007f]+/g, '-').replace(/[\s_]+/g, '_').replace(/^[._-]+|[._-]+$/g, '');
+  return [...t].slice(0, 70).join('').replace(/[._-]+$/, '') || fallback;
 }
-export const folderName = (id, label, fallback) => `${id}__${slug(label, fallback)}`;
+export const folderName = (id, label, fallback) => `${id}__${folderTitle(label, fallback)}`;
+// The only place that splits a folder name. Text shown to people comes from title, never id.
+export function parseName(name) {
+  const i = name.indexOf('__');
+  return i < 0 ? { id: name, title: '' } : { id: name.slice(0, i), title: name.slice(i + 2).replace(/_+/g, ' ').trim() };
+}
+export const cleanWords = text => String(text).replace(/_/g, ' ').replace(/\s+/g, ' ').trim();
 // Crowded folders are split by the date in the ID: 26.11.04__accounts
 export const dayFolder = (id, label) => `${id.slice(2, 10)}__${label}`;
 // Accounts sort into A to Z by username. Usernames can start with anything, so the rest go in _other.
@@ -28,4 +32,4 @@ export function letterFolder(username) {
   const c = String(username).normalize('NFKD').trim().charAt(0).toUpperCase();
   return /^[A-Z]$/.test(c) ? c : '_other';
 }
-export const idOf = name => name.split('__')[0];
+export const idOf = name => parseName(name).id;

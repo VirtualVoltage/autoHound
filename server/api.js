@@ -8,7 +8,7 @@ import { rebuildStep } from './rebuild.js';
 import { CITIES, PART_CATEGORIES, CAR_CATEGORIES, CONDITIONS, HANDOFFS, LIMITS } from './config.js';
 import { isId } from './ids.js';
 
-let readyCached = false;
+let readyUntil = 0;
 const routes = [
   ['POST', /^setup$/, ctx => setupStep(ctx)],
   ['GET', /^options$/, () => json({ cities: CITIES, part_categories: PART_CATEGORIES, car_categories: CAR_CATEGORIES, conditions: CONDITIONS, handoffs: HANDOFFS, limits: { usernameMin: LIMITS.usernameMin, usernameMax: LIMITS.usernameMax, passwordMin: LIMITS.passwordMin, passwordMax: LIMITS.passwordMax, photos: LIMITS.photosPerListing } })],
@@ -47,8 +47,10 @@ export async function handle(request, base) {
     const r = match.find(x => x.m === request.method);
     if (!r) fail(405, 'Not allowed.');
     if (route !== 'setup') {
-      if (!readyCached) readyCached = await isReady(base.db);
-      if (!readyCached) return json({ setup: true, error: 'Setting up the demo.' }, 503);
+      if (Date.now() > readyUntil) {
+        if (!await isReady(base.db)) return json({ setup: true, error: 'Setting up the demo.' }, 503);
+        readyUntil = Date.now() + 30000;
+      }
     }
     const args = r.hit.slice(1).map(decodeURIComponent);
     for (const a of args) if (!isId(a)) fail(404, 'Not found.');
