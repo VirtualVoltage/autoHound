@@ -1,7 +1,7 @@
 import { SCHEMA, REBUILDABLE_TABLES } from './schema.js';
 import { LIMITS } from './config.js';
 import { readJsonFile, readLines } from './http.js';
-import { idOf, isId } from './ids.js';
+import { idOf, isId, dayFolder } from './ids.js';
 import { usernameKey } from './auth.js';
 import { indexRow, INSERT_LISTING } from './listings.js';
 
@@ -16,7 +16,8 @@ export async function rebuildStep(ctx, cursor, problems = []) {
     await db.batch(REBUILDABLE_TABLES.map(t => [`DELETE FROM ${t}`]));
     cursor = 0;
   }
-  const accounts = (await store.listFolders('records/accounts')).sort();
+  const accounts = [];
+  for (const day of (await store.listFolders('records/accounts')).sort()) for (const a of (await store.listFolders(`records/accounts/${day}`)).sort()) accounts.push(`${day}/${a}`);
   if (cursor < accounts.length) { await indexAccount(ctx, accounts[cursor], problems); return { cursor: cursor + 1, total: accounts.length, done: false, problems }; }
   await indexArchived(ctx, problems);
   await repairCounters(ctx);
@@ -65,15 +66,17 @@ async function indexConversation(ctx, cPath, dataPath, status) {
   await db.run('INSERT OR REPLACE INTO conversations(id,listing_id,seller_id,buyer_id,status,backups,path,data_path,last_id,last_from,last_text,last_activity,seller_read,buyer_read) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)', meta.id, meta.listing, meta.seller, meta.buyer, status, backups, cPath, dataPath, last?.id || null, last?.from || null, last ? (last.attachment ? (last.attachment[0] === 'F' ? 'Sent a file' : 'Sent a photo') : (last.text || '').slice(0, 120)) : null, last ? Date.parse(last.time) : Date.parse(meta.started), meta.last_read?.[meta.seller] || null, meta.last_read?.[meta.buyer] || null);
 }
 async function countBackups(ctx, id, seller, buyer) {
-  const names = await ctx.store.listFolders(`records/conversations/${id}__${seller}_${buyer}`);
+  const names = await ctx.store.listFolders(`records/backups/conversations/${dayFolder(id, 'conversations')}/${id}__${seller}_${buyer}`);
   return names.filter(n => /^backup\d+$/.test(n)).length;
 }
 async function indexArchived(ctx) {
   const { db, store } = ctx;
-  for (const folder of await store.listFolders('records/conversations')) {
-    const root = `records/conversations/${folder}`, subs = await store.listFolders(root), id = idOf(folder), [seller, buyer] = folder.split('__')[1].split('_');
+  const base = 'records/backups/conversations', all = [];
+  for (const day of await store.listFolders(base)) for (const f of await store.listFolders(`${base}/${day}`)) all.push({ day, folder: f });
+  for (const { day, folder } of all) {
+    const root = `${base}/${day}/${folder}`, subs = await store.listFolders(root), id = idOf(folder), [seller, buyer] = folder.split('__')[1].split('_');
     if (subs.includes('active')) {
-      const dataRoot = `data/conversations/${folder}_attachments/active`, cPath = `${root}/active`;
+      const dataRoot = `data/backups/conversations/${day}/${folder}_attachments/active`, cPath = `${root}/active`;
       for (const k of await store.listAll(dataRoot + '/')) {
         const parts = k.split('/'), name = parts[parts.length - 2];
         if (isId(idOf(name))) await db.run('INSERT OR REPLACE INTO files(id,path,ext,owner_account,listing_id,conversation_id) VALUES(?,?,?,NULL,NULL,?)', idOf(name), parts.slice(0, -1).join('/'), extOf(parts), id);

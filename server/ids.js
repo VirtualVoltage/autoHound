@@ -21,4 +21,6 @@ export function slug(text, fallback = 'untitled') {
   return s || fallback;
 }
 export const folderName = (id, label, fallback) => `${id}__${slug(label, fallback)}`;
+// Crowded folders are split by the date in the ID: 26.11.04__accounts
+export const dayFolder = (id, label) => `${id.slice(2, 10)}__${label}`;
 export const idOf = name => name.split('__')[0];

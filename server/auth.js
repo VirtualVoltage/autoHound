@@ -1,6 +1,6 @@
 import { LIMITS } from './config.js';
 import { ApiError, fail, hit, json, readJson, readJsonFile, writeJsonFile, sha256Hex, clientKey } from './http.js';
-import { nextId, folderName } from './ids.js';
+import { nextId, folderName, dayFolder } from './ids.js';
 
 const COOKIE = 'ah_session';
 export const usernameKey = u => u.normalize('NFKC').toLowerCase();
@@ -39,7 +39,7 @@ export async function signup({ db, store, request }) {
   if (!await hit(db, 'signup:' + await clientKey(request), LIMITS.signupsPerHour, 3600e3)) fail(429, 'Too many new accounts from here. Try again later.');
   const key = usernameKey(username);
   if (await db.get('SELECT id FROM accounts WHERE username_key=?', key)) fail(409, 'That username is taken.');
-  const id = await nextId(db, 'A'), folder = folderName(id, username, 'user'), path = `records/accounts/${folder}`, joined = new Date().toISOString();
+  const id = await nextId(db, 'A'), folder = `${dayFolder(id, 'accounts')}/${folderName(id, username, 'user')}`, path = `records/accounts/${folder}`, joined = new Date().toISOString();
   try {
     await db.run('INSERT INTO accounts(id,username,username_key,path,data_path,photo,joined) VALUES(?,?,?,?,?,NULL,?)', id, username, key, path, `data/accounts/${folder}`, joined);
   } catch { fail(409, 'That username is taken.'); }

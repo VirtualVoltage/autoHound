@@ -73,7 +73,7 @@ export async function addPhoto(ctx, id) {
   if (r.status !== 'draft') fail(409, 'This listing can no longer take photos.');
   const l = await readJsonFile(store, `${r.path}/listing.json`);
   if (l.photos.length >= LIMITS.photosPerListing) fail(409, 'That\'s the most photos a listing can have.');
-  const pid = await saveImage(ctx, r.data_path, await readImage(request, LIMITS.photoBytes), `photo-${l.photos.length + 1}`, { account: a.id, listing: id });
+  const pid = await saveImage(ctx, r.data_path, await readImage(request, LIMITS.photoBytes), 'photo', { account: a.id, listing: id });
   l.photos.push(pid);
   await writeJsonFile(store, `${r.path}/listing.json`, l);
   return json({ id: pid });

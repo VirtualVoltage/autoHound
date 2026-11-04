@@ -1,12 +1,12 @@
 import { LIMITS, MESSAGE_TEMPLATE } from './config.js';
 import { fail, hit, json, readJson, readAttachment, readJsonFile, writeJsonFile, readLines, appendLine, moveTree } from './http.js';
-import { nextId, isId } from './ids.js';
+import { nextId, isId, dayFolder } from './ids.js';
 import { requireAccount } from './auth.js';
 import { saveImage } from './files.js';
 
 const folderFor = (id, seller, buyer) => `${id}__${seller}_${buyer}`;
 const zip = (template, row) => Object.fromEntries(template.map((k, i) => [k, row[i]]));
-const backupRoot = c => `conversations/${folderFor(c.id, c.seller_id, c.buyer_id)}`;
+const backupRoot = c => `backups/conversations/${dayFolder(c.id, 'conversations')}/${folderFor(c.id, c.seller_id, c.buyer_id)}`;
 
 // The newest message in the files decides the timer, so the index can never expire a chat by mistake.
 async function latestMessageTime(store, c) {

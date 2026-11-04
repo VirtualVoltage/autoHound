@@ -16,7 +16,7 @@ scripts/   Index rebuild and demo account builder
 `records/` holds text and `data/` holds photos, videos and PDFs. Both use the same layout.
 
 ```text
-records/accounts/A.26.11.04.00000__username/
+records/accounts/26.11.04__accounts/A.26.11.04.00000__username/
   account.json
   private.json                 hashed password, never sent to visitors
   favorites.json
@@ -29,24 +29,25 @@ records/accounts/A.26.11.04.00000__username/
       sellerID.jsonl           one message per line
       buyerID.jsonl
 
-data/accounts/A.26.11.04.00000__username/
+data/accounts/26.11.04__accounts/A.26.11.04.00000__username/
   P.26.11.04.00000__profile/original.jpg
   listings/L.26.11.04.00000__title/
-    P.26.11.04.00001__photo-1/original.jpg, thumb.jpg
+    P.26.11.04.00001__photo/original.jpg, thumb.jpg
     conversations/C.26.11.04.00000__sellerID_buyerID_attachments/
       P.26.11.04.00002__attachment/original.jpg
       F.26.11.04.00000__document/original.pdf
 
-records/conversations/C.26.11.04.00000__sellerID_buyerID/
+records/backups/conversations/26.11.04__conversations/C.26.11.04.00000__sellerID_buyerID/
   active/    chat on a sold or removed listing
   backup1/   chat that went 7 days with no message
   backup2/
-data/conversations/C.26.11.04.00000__sellerID_buyerID_attachments/
+data/backups/conversations/26.11.04__conversations/C.26.11.04.00000__sellerID_buyerID_attachments/
   active/, backup1/, backup2/
 ```
 
 ## Rules
 
+- Folders that could get crowded are split by the date in the ID, with a generic title like `26.11.04__accounts`.
 - IDs are type, date, then a daily count: `L.26.11.04.00000`. Types: A account, L listing, P photo, F other file, C conversation, M message.
 - Only the part before the first `__` matters to the code. Labels and file names can change.
 - Message lines follow `message_template`: `[attachment, id, text, time]`. An attachment is its own line.

@@ -58,7 +58,7 @@ def nid(typ, day):
     k = f'{typ}.{day}'; n = counters.get(k, 0); counters[k] = n + 1; return f'{k}.{n:05d}'
 AUCTION_ENDS = {'seed': 1794700800000}  # Nov 2026
 for i, ac in enumerate(ACCOUNTS):
-    aid = nid('A', ac['day']); folder = f"{aid}__{slug(ac['username'], 'user')}"; rp = f'records/accounts/{folder}'; dp = f'data/accounts/{folder}'
+    aid = nid('A', ac['day']); folder = f"{ac['day']}__accounts/{aid}__{slug(ac['username'], 'user')}"; rp = f'records/accounts/{folder}'; dp = f'data/accounts/{folder}'
     pid = nid('P', ac['day']); pd = f'{dp}/{pid}__profile'; assets += save_photo(ac['pic'], pd)
     joined = f"20{ac['day'].replace('.', '-')}T18:0{i}:00.000Z"
     rec(f'{rp}/account.json', dict(id=aid, username=ac['username'], joined=joined, status='active', profile_photo=pid))
@@ -70,7 +70,7 @@ for i, ac in enumerate(ACCOUNTS):
         day = f"26.10.{min(13 + i * 3 + j * 2, 31):02d}"; created = f"20{day.replace('.', '-')}T{16 + j}:{10 + i}:00.000Z"
         lid = nid('L', day); lf = f"{lid}__{slug(l['t'], 'listing')}"; photos = []
         for k, name in enumerate(l['img']):
-            ph = nid('P', day); assets += save_photo(name, f'{dp}/listings/{lf}/{ph}__photo-{k + 1}'); photos.append(ph)
+            ph = nid('P', day); assets += save_photo(name, f'{dp}/listings/{lf}/{ph}__photo'); photos.append(ph)
         item = dict(id=lid, account=aid, kind=l['k'], title=l['t'], description=l['d'], price=l['p'], category=l['c'], city=l['city'], condition=l['cond'], handoff=l.get('handoff', 'Meet up or pick up'), fits=l.get('fits') if l['k'] == 'parts' else None, market_value=l['mv'], sell_type='auction' if l.get('auction') else 'post', photos=photos, status='live', created=created, auction_ends=AUCTION_ENDS['seed'] + j * 86400000 if l.get('auction') else None)
         if l['k'] == 'cars': item['car'] = dict(year=l['year'], miles=l['miles'], title_status=l['title'])
         if l.get('auction'): item['bid_template'] = ['account', 'amount', 'sent']
