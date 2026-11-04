@@ -16,7 +16,7 @@ scripts/   Index rebuild and demo account builder
 `records/` holds text and `data/` holds photos, videos and PDFs. Both use the same layout.
 
 ```text
-records/accounts/26.11.04__accounts/A.26.11.04.00000__username/
+records/accounts/U/A.26.11.04.00000__username/
   account.json
   private.json                 hashed password, never sent to visitors
   favorites.json
@@ -29,7 +29,7 @@ records/accounts/26.11.04__accounts/A.26.11.04.00000__username/
       sellerID.jsonl           one message per line
       buyerID.jsonl
 
-data/accounts/26.11.04__accounts/A.26.11.04.00000__username/
+data/accounts/U/A.26.11.04.00000__username/
   P.26.11.04.00000__profile/original.jpg
   listings/L.26.11.04.00000__title/
     P.26.11.04.00001__photo/original.jpg, thumb.jpg
@@ -47,7 +47,8 @@ data/backups/conversations/26.11.04__conversations/C.26.11.04.00000__sellerID_bu
 
 ## Rules
 
-- Folders that could get crowded are split by the date in the ID, with a generic title like `26.11.04__accounts`.
+- Accounts sort into `A` to `Z` by the username's first letter. Usernames that start with anything else go in `_other`.
+- Other folders that could get crowded are split by the date in the ID, with a generic title like `26.11.04__conversations`.
 - IDs are type, date, then a daily count: `L.26.11.04.00000`. Types: A account, L listing, P photo, F other file, C conversation, M message.
 - Only the part before the first `__` matters to the code. Labels and file names can change.
 - Message lines follow `message_template`: `[attachment, id, text, time]`. An attachment is its own line.

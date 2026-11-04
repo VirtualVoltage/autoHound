@@ -23,4 +23,9 @@ export function slug(text, fallback = 'untitled') {
 export const folderName = (id, label, fallback) => `${id}__${slug(label, fallback)}`;
 // Crowded folders are split by the date in the ID: 26.11.04__accounts
 export const dayFolder = (id, label) => `${id.slice(2, 10)}__${label}`;
+// Accounts sort into A to Z by username. Usernames can start with anything, so the rest go in _other.
+export function letterFolder(username) {
+  const c = String(username).normalize('NFKD').trim().charAt(0).toUpperCase();
+  return /^[A-Z]$/.test(c) ? c : '_other';
+}
 export const idOf = name => name.split('__')[0];

@@ -58,7 +58,7 @@ def nid(typ, day):
     k = f'{typ}.{day}'; n = counters.get(k, 0); counters[k] = n + 1; return f'{k}.{n:05d}'
 AUCTION_ENDS = {'seed': 1794700800000}  # Nov 2026
 for i, ac in enumerate(ACCOUNTS):
-    aid = nid('A', ac['day']); folder = f"{ac['day']}__accounts/{aid}__{slug(ac['username'], 'user')}"; rp = f'records/accounts/{folder}'; dp = f'data/accounts/{folder}'
+    aid = nid('A', ac['day']); folder = f"{ac['username'][0].upper()}/{aid}__{slug(ac['username'], 'user')}"; rp = f'records/accounts/{folder}'; dp = f'data/accounts/{folder}'
     pid = nid('P', ac['day']); pd = f'{dp}/{pid}__profile'; assets += save_photo(ac['pic'], pd)
     joined = f"20{ac['day'].replace('.', '-')}T18:0{i}:00.000Z"
     rec(f'{rp}/account.json', dict(id=aid, username=ac['username'], joined=joined, status='active', profile_photo=pid))
