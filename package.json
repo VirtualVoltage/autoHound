@@ -1,0 +1,10 @@
+{
+  "name": "autohound",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server/node-server.js",
+    "rebuild-index": "node scripts/rebuild-index.js"
+  },
+  "engines": { "node": ">=22.5" }
+}

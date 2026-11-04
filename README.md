@@ -1,7 +1,69 @@
 # Autohound
 
-Demo of a local car parts and project car marketplace. Sample listings are imaginary, and sample photos must be replaced before a real launch.
+Local marketplace for car parts, project cars and auctions. Demo stage.
 
-- `public/`: the site
-- `functions/` and `lib/`: server code for shared posts (Cloudflare Pages Functions)
-- Database: Cloudflare D1, bound as `DB`
+## Layout
+
+```text
+site/      Pages, styling and scripts the browser loads
+server/    Code that reads and writes accounts, listings and chats
+functions/ Connects the server to Cloudflare
+scripts/   Index rebuild and demo account builder
+```
+
+## Stored files
+
+`records/` holds text and `data/` holds photos, videos and PDFs. Both use the same layout.
+
+```text
+records/accounts/A.26.11.04.00000__username/
+  account.json
+  private.json                 hashed password, never sent to visitors
+  favorites.json
+  listings/L.26.11.04.00000__title/
+    listing.json
+    bids.jsonl
+    reports.jsonl
+    conversations/C.26.11.04.00000__sellerID_buyerID/
+      conversation.json        includes message_template
+      sellerID.jsonl           one message per line
+      buyerID.jsonl
+
+data/accounts/A.26.11.04.00000__username/
+  P.26.11.04.00000__profile/original.jpg
+  listings/L.26.11.04.00000__title/
+    P.26.11.04.00001__photo-1/original.jpg, thumb.jpg
+    conversations/C.26.11.04.00000__sellerID_buyerID_attachments/
+      P.26.11.04.00002__attachment/original.jpg
+      F.26.11.04.00000__document/original.pdf
+
+records/conversations/C.26.11.04.00000__sellerID_buyerID/
+  active/    chat on a sold or removed listing
+  backup1/   chat that went 7 days with no message
+  backup2/
+data/conversations/C.26.11.04.00000__sellerID_buyerID_attachments/
+  active/, backup1/, backup2/
+```
+
+## Rules
+
+- IDs are type, date, then a daily count: `L.26.11.04.00000`. Types: A account, L listing, P photo, F other file, C conversation, M message.
+- Only the part before the first `__` matters to the code. Labels and file names can change.
+- Message lines follow `message_template`: `[attachment, id, text, time]`. An attachment is its own line.
+- Each new message restarts a 7-day timer. The newest message's `time` in the files decides when a chat becomes the next backup.
+- The search index can always be rebuilt from `records/` and `data/`. Only logins and rate limits are lost, and those are temporary.
+
+## Run it on your own server
+
+Needs Node 22.5 or newer and no other installs.
+
+```text
+npm start                 site on port 8080, files in ./storage
+npm run rebuild-index     recreate the search index from the files
+```
+
+Set `PORT`, `AUTOHOUND_DIR` and `ADMIN_KEY` to change the defaults. To move off Cloudflare, copy `records/` and `data/` into the storage folder, then rebuild the index.
+
+## Cloudflare
+
+Output folder is `site`. Bindings: `DB` (D1 index) and optionally `FILES` (R2). Without `FILES`, the same paths are kept in a D1 table called `vfs`, and attachments are limited to 1.5 MB. `POST /api/admin/rebuild` stays off until an `ADMIN_KEY` is set.
