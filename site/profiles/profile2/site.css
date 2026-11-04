@@ -70,6 +70,7 @@ textarea { display: block; resize: vertical; }
 .avatar { display: block; width: 36px; height: 36px; flex: none; border-radius: 50%; object-fit: cover; background: #fff; border: 2px solid var(--neon); box-shadow: 0 0 10px rgba(30,255,40,.8); }
 .logo .avatar { object-fit: contain; padding: 3px; }
 .logo.blink { opacity: .12; }
+.logo.dim { opacity: .75; }
 .search { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 8px; max-width: 720px; }
 .rail { position: sticky; top: 76px; align-self: start; display: grid; gap: 8px; padding-block: 16px; }
 .rail .btn { justify-content: flex-start; }
