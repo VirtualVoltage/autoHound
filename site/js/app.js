@@ -23,6 +23,7 @@ async function route() {
   const mine = ++token, path = location.pathname.replace(/(.)\/$/, '$1');
   const m = ROUTES.map(([re, fn]) => ({ fn, hit: path.match(re) })).find(x => x.hit);
   scrollTo(0, 0);
+  renderHeader();
   if (!m) { $('main').innerHTML = view.notFound(); return; }
   try {
     const result = await m.fn(...m.hit.slice(1).map(decodeURIComponent));

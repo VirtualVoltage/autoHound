@@ -6,7 +6,8 @@ Local marketplace for car parts, project cars and auctions. Demo stage.
 
 ```text
 site/      Pages and scripts the browser loads
-  profiles/profile1/   Look and layouts of the site: site.css, views.js, img/
+  profiles/profile1/   The original look and layouts: site.css, views.js, img/
+  profiles/profile2/   The active look: same neon, simple marketplace layout, real buttons
 server/    Code that reads and writes accounts, listings and chats
 functions/ Connects the server to Cloudflare
 scripts/   Index rebuild and demo account builder
