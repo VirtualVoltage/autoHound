@@ -210,3 +210,23 @@ footer { margin-top: 18px; background: linear-gradient(var(--panel-top), #070907
 
 .bubble video { display: block; max-width: 100%; max-height: 300px; margin-bottom: 5px; }
 .chip { padding: 2px 7px; background: #1a1f1a; border: 1px solid #3a463a; font-size: 12px; }
+
+/* phones: iPhones zoom on any field under 16px, and double taps zoom unless told otherwise */
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+a, button, label, input, select, textarea, summary { touch-action: manipulation; -webkit-tap-highlight-color: rgba(42,255,50,.25); }
+@media (hover: none), (pointer: coarse), (max-width: 760px) {
+  input, select, textarea { font-size: 16px; }
+  .btn, .search button { min-height: 44px; }
+  .head-links { flex-wrap: wrap; gap: 0 12px; max-width: 100%; }
+  .head-links a:not(.btn) { display: inline-flex; align-items: center; min-height: 44px; }
+  .sorts { width: 100%; }
+  .sorts button { flex: 1; min-height: 44px; padding: 6px 4px; }
+  .price-range input { flex: 1; width: auto; min-width: 0; }
+  .price-range { width: 100%; }
+  .star { min-width: 40px; min-height: 40px; }
+  .up-x { width: 32px; height: 32px; }
+  .up-cover { padding: 6px 7px; font-size: 11px; }
+  .thumbs { grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); }
+  .crumb a, .note a, .thread-head a { display: inline-block; padding-block: 10px; }
+  .composer textarea { min-height: 44px; }
+}
