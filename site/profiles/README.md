@@ -7,6 +7,7 @@ profile1/
   site.css     colors, fonts, spacing
   views.js     HTML for the header, banner, footer and every page
   img/         brand-banner.webp, brand-profile.webp, and anything else it needs
+  *.js         optional visual effects, imported from views.js
 ```
 
 Copy a profile folder to start a new one. `views.js` can arrange anything, but it has to export the same functions, and these elements must stay so the shared logic can attach to them.

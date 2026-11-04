@@ -69,8 +69,7 @@ textarea { display: block; resize: vertical; }
 .logo::after, .main-title::after, .big-price::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: repeating-linear-gradient(0deg, rgba(0,0,0,.5) 0 1px, transparent 1px 4px); }
 .avatar { display: block; width: 36px; height: 36px; flex: none; border-radius: 50%; object-fit: cover; background: #fff; border: 2px solid var(--neon); box-shadow: 0 0 10px rgba(30,255,40,.8); }
 .logo .avatar { object-fit: contain; padding: 3px; }
-@media (prefers-reduced-motion: no-preference) { .logo { animation: flicker 4.6s linear infinite; } }
-@keyframes flicker { 0%,6% {opacity:1} 7%,10% {opacity:.25} 11%,17% {opacity:1} 18%,21% {opacity:.45} 22%,27% {opacity:1} 28%,31% {opacity:.15} 32%,54% {opacity:1} 55%,59% {opacity:.35} 60%,67% {opacity:1} 68%,70% {opacity:.6} 71%,87% {opacity:1} 88%,93% {opacity:.2} 94%,100% {opacity:1} }
+.logo.blink { opacity: .12; }
 .search { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 8px; max-width: 720px; }
 .rail { position: sticky; top: 76px; align-self: start; display: grid; gap: 8px; padding-block: 16px; }
 .rail .btn { justify-content: flex-start; }
