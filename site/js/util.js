@@ -1,10 +1,11 @@
+export const profileAsset = name => `/profiles/${window.AUTOHOUND_PROFILE}/img/${name}`;
 export const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 export const money = n => '$' + Math.round(n).toLocaleString('en-US');
 export const $ = id => document.getElementById(id);
 export const MILES = { Lynden: 2, Everson: 6, Sumas: 11, Ferndale: 11, Blaine: 14, Bellingham: 15, Burlington: 38, 'Mount Vernon': 43, Anacortes: 50, Arlington: 60, Marysville: 72, Everett: 78 };
 export const townLine = city => `${esc(city)}${MILES[city] !== undefined ? `, ${MILES[city]} mi` : ''}`;
 export const ph = (src, cover, alt = '') => src ? `<span class="ph ${cover ? 'cover' : ''}"><img src="${esc(src)}" alt="${esc(alt)}" loading="lazy"></span>` : `<span class="ph missing">Photo unavailable</span>`;
-export const avatar = (src, alt = '') => `<img class="avatar" src="${esc(src || '/img/brand-profile.webp')}" alt="${esc(alt)}">`;
+export const avatar = (src, alt = '') => `<img class="avatar" src="${esc(src || profileAsset('brand-profile.webp'))}" alt="${esc(alt)}">`;
 export function timeLeft(ms) {
   if (ms <= 0) return 'ended';
   const m = Math.floor(ms / 6e4), h = Math.floor(m / 60), d = Math.floor(h / 24);

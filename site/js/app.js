@@ -1,4 +1,4 @@
-import { $, esc, toast, timeLeft } from './util.js';
+import { $, esc, toast, timeLeft, profileAsset } from './util.js';
 import { api, session, refreshSession } from './api.js';
 import { notFound } from './components.js';
 import { homePage, setSearch } from './pages/home.js';
@@ -59,6 +59,8 @@ $('searchForm').addEventListener('submit', e => { e.preventDefault(); setSearch(
 addEventListener('popstate', route);
 setInterval(() => document.querySelectorAll('[data-end]').forEach(n => { n.textContent = timeLeft(+n.dataset.end - Date.now()); }), 1000);
 setInterval(async () => { if (session.account && !document.hidden) { try { const d = await api('me'); if (d.unread !== session.unread) { session.unread = d.unread; renderHeader(); } } catch {} } }, 30000);
+
+$('logoMark').src = profileAsset('brand-profile.webp');
 
 (async function start() {
   renderHeader();

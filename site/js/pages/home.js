@@ -1,4 +1,4 @@
-import { $, esc, money } from '../util.js';
+import { $, esc, money, profileAsset } from '../util.js';
 import { api } from '../api.js';
 import { windowCard } from '../components.js';
 import { go } from '../app.js';
@@ -35,7 +35,7 @@ export async function homePage() {
   const q = new URLSearchParams(location.search).get('q') || '';
   $('searchInput').value = q;
   const first = await api('listings?limit=40');
-  $('main').innerHTML = `<div class="banner"><img src="/img/brand-banner.webp" alt="Autohound: a dog carrying a wrench in its mouth"></div>${ticker(first.listings)}
+  $('main').innerHTML = `<div class="banner"><img src="${profileAsset('brand-banner.webp')}" alt="Autohound: a dog carrying a wrench in its mouth"></div>${ticker(first.listings)}
     <div class="wrap page">
       <h1 class="main-title center">${q ? `Results for ${esc(q)}` : 'Popular listings'}</h1>
       <div class="filters">

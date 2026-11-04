@@ -5,11 +5,16 @@ Local marketplace for car parts, project cars and auctions. Demo stage.
 ## Layout
 
 ```text
-site/      Pages, styling and scripts the browser loads
+site/      Pages and scripts the browser loads
+  profiles/profile1/   Look of the site: site.css, fonts and img/
 server/    Code that reads and writes accounts, listings and chats
 functions/ Connects the server to Cloudflare
 scripts/   Index rebuild and demo account builder
 ```
+
+## Visual profiles
+
+Each folder in `site/profiles/` is one look for the site. Change the name in `site/js/profile.js` to switch. A new profile needs its own `site.css`, `img/brand-banner.webp` and `img/brand-profile.webp`.
 
 ## Stored files
 
