@@ -19,6 +19,7 @@ export async function rebuildStep(ctx, cursor, problems = []) {
   const accounts = [];
   for (const day of (await store.listFolders('records/accounts')).sort()) for (const a of (await store.listFolders(`records/accounts/${day}`)).sort()) accounts.push(`${day}/${a}`);
   if (cursor < accounts.length) { await indexAccount(ctx, accounts[cursor], problems); return { cursor: cursor + 1, total: accounts.length, done: false, problems }; }
+  await indexArchivedListings(ctx, problems);
   await indexArchived(ctx, problems);
   await repairCounters(ctx);
   return { cursor, total: accounts.length, done: true, problems };
@@ -44,14 +45,14 @@ async function indexAccount(ctx, folder, problems) {
     }
   }
 }
-async function indexDataTree(ctx, dataPath, accountId) {
+async function indexDataTree(ctx, dataPath, accountId, listingId = null) {
   const found = new Set(), seen = new Set();
   for (const k of await ctx.store.listAll(dataPath + '/')) {
     const parts = k.split('/'), name = parts[parts.length - 2];
     if (!isId(idOf(name)) || seen.has(name)) continue;
     seen.add(name);
     const id = idOf(name), folder = parts.slice(0, -1).join('/'), li = parts.indexOf('listings'), ci = parts.indexOf('conversations');
-    await ctx.db.run('INSERT OR REPLACE INTO files(id,path,ext,owner_account,listing_id,conversation_id) VALUES(?,?,?,?,?,?)', id, folder, extOf(parts), accountId, li >= 0 && ci < 0 ? idOf(parts[li + 1]) : null, ci >= 0 ? idOf(parts[ci + 1]) : null);
+    await ctx.db.run('INSERT OR REPLACE INTO files(id,path,ext,owner_account,listing_id,conversation_id) VALUES(?,?,?,?,?,?)', id, folder, extOf(parts), accountId, li >= 0 && ci < 0 ? (listingId || idOf(parts[li + 1])) : null, ci >= 0 ? idOf(parts[ci + 1]) : null);
     found.add(id);
   }
   return found;
@@ -66,6 +67,22 @@ async function indexConversation(ctx, cPath, dataPath, status) {
   }
   const backups = await countBackups(ctx, meta.id, meta.seller, meta.buyer);
   await db.run('INSERT OR REPLACE INTO conversations(id,listing_id,seller_id,buyer_id,status,backups,path,data_path,last_id,last_from,last_text,last_activity,seller_read,buyer_read) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)', meta.id, meta.listing, meta.seller, meta.buyer, status, backups, cPath, dataPath, last?.id || null, last?.from || null, last ? (last.attachment ? (last.attachment[0] === 'F' ? 'Sent a file' : 'Sent a photo') : (last.text || '').slice(0, 120)) : null, last ? Date.parse(last.time) : Date.parse(meta.started), meta.last_read?.[meta.seller] || null, meta.last_read?.[meta.buyer] || null);
+}
+// Sold and removed listings, kept in backups/listings by date.
+async function indexArchivedListings(ctx, problems) {
+  const { db, store } = ctx, base = 'records/backups/listings';
+  for (const day of (await store.listFolders(base)).sort()) for (const folder of (await store.listFolders(`${base}/${day}`)).sort()) {
+    const lPath = `${base}/${day}/${folder}`, dataPath = `data/backups/listings/${day}/${folder}`, l = await readJsonFile(store, `${lPath}/listing.json`);
+    if (!l) { problems.push(`${lPath}: listing.json is missing`); continue; }
+    const a = await db.get('SELECT * FROM accounts WHERE id=?', l.account);
+    if (!a) { problems.push(`${lPath}: its account ${l.account} is missing`); continue; }
+    if (folderTitle(l.title, 'listing') !== folder.slice(folder.indexOf('__') + 2)) l.title = parseName(folder).title || l.title;
+    const files = await indexDataTree(ctx, dataPath, a.id, l.id);
+    const bids = await readLines(store, `${lPath}/bids.jsonl`), top = bids.reduce((m, b) => (!m || b[1] > m[1]) ? b : m, null);
+    await db.run(INSERT_LISTING, ...indexRow(l, { ...a, username: a.username }, lPath, dataPath, { price: top ? top[1] : l.price, bids: bids.length, top_bidder: top ? top[0] : null }));
+    for (const p of l.photos) if (!files.has(p)) problems.push(`${l.id}: photo ${p} is missing`);
+    for (const r of await readLines(store, `${lPath}/reports.jsonl`)) await db.run('INSERT OR IGNORE INTO reports(listing_id,account_id) VALUES(?,?)', l.id, r[0]);
+  }
 }
 async function countBackups(ctx, id, seller, buyer) {
   const names = await ctx.store.listFolders(`records/backups/conversations/${dayFolder(id, 'conversations')}/${id}__${seller}_${buyer}`);

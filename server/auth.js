@@ -1,6 +1,7 @@
 import { LIMITS } from './config.js';
 import { ApiError, fail, hit, json, readJson, readJsonFile, writeJsonFile, sha256Hex, clientKey } from './http.js';
 import { nextId, folderName, letterFolder } from './ids.js';
+import { checkWords } from './wordfilter.js';
 
 const COOKIE = 'ah_session';
 export const usernameKey = u => u.normalize('NFKC').replace(/[_\s]+/g, ' ').trim().toLowerCase();
@@ -36,6 +37,7 @@ export async function signup({ db, store, request }) {
   if (username.includes('_')) fail(400, 'Usernames use spaces, not underscores.');
   const n = countChars(username);
   if (n < LIMITS.usernameMin || n > LIMITS.usernameMax) fail(400, `Usernames must be ${LIMITS.usernameMin} to ${LIMITS.usernameMax} characters.`);
+  checkWords('username', username);
   checkProof(b.proof);
   if (!await hit(db, 'signup:' + await clientKey(request), LIMITS.signupsPerHour, 3600e3)) fail(429, 'Too many new accounts from here. Try again later.');
   const key = usernameKey(username);

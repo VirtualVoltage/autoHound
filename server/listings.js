@@ -1,9 +1,10 @@
 import { LIMITS, CITIES, PART_CATEGORIES, CAR_CATEGORIES, CONDITIONS, HANDOFFS, BID_TEMPLATE, AUCTION } from './config.js';
-import { ApiError, fail, hit, json, readJson, readImage, readJsonFile, writeJsonFile, appendLine } from './http.js';
-import { nextId, folderName, isId, cleanWords } from './ids.js';
+import { ApiError, fail, hit, json, readJson, readImage, readJsonFile, writeJsonFile, appendLine, moveTree } from './http.js';
+import { nextId, folderName, isId, cleanWords, dayFolder } from './ids.js';
 import { requireAccount, publicAccount } from './auth.js';
 import { saveImage } from './files.js';
 import { closeListingConversations } from './conversations.js';
+import { checkWords } from './wordfilter.js';
 
 const str = (v, max) => typeof v === 'string' ? v.trim().slice(0, max) : '';
 const int = (v, lo, hi) => { const n = Math.round(Number(v)); return Number.isFinite(n) && n >= lo && n <= hi ? n : null; };
@@ -27,6 +28,7 @@ function cleanFields(b) {
   if (!CONDITIONS.includes(b.condition)) fail(400, 'Pick a condition.');
   if (!HANDOFFS.includes(b.handoff)) fail(400, 'Pick a handoff.');
   const l = { kind, title, description, price, category: b.category, city: b.city, condition: b.condition, handoff: b.handoff, fits: kind === 'parts' ? (str(b.fits, 60) || 'Universal') : null, market_value: int(b.market_value, 1, 20000000), sell_type: b.sell_type === 'auction' ? 'auction' : 'post' };
+  checkWords('listing', l.title, l.description, l.fits);
   if (kind === 'cars') {
     const year = int(b.year, 1900, 2100), miles = int(b.miles, 0, 5000000);
     if (!year || miles === null) fail(400, 'Add the year and miles.');
@@ -116,7 +118,30 @@ export async function changeStatus(ctx, id) {
   await writeJsonFile(store, `${r.path}/listing.json`, l);
   await db.run('UPDATE listings SET status=? WHERE id=?', status, id);
   await closeListingConversations(ctx, l);
+  await archiveListing(ctx, { ...r, status });
   return json({ ok: true, status });
+}
+// Sold or removed listings move out of the account into backups/listings, sorted by the listing's date.
+// Its chats move first (closeListingConversations), so only the listing and its photos travel here.
+export const listingBackupRoot = r => `backups/listings/${dayFolder(r.id, 'listings')}/${r.path.split('/').pop()}`;
+export async function archiveListing(ctx, r) {
+  if (r.path.startsWith('records/backups/')) return;
+  const root = listingBackupRoot(r), to = `records/${root}`, dataTo = `data/${root}`;
+  await moveTree(ctx.store, r.path, to);
+  if (r.data_path) await moveTree(ctx.store, r.data_path, dataTo);
+  await ctx.db.run('UPDATE listings SET path=?, data_path=? WHERE id=?', to, dataTo, r.id);
+  // Every file that was under the folder, including anything a chat left behind.
+  if (r.data_path) for (const f of await ctx.db.all('SELECT id,path FROM files WHERE path >= ? AND path < ?', r.data_path + '/', r.data_path + '0'))
+    await ctx.db.run('UPDATE files SET path=? WHERE id=?', dataTo + f.path.slice(r.data_path.length), f.id);
+}
+// Moves listings that were sold or removed before backups existed, a few per visit.
+export async function sweepClosedListings(ctx, limit = 3) {
+  const rows = await ctx.db.all("SELECT * FROM listings WHERE status IN ('sold','deleted') AND path NOT LIKE 'records/backups/%' LIMIT ?", limit);
+  for (const r of rows) {
+    const l = await readJsonFile(ctx.store, `${r.path}/listing.json`);
+    if (l) await closeListingConversations(ctx, l);
+    await archiveListing(ctx, r);
+  }
 }
 export async function placeBid({ db, store, request }, id) {
   const a = await requireAccount(db, request), amount = int((await readJson(request)).amount, 1, 10000000);
