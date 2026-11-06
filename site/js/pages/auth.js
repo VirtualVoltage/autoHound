@@ -13,8 +13,8 @@ export async function authPage(mode) {
     e.preventDefault();
     const err = $('authErr'), btn = e.target.querySelector('button'), username = $('username').value.trim(), password = $('password').value, show = m => { err.textContent = m; err.hidden = false; };
     err.hidden = true;
+    if (username.includes('_')) return show('Usernames use spaces, not underscores.');
     if (signup) {
-      if (username.includes('_')) return show('Usernames can\'t have underscores right now. Use a space instead.');
       const u = countChars(username.replace(/\s+/g, ' ')), p = countChars(password);
       if (u < L.usernameMin || u > L.usernameMax) return show(`Usernames must be ${L.usernameMin} to ${L.usernameMax} characters.`);
       if (p < L.passwordMin || p > L.passwordMax) return show(`Passwords must be ${L.passwordMin} to ${L.passwordMax} characters.`);

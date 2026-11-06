@@ -77,7 +77,7 @@ export const authPage = ({ signup, limits: L, otherLink }) => `<div class="wrap 
     <h1 class="main-title">${signup ? 'Make an account' : 'Log in'}</h1>
     <label class="field"><span>Username</span><input id="username" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" maxlength="80"></label>
     <label class="field"><span>Password</span><input id="password" type="password" autocomplete="${signup ? 'new-password' : 'current-password'}" maxlength="40"></label>
-    ${signup ? `<p class="note">Username: ${L.usernameMin} to ${L.usernameMax} characters. No underscores. Password: ${L.passwordMin} to ${L.passwordMax} characters. There's no email, so a lost password can't be reset yet.</p>` : ''}
+    ${signup ? `<p class="note">Username: ${L.usernameMin} to ${L.usernameMax} characters, with spaces allowed but no underscores. Password: ${L.passwordMin} to ${L.passwordMax} characters. There's no email, so a lost password can't be reset yet.</p>` : ''}
     <p class="err" id="authErr" role="alert" hidden></p>
     <button class="btn" type="submit">${signup ? 'Sign up' : 'Log in'}</button>
     <p class="note">${signup ? 'Already have an account?' : 'New here?'} <a href="${esc(otherLink)}">${signup ? 'Log in' : 'Sign up'}</a></p>

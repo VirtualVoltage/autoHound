@@ -20,7 +20,7 @@ Unless the owner says a big change is coming, act as if real people depend on th
 - `profile1` theme: black and neon green, early 2000s tuner. White text and titles, green main title and prices, yellow towns, gray counts.
 - Text goes in `records/`. Photos, videos and PDFs go in `data/`, using the same layout.
 - IDs look like `L.26.11.04.00000`. Folder names are `ID__title`, and `__` only ever separates the two. Titles use `_` for spaces in folder names.
-- People see titles with spaces and never see IDs in page text. Usernames can't contain `_`.
+- People see titles with spaces and never see IDs in page text. Usernames can have spaces but never `_`, at signup or login. Folder names store their spaces as `_`.
 - Usernames are 6 to 40 characters. Passwords are 6 to 15. There's no email for now.
 - Accounts sort into `A` to `Z` folders, plus `_other`. Other crowded folders sort by date with a generic title.
 - The search index must always be fully rebuildable from `records/` and `data/`.

@@ -33,7 +33,7 @@ export const publicAccount = a => a && ({ id: a.id, username: a.username, joined
 
 export async function signup({ db, store, request }) {
   const b = await readJson(request), username = String(b.username || '').replace(/[\u0000-\u001f\u007f]/g, '').replace(/\s+/g, ' ').trim();
-  if (username.includes('_')) fail(400, 'Usernames can\'t have underscores right now. Use a space instead.');
+  if (username.includes('_')) fail(400, 'Usernames use spaces, not underscores.');
   const n = countChars(username);
   if (n < LIMITS.usernameMin || n > LIMITS.usernameMax) fail(400, `Usernames must be ${LIMITS.usernameMin} to ${LIMITS.usernameMax} characters.`);
   checkProof(b.proof);
@@ -53,6 +53,7 @@ export async function signup({ db, store, request }) {
 }
 export async function login({ db, store, request }) {
   const b = await readJson(request), username = String(b.username || '').trim();
+  if (username.includes('_')) fail(400, 'Usernames use spaces, not underscores.');
   checkProof(b.proof);
   const key = usernameKey(username);
   if (!await hit(db, 'login:' + await clientKey(request) + ':' + key, LIMITS.loginsPer10Min, 600e3)) fail(429, 'Too many tries. Wait a few minutes.');
