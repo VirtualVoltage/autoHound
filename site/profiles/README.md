@@ -1,16 +1,18 @@
 # Visual profiles
 
-Each folder here is one complete look for the site, including its layouts. `site/js/profile.js` picks the active one.
+Each folder here is one complete look for the site, including its layouts. `site/js/profile.js` picks the active one, and loads `mobile` on phones and `desktop` on everything else, including tablets.
 
 ```text
 profile1/
-  site.css     colors, fonts, spacing
-  views.js     HTML for the header, banner, footer and every page
-  img/         brand-banner.webp, brand-profile.webp, and anything else it needs
-  *.js         optional visual effects, imported from views.js
+  desktop/
+    site.css     colors, fonts, spacing
+    views.js     HTML for the header, footer and every page
+    img/         brand-banner.webp, brand-profile.webp, and anything else it needs
+    *.js         optional visual effects, imported from views.js
+  mobile/        the same files, with changes that suit phones
 ```
 
-Copy a profile folder to start a new one. `views.js` can arrange anything, but it has to export the same functions, and these elements must stay so the shared logic can attach to them.
+Copy a profile folder to start a new one. Most changes belong in both `desktop` and `mobile`. `views.js` can arrange anything, but it has to export the same functions, and these elements must stay so the shared logic can attach to them.
 
 | Page | Needed |
 |---|---|

@@ -6,8 +6,8 @@ Local marketplace for car parts, project cars and auctions. Demo stage.
 
 ```text
 site/      Pages and scripts the browser loads
-  profiles/profile1/   The original look and layouts: site.css, views.js, img/
-  profiles/profile2/   The active look: same neon, simple marketplace layout, real buttons
+  profiles/profile1/   The original look, with desktop/ and mobile/ folders
+  profiles/profile2/   The active look, with desktop/ and mobile/ folders
 server/    Code that reads and writes accounts, listings and chats
 functions/ Connects the server to Cloudflare
 scripts/   Index rebuild and demo account builder
@@ -15,7 +15,7 @@ scripts/   Index rebuild and demo account builder
 
 ## Visual profiles
 
-Each folder in `site/profiles/` is one complete look for the site, including page layouts. Change the name in `site/js/profile.js` to switch. See `site/profiles/README.md` to make a new one.
+Each folder in `site/profiles/` is one complete look for the site, including page layouts. Change the name in `site/js/profile.js` to switch. Phones load a profile's `mobile` folder, and everything else loads `desktop`. See `site/profiles/README.md` to make a new one.
 
 ## Stored files
 

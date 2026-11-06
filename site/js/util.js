@@ -1,4 +1,4 @@
-export const profileAsset = name => `/profiles/${window.AUTOHOUND_PROFILE}/img/${name}`;
+export const profileAsset = name => `${window.AUTOHOUND_LOOK}/img/${name}`;
 export const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 export const money = n => '$' + Math.round(n).toLocaleString('en-US');
 export const $ = id => document.getElementById(id);
