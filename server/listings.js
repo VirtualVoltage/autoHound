@@ -127,15 +127,16 @@ export const listingBackupRoot = r => `backups/listings/${dayFolder(r.id, 'listi
 export async function archiveListing(ctx, r) {
   if (r.path.startsWith('records/backups/')) return;
   const root = listingBackupRoot(r), to = `records/${root}`, dataTo = `data/${root}`;
+  // Each step can safely run again. The listing row changes last, so a cut-off request is finished on a later visit.
   await moveTree(ctx.store, r.path, to);
   if (r.data_path) await moveTree(ctx.store, r.data_path, dataTo);
-  await ctx.db.run('UPDATE listings SET path=?, data_path=? WHERE id=?', to, dataTo, r.id);
   // Every file that was under the folder, including anything a chat left behind.
   if (r.data_path) for (const f of await ctx.db.all('SELECT id,path FROM files WHERE path >= ? AND path < ?', r.data_path + '/', r.data_path + '0'))
     await ctx.db.run('UPDATE files SET path=? WHERE id=?', dataTo + f.path.slice(r.data_path.length), f.id);
+  await ctx.db.run('UPDATE listings SET path=?, data_path=? WHERE id=?', to, dataTo, r.id);
 }
 // Moves listings that were sold or removed before backups existed, a few per visit.
-export async function sweepClosedListings(ctx, limit = 3) {
+export async function sweepClosedListings(ctx, limit = 1) {
   const rows = await ctx.db.all("SELECT * FROM listings WHERE status IN ('sold','deleted') AND path NOT LIKE 'records/backups/%' LIMIT ?", limit);
   for (const r of rows) {
     const l = await readJsonFile(ctx.store, `${r.path}/listing.json`);

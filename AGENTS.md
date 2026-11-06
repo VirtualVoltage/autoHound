@@ -26,7 +26,7 @@ Unless the owner says a big change is coming, act as if real people depend on th
 - The search index must always be fully rebuildable from `records/` and `data/`.
 - Chats live under the listing. Each person has their own `.jsonl` file, and an attachment is its own line. The template is `attachment, id, text, time`.
 - After 7 days with no message, a chat moves to the next `backupN`, and each new message resets the timer. Sold or removed listings keep their chat in both inboxes until then.
-- Sold or removed listings move to `records/backups/listings/<date>__listings/` and the matching `data/` folder, sorted by the listing's ID date. Their chats move out first. Older ones move a few at a time on visits.
+- Sold or removed listings move to `records/backups/listings/<date>__listings/` and the matching `data/` folder, sorted by the listing's ID date. Their chats move out first. Older ones move one per visit, and a move cut off partway finishes on a later visit.
 - Public text (usernames, listings, and any future comments) goes through `server/wordfilter.js`, which blocks slurs and profanity. Private chats are never filtered.
 - Auction pages never show buyers a market value comparison.
 - The home page shows popular listing windows, with only search and price filters.
