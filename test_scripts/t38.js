@@ -19,7 +19,7 @@ const a=findAcct(user);ok(a.email===email&&a.email_verified===false, dev+' accou
 await p.waitForTimeout(300);const code=codeFor(email);ok(/^\d{6}$/.test(code||''), dev+' code emailed');
 await p.fill('#code',code);await p.click('#verifyForm button[type=submit]');await p.waitForURL(u=>new URL(u).pathname==='/account',{timeout:8000});
 await p.waitForSelector('.security');ok(!(await p.$('#emailForm')), dev+' form gone once confirmed');ok(findAcct(user).email_verified===true, dev+' confirmed in account.json');
-await p.screenshot({path:`${process.env.OUT}/email-${dev}.png`,fullPage:false});
+await p.screenshot({path:`${process.env.OUT||require("path").join(__dirname,"work","out")}/email-${dev}.png`,fullPage:false});
 // log in by the new email now
 await p.click('#logoutBtn');await p.waitForTimeout(500);await p.goto(U+'/login');await p.waitForSelector('#login');await p.fill('#login',email.toUpperCase());await p.fill('#password',pass);await p.click('#authForm button[type=submit]');await p.waitForSelector('.window');
 ok(await p.evaluate(()=>!!document.querySelector('#sideNav a')), dev+' logged in with new email');
