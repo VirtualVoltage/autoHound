@@ -29,7 +29,7 @@ Unless the owner says a big change is coming, act as if real people depend on th
 - Chats live under the listing. Each person has their own `.jsonl` file, and an attachment is its own line. The template is `attachment, id, text, time`.
 - After 7 days with no message, a chat moves to the next `backupN`, and each new message resets the timer. Sold or removed listings keep their chat in both inboxes until then.
 - Sold or removed listings move to `records/backups/listings/<date>__listings/` and the matching `data/` folder, sorted by the listing's ID date. Their chats move out first. Older ones move one per visit, and a move cut off partway finishes on a later visit.
-- Public text (usernames, listings, and any future comments) goes through `server/wordfilter.js`, which blocks slurs and profanity. Private chats are never filtered.
+- Public text (usernames, listings, and any future comments) goes through `server/wordfilter.js`. By the owner's decision it blocks only the hard-R slur, including look-alike, stretched and spaced-out spellings. All other words are allowed. Private chats are never filtered.
 - An account is an admin only while its `account.json` has `"admin": true`. It's toggled by hand, never by the site. Admins see the site inbox in the menu and at the top of the home page.
 - Email sent to any @autohound.online address goes to the site's own inbox. The `autohound-mail` Worker (`workers/mail-intake.js`, deployed by hand) puts it in `mail_queue`, and `server/mail.js` saves it as `records/inbox/<date>__inbox/E.ID__Subject/message.json` plus `message.eml` in the matching `data/` folder. Email is shown as plain text only, never as HTML.
 - Chats for live listings happen in the chat box on the listing page in every profile; sellers pick a buyer there. Sold or removed listings keep their chat page.
@@ -44,4 +44,4 @@ The owner watches the live site in the Claude desktop app's browser pane. The ol
 
 ## Before a real launch
 
-Replace the sample photos, check the AUTOHOUND trademark, turn on R2, set up off-site backups, strengthen password hashing, add a password reset, review posts, and add a word filter for usernames.
+Replace the sample photos, check the AUTOHOUND trademark, turn on R2, set up off-site backups, strengthen password hashing, add a password reset, review posts,.
