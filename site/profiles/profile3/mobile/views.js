@@ -123,7 +123,8 @@ export function listingPage({ listing: l, favorite, closed, minBid }) {
           ${actions ? `<div class="action-row">${actions}</div>` : ''}
         </div>
         ${buyBox(l, minBid)}
-        <div class="panel"><a class="btn plain seller-btn" href="/seller/${esc(l.seller.id)}">${avatar(l.seller.photo, '')}<span>${esc(l.seller.username)}</span></a></div>
+        <div class="panel"><a class="btn plain seller-btn" href="/seller/${esc(l.seller.id)}">${avatar(l.seller.photo, '')}<span>${esc(l.seller.username)}</span></a>
+        </div>
         ${chatPanel(l, closed)}
         ${l.sell_type === 'post' && l.market_value ? meter(l.price / l.market_value, l.market_value) : ''}
         ${attrs(l)}
@@ -190,7 +191,7 @@ export const accountPage = ({ account: a, photo, listings, favorites, security }
     <div class="panel profile">${avatar(photo, 'Your profile picture')}<div class="row-text"><h1 class="main-title">${esc(a.username)}</h1><span class="count">Joined ${shortDate(a.joined)}</span>${a.email ? `<span class="muted">${esc(a.email)}</span>` : ''}</div>
       <div class="action-row"><label class="btn plain" for="photoInput">Change picture</label><input id="photoInput" class="sr" type="file" accept="image/*"><button class="btn plain" id="logoutBtn">Log out</button></div></div>
     ${securityPanel(security)}
-    </div>`;
+    <div class="toolbar"><h2>Your listings</h2></div>${grid(listings, 'You have no live listings.', favorites)}</div>`;
 export const sellerPage = ({ account: a, listings, favorites }) => `<div class="page"><div class="panel profile">${avatar(a.photo, '')}<div class="row-text"><h1 class="main-title">${esc(a.username)}</h1><span class="count">Joined ${shortDate(a.joined)} · ${listings.length} live listings</span></div></div>${grid(listings, 'No live listings.', favorites)}</div>`;
 export const favoritesPage = ({ listings, favorites }) => `<div class="page"><div class="toolbar"><h1 class="main-title">Favorites</h1></div>${grid(listings, 'Press the star on any listing to save it here.', favorites)}</div>`;
 
@@ -266,17 +267,7 @@ export const editListingPage = ({ listing: l, options: o, priceLocked }) => `<di
     </form></div>`;
 export const myListingsPage = ({ listings, favorites }) => `<div class="page"><div class="toolbar"><h1 class="main-title">My listings</h1><a class="btn" href="/sell">Sell something</a></div>
     ${listings.length ? `<div class="windows">${listings.map(l => `<div class="my-card">${windowCard(l, favorites.has(l.id))}<a class="btn plain" href="/listing/${esc(l.id)}/edit">Edit</a></div>`).join('')}</div>` : '<div class="empty"><b>You have no live listings.</b><a class="btn" href="/sell">Sell something</a></div>'}</div>`;
-
-/* ---------- side menu (profile3) ---------- */
-// Shown under the header on the main pages. Hidden on log in, sign up and code pages.
-const NO_SIDE = /^\/(login|signup|verify)$/;
-export function sideNav({ account, path }) {
-  if (NO_SIDE.test(path)) return '';
-  const item = (href, label, match) => { const here = match.test(path); return `<a class="btn plain ${here ? 'here' : ''}" ${here ? 'aria-current="page"' : ''} href="${href}">${label}</a>`; };
-  return item('/', 'Browse market', /^\/$/) + item('/my-listings', 'My listings', /^\/my-listings$|^\/listing\/[^/]+\/edit$/) + item('/account', 'Account settings', /^\/account$/);
-}
-
-/* ---------- chat box on the listing page (profile3) ---------- */
+/* ---------- chat box on the listing page (all profiles) ---------- */
 // Live listings keep their chats here instead of on a separate page.
 export const chatOnListing = true;
 const composer = (placeholder) => `<form class="composer chat-composer" id="composer" novalidate>
@@ -294,4 +285,13 @@ export function chatPanel(l, closed) {
     ${talk ? `<div class="thread chat-thread" id="thread" aria-live="polite"></div><div class="attach-preview" id="attachPreview"></div>${composer(l.mine ? 'Write a reply' : 'Write a message to the seller')}
     <p class="note">Meet in a public place, inspect before you pay, and never wire money.</p>` : ''}
   </div>`;
+}
+
+/* ---------- side menu (profile3) ---------- */
+// Shown under the header line on the main pages. Hidden on log in, sign up and code pages.
+const NO_SIDE = /^\/(login|signup|verify)$/;
+export function sideNav({ account, path }) {
+  if (NO_SIDE.test(path)) return '';
+  const item = (href, label, match) => { const here = match.test(path); return `<a class="btn plain ${here ? 'here' : ''}" ${here ? 'aria-current="page"' : ''} href="${href}">${label}</a>`; };
+  return item('/', 'Browse market', /^\/$/) + item('/my-listings', 'My listings', /^\/my-listings$|^\/listing\/[^/]+\/edit$/) + item('/account', 'Account settings', /^\/account$/);
 }
