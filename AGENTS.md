@@ -13,6 +13,7 @@ Unless the owner says a big change is coming, act as if real people depend on th
 - Test both versions before pushing: `server/node-server.js` and Cloudflare (`wrangler pages dev`). Include the flows you touched and an index rebuild.
 - Pushing to `main` publishes the site right away. Tell the owner before a risky push.
 - If you can't confirm something on the live site, say so.
+- Before committing, run `node scripts/stamp-version.mjs` (the local pre-commit hook does it). It puts a version in `site/index.html` so code loads from `/v/<version>/...` and browsers never keep old files after a push. Imports inside `site/` stay relative so they keep the version.
 
 ## Rules decided by the owner
 

@@ -1,0 +1,3 @@
+# Versioned code files: /v/<version>/js/app.js is the same file as /js/app.js.
+# The version changes with every code change (scripts/stamp-version.mjs), so browsers always get fresh files.
+/v/:version/* /:splat 200

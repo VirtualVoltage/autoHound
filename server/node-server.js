@@ -13,10 +13,11 @@ const ctx = nodeContext({ dir, siteDir, env: { ADMIN_KEY: process.env.ADMIN_KEY,
 const TYPES = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.webp': 'image/webp', '.jpg': 'image/jpeg', '.png': 'image/png', '.svg': 'image/svg+xml' };
 
 async function staticFile(pathname, res) {
-  const file = resolve(siteDir, '.' + decodeURIComponent(pathname));
+  // /v/<version>/js/app.js is /js/app.js (see scripts/stamp-version.mjs).
+  const file = resolve(siteDir, '.' + decodeURIComponent(pathname.replace(/^\/v\/[^/]+(?=\/)/, '')));
   let target = file.startsWith(siteDir + sep) ? file : join(siteDir, 'index.html');
   try { if ((await fs.stat(target)).isDirectory()) target = join(target, 'index.html'); } catch { target = join(siteDir, 'index.html'); }
-  res.writeHead(200, { 'content-type': TYPES[extname(target)] || 'application/octet-stream' });
+  res.writeHead(200, { 'content-type': TYPES[extname(target)] || 'application/octet-stream', 'cache-control': 'no-cache' });
   res.end(await fs.readFile(target));
 }
 createServer(async (req, res) => {

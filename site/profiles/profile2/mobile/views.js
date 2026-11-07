@@ -1,6 +1,6 @@
 // Page layouts for this profile. Each function only returns HTML. The element IDs and data-* attributes
 // listed in site/profiles/README.md must stay, because the shared logic attaches to them.
-import { esc, money, townLine, timeLeft, shortDate, clock, profileAsset } from '/js/util.js';
+import { esc, money, townLine, timeLeft, shortDate, clock, profileAsset } from '../../../js/util.js';
 import './logo.js';
 
 export const ph = (src, cover, alt = '') => src ? `<span class="ph ${cover ? 'cover' : ''}"><img src="${esc(src)}" alt="${esc(alt)}" loading="lazy"></span>` : missingPhoto();
