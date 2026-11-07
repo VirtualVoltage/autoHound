@@ -31,6 +31,10 @@ Unless the owner says a big change is coming, act as if real people depend on th
 - Auction pages never show buyers a market value comparison.
 - The home page shows popular listing windows, with only search and price filters.
 
+## Preview in the Claude app
+
+After any visual change, rebuild the side panel preview and republish it to the same artifact, https://claude.ai/artifact/55jiC8kWCX265RgCgnoXfb. Run a local server on a fresh sample copy, then `node scripts/build-preview.mjs <local url> <out.html>`. Never point it at the live site.
+
 ## Before a real launch
 
 Replace the sample photos, check the AUTOHOUND trademark, turn on R2, set up off-site backups, strengthen password hashing, add a password reset, review posts, and add a word filter for usernames.

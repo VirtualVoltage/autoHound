@@ -76,3 +76,7 @@ Set `PORT`, `AUTOHOUND_DIR` and `ADMIN_KEY` to change the defaults. To move off 
 ## Cloudflare
 
 Output folder is `site`. Bindings: `DB` (D1 index) and optionally `FILES` (R2). Without `FILES`, the same paths are kept in a D1 table called `vfs`, and attachments are limited to 1.5 MB. `POST /api/admin/rebuild` stays off until an `ADMIN_KEY` is set.
+
+## Preview
+
+`node scripts/build-preview.mjs <local server url> <out.html>` builds a single page of the site with sample listings, for viewing in the Claude app's side panel. It needs esbuild.
