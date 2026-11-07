@@ -10,9 +10,10 @@ import { accountPage, sellerPage, favoritesPage, myListingsPage } from './pages/
 import { adminInboxPage, adminMessagePage } from './pages/admin.js';
 import { verifyPage } from './pages/verify.js';
 import { editListingPage } from './pages/edit.js';
+import { mapPage } from './pages/map.js';
 
 const ROUTES = [
-  [/^\/$/, homePage], [/^\/listing\/([^/]+)$/, listingPage], [/^\/listing\/([^/]+)\/edit$/, editListingPage], [/^\/sell$/, sellPage],
+  [/^\/$/, homePage], [/^\/listing\/([^/]+)$/, listingPage], [/^\/listing\/([^/]+)\/edit$/, editListingPage], [/^\/sell$/, sellPage], [/^\/map$/, mapPage],
   [/^\/signup$/, () => authPage('signup')], [/^\/login$/, () => authPage('login')],
   [/^\/messages$/, inboxPage], [/^\/messages\/([^/]+)$/, threadPage],
   [/^\/account$/, accountPage], [/^\/my-listings$/, myListingsPage], [/^\/saved$/, favoritesPage], [/^\/favorites$/, () => go('/saved' + location.search, true)], [/^\/seller\/([^/]+)$/, sellerPage],

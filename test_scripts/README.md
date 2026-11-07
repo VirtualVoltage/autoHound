@@ -23,6 +23,7 @@ Older scripts were written for earlier versions of the site, so some no longer m
 | `t21.js`, `t21-seed.mjs`, `t22.mjs` | Admin site inbox and email parsing (`fixtures/mail/`). |
 | `t32.js`, `t40.js`, `t48.js` | Other profiles, using a copy of the site with `DEFAULT_PROFILE` changed, on port 8792. |
 | `t8.js` | Phone layout audit. Needs a fresh store. |
+| `t49.js`, `t50.js` | Map page, Map button, DEMO tag, example businesses, and the pickup pin on the sell and edit forms (`t50.js` for other profiles). Map tiles can't load in the test box, so these check pins and saving. |
 
 ## Other files
 

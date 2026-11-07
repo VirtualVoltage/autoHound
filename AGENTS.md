@@ -38,9 +38,10 @@ Unless the owner says a big change is coming, act as if real people depend on th
 - Features belong to every profile: logic in `server/` and `site/js`, with matching views in each profile. Only layout choices, like profile3's side menu and header buttons, are profile-specific.
 - Owners can edit a live listing's words, price and details, but not photos, type or category. A new title renames its folder, and its chats and photos move with it. Auctions with bids keep their price.
 - Auction pages never show buyers a market value comparison.
-- The site never calls itself a demo. No demo strips, sample-photo notes or demo wording in page text or messages.
+- The site doesn't call itself a demo in page text or messages (no demo strips or sample-photo notes). The one exception, by the owner's choice: a red "DEMO" after the AUTOHOUND lettering in profile3's logo, with the logo's scan lines through it.
 - Listing pages in every profile: thumbnails sit under the big photo, arrow buttons show on hover (always on phones), and the left and right arrow keys change photos except while typing. In profile3 the description sits right under the title on the right.
 - Starred listings are called Saved everywhere (page `/saved`; old `/favorites` links redirect). The code still says favorites internally.
+- The map (`/map`, a Map button between the logo and search bar in every profile) uses MapLibre (saved in `site/vendor/`) with OpenFreeMap's free tiles, recolored by each profile's `mapstyle.js`. No API key. Sellers can drop an optional pickup pin on the sell and edit forms; it's public, saved as `"spot": {lat, lng}` in `listing.json` and `spot_lat`/`spot_lng` in the index, and has to be within `MAP_AREA`. Listings without a pin show at their town (`TOWN_SPOTS`). The five "Example business" pins come from `EXAMPLE_BUSINESSES` in `server/config.js` until business accounts exist.
 - The home page shows popular listing windows under the title "Popular", with only search and price filters.
 
 ## Viewing the site

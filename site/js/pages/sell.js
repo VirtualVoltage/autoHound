@@ -2,12 +2,13 @@ import { $, toast, shrink } from '../util.js';
 import { view } from '../theme.js';
 import { api, upload, session, getOptions } from '../api.js';
 import { go, needLogin } from '../app.js';
+import { mountSpotPicker } from '../spot.js';
 
 const MAX = 8;
 // Rough estimates, used for the price guide.
 const ESTIMATES = [['Coilovers', 900, 'Suspension'], ['Clutch kit', 420, 'Drivetrain'], ['Wheels, set of 4', 1100, 'Wheels & Tires'], ['Turbocharger', 1250, 'Engine'], ['Standalone ECU', 700, 'Electrical'], ['Headlight pair', 260, 'Lighting'], ['Tires, set of 4', 520, 'Wheels & Tires'], ['Big brake kit', 980, 'Brakes'], ['Intake', 180, 'Engine'], ['Bucket seats, pair', 650, 'Interior'], ['Interior panels', 220, 'Interior']];
 const COND_FACTOR = { New: 1.2, 'Like new': 1.05, Excellent: 1, Good: .9, Fair: .7, 'Parts only': .4 };
-const blank = () => ({ kind: 'parts', part: 'other', category: 'Engine', tier: 'Daily', year: '', miles: '', title_status: 'Clean', condition: 'Good', sell_type: 'post', price: '', title: '', fits: '', city: 'Lynden', handoff: 'Meet up or pick up', description: '', photos: [] });
+const blank = () => ({ kind: 'parts', part: 'other', category: 'Engine', tier: 'Daily', year: '', miles: '', title_status: 'Clean', condition: 'Good', sell_type: 'post', price: '', title: '', fits: '', city: 'Lynden', handoff: 'Meet up or pick up', description: '', photos: [], spot: null });
 let D = blank();
 const estimate = () => { if (D.kind !== 'parts' || D.part === 'other') return null; const e = ESTIMATES[+D.part]; return e ? Math.round(e[1] * COND_FACTOR[D.condition] / 5) * 5 : null; };
 const category = () => D.kind === 'cars' ? D.tier : (D.part !== 'other' && ESTIMATES[+D.part]) ? ESTIMATES[+D.part][2] : D.category;
@@ -38,6 +39,10 @@ export async function sellPage() {
   const o = await getOptions();
   $('main').innerHTML = view.sellPage({ draft: D, options: o, estimates: ESTIMATES, max: MAX });
   refresh();
+  // Optional pickup pin. The map loads in the background.
+  let picker = null;
+  mountSpotPicker({ spot: D.spot, town: D.city, options: o, onChange: s => { D.spot = s; } }).then(p => { picker = p; });
+  $('sCity')?.addEventListener('change', e => picker?.town(e.target.value));
   const form = $('sellForm');
   form.addEventListener('input', () => { $('sellErr').hidden = true; refresh(); });
   $('sPhotos').addEventListener('change', e => { addFiles(e.target.files).then(() => { e.target.value = ''; }); });
@@ -66,7 +71,7 @@ export async function sellPage() {
     btn.disabled = true; err.hidden = true;
     try {
       btn.textContent = 'Creating listing...';
-      const { id } = await api('listings', { json: { kind: D.kind, title: D.title, description: D.description, price: +D.price, category: category(), city: D.city, condition: D.condition, handoff: D.handoff, fits: D.fits, sell_type: D.sell_type, market_value: estimate(), year: +D.year, miles: +D.miles, title_status: D.title_status } });
+      const { id } = await api('listings', { json: { kind: D.kind, title: D.title, description: D.description, price: +D.price, category: category(), city: D.city, condition: D.condition, handoff: D.handoff, fits: D.fits, sell_type: D.sell_type, market_value: estimate(), year: +D.year, miles: +D.miles, title_status: D.title_status, spot: D.spot } });
       for (let i = 0; i < D.photos.length; i++) {
         btn.textContent = `Uploading photo ${i + 1} of ${D.photos.length}...`;
         const p = await upload(`listings/${id}/photos`, D.photos[i].full);
@@ -77,4 +82,5 @@ export async function sellPage() {
       D = blank(); toast('Your listing is live'); go('/listing/' + id);
     } catch (er) { err.textContent = er.message; err.hidden = false; btn.disabled = false; btn.textContent = 'Publish listing'; }
   });
+  return () => picker?.stop();
 }

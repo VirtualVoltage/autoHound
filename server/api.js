@@ -1,11 +1,11 @@
 import { ApiError, json, fail, sha256Hex } from './http.js';
 import { signup, login, loginSalt, loginWithCode, logout, currentAccount, requireAccount, publicAccount } from './auth.js';
-import { browse, createDraft, addPhoto, addThumb, publish, getListing, changeStatus, placeBid, report, sellerPage, favorites, setProfilePhoto, sweepClosedListings } from './listings.js';
+import { browse, createDraft, addPhoto, addThumb, publish, getListing, changeStatus, placeBid, report, sellerPage, favorites, setProfilePhoto, sweepClosedListings, mapData } from './listings.js';
 import { sweepIdle, startConversation, inbox, openConversation, sendMessage, addAttachment, unreadCount } from './conversations.js';
 import { serveFile } from './files.js';
 import { isReady, setupStep } from './setup.js';
-import { rebuildStep } from './rebuild.js';
-import { CITIES, PART_CATEGORIES, CAR_CATEGORIES, CONDITIONS, HANDOFFS, LIMITS } from './config.js';
+import { rebuildStep, ensureSchemaOnce } from './rebuild.js';
+import { CITIES, PART_CATEGORIES, CAR_CATEGORIES, CONDITIONS, HANDOFFS, LIMITS, TOWN_SPOTS, MAP_AREA } from './config.js';
 import { isId } from './ids.js';
 import { isAdmin, adminSummary, adminInbox, adminMessage, adminRawMessage } from './mail.js';
 import { verifyStatus, resendCode, checkCode, setLoginCodes, setEmail } from './verify.js';
@@ -13,12 +13,13 @@ import { verifyStatus, resendCode, checkCode, setLoginCodes, setEmail } from './
 let readyUntil = 0;
 const routes = [
   ['POST', /^setup$/, ctx => setupStep(ctx)],
-  ['GET', /^options$/, () => json({ cities: CITIES, part_categories: PART_CATEGORIES, car_categories: CAR_CATEGORIES, conditions: CONDITIONS, handoffs: HANDOFFS, limits: { usernameMin: LIMITS.usernameMin, usernameMax: LIMITS.usernameMax, passwordMin: LIMITS.passwordMin, passwordMax: LIMITS.passwordMax, photos: LIMITS.photosPerListing } })],
+  ['GET', /^options$/, () => json({ cities: CITIES, part_categories: PART_CATEGORIES, car_categories: CAR_CATEGORIES, conditions: CONDITIONS, handoffs: HANDOFFS, town_spots: TOWN_SPOTS, map_area: MAP_AREA, limits: { usernameMin: LIMITS.usernameMin, usernameMax: LIMITS.usernameMax, passwordMin: LIMITS.passwordMin, passwordMax: LIMITS.passwordMax, photos: LIMITS.photosPerListing } })],
   ['POST', /^signup$/, signup], ['POST', /^login$/, login], ['POST', /^login\/salt$/, loginSalt], ['POST', /^login\/code$/, loginWithCode], ['POST', /^logout$/, logout],
   ['GET', /^me$/, async ctx => { await sweepIdle(ctx, 1); await sweepClosedListings(ctx, 1); const a = await currentAccount(ctx.db, ctx.request), admin = await isAdmin(ctx, a); return json({ account: a ? { ...publicAccount(a), email: a.email || null, email_verified: !!a.email_verified, admin } : null, admin_inbox: admin ? await adminSummary(ctx) : null, unread: a ? await unreadCount(ctx, a) : 0 }); }],
   ['POST', /^me\/photo$/, setProfilePhoto],
   ['GET', /^me\/email$/, verifyStatus], ['PUT', /^me\/email$/, setEmail], ['POST', /^me\/email\/code$/, resendCode], ['POST', /^me\/email\/verify$/, checkCode], ['POST', /^me\/login-codes$/, setLoginCodes],
   ['GET', /^favorites$/, favorites], ['POST', /^favorites$/, favorites],
+  ['GET', /^map$/, mapData],
   ['GET', /^listings$/, browse], ['POST', /^listings$/, createDraft],
   ['GET', /^listings\/([^/]+)$/, async (ctx, id) => getListing(ctx, id, await currentAccount(ctx.db, ctx.request))],
   ['PATCH', /^listings\/([^/]+)$/, changeStatus],
@@ -55,6 +56,8 @@ export async function handle(request, base) {
         if (!await isReady(base.db)) return json({ setup: true, error: 'Getting Autohound ready.' }, 503);
         readyUntil = Date.now() + 30000;
       }
+      // New columns (like listing map pins) get added once per server start.
+      await ensureSchemaOnce(base.db);
     }
     const args = r.hit.slice(1).map(decodeURIComponent);
     for (const a of args) if (!isId(a)) fail(404, 'Not found.');

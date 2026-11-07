@@ -3,7 +3,7 @@ export const SCHEMA = [
   `CREATE TABLE IF NOT EXISTS system_state(key TEXT PRIMARY KEY, value TEXT)`,
   `CREATE TABLE IF NOT EXISTS counters(key TEXT PRIMARY KEY, n INTEGER NOT NULL)`,
   `CREATE TABLE IF NOT EXISTS accounts(id TEXT PRIMARY KEY, username TEXT NOT NULL, username_key TEXT NOT NULL UNIQUE, path TEXT NOT NULL, data_path TEXT NOT NULL, photo TEXT, joined TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'active', email TEXT, email_verified INTEGER NOT NULL DEFAULT 0)`,
-  `CREATE TABLE IF NOT EXISTS listings(id TEXT PRIMARY KEY, account_id TEXT NOT NULL, title TEXT NOT NULL, kind TEXT NOT NULL, category TEXT NOT NULL, city TEXT NOT NULL, price INTEGER NOT NULL, description TEXT NOT NULL, photo TEXT, sell_type TEXT NOT NULL, auction_ends INTEGER, bids INTEGER NOT NULL DEFAULT 0, top_bidder TEXT, status TEXT NOT NULL, created TEXT NOT NULL, path TEXT NOT NULL, data_path TEXT NOT NULL, search TEXT NOT NULL)`,
+  `CREATE TABLE IF NOT EXISTS listings(id TEXT PRIMARY KEY, account_id TEXT NOT NULL, title TEXT NOT NULL, kind TEXT NOT NULL, category TEXT NOT NULL, city TEXT NOT NULL, price INTEGER NOT NULL, description TEXT NOT NULL, photo TEXT, sell_type TEXT NOT NULL, auction_ends INTEGER, bids INTEGER NOT NULL DEFAULT 0, top_bidder TEXT, status TEXT NOT NULL, created TEXT NOT NULL, path TEXT NOT NULL, data_path TEXT NOT NULL, search TEXT NOT NULL, spot_lat REAL, spot_lng REAL)`,
   `CREATE INDEX IF NOT EXISTS listings_browse ON listings(status, created)`,
   `CREATE INDEX IF NOT EXISTS listings_price ON listings(status, price)`,
   `CREATE INDEX IF NOT EXISTS listings_account ON listings(account_id)`,
@@ -28,6 +28,8 @@ export const SCHEMA = [
 export const MIGRATIONS = [
   `ALTER TABLE accounts ADD COLUMN email TEXT`,
   `ALTER TABLE accounts ADD COLUMN email_verified INTEGER NOT NULL DEFAULT 0`,
+  `ALTER TABLE listings ADD COLUMN spot_lat REAL`,
+  `ALTER TABLE listings ADD COLUMN spot_lng REAL`,
 ];
 // Indexes that need a migrated column.
 export const AFTER_MIGRATIONS = [

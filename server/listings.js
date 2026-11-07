@@ -1,4 +1,4 @@
-import { LIMITS, CITIES, PART_CATEGORIES, CAR_CATEGORIES, CONDITIONS, HANDOFFS, BID_TEMPLATE, AUCTION } from './config.js';
+import { LIMITS, CITIES, PART_CATEGORIES, CAR_CATEGORIES, CONDITIONS, HANDOFFS, BID_TEMPLATE, AUCTION, TOWN_SPOTS, MAP_AREA, EXAMPLE_BUSINESSES } from './config.js';
 import { ApiError, fail, hit, json, readJson, readImage, readJsonFile, writeJsonFile, appendLine, moveTree } from './http.js';
 import { nextId, folderName, isId, cleanWords, dayFolder } from './ids.js';
 import { requireAccount, publicAccount } from './auth.js';
@@ -13,10 +13,17 @@ export function searchText(l, username) {
   return [l.title, l.category, l.city, l.description, l.fits, l.condition, username, l.car?.year].filter(Boolean).join(' ').toLowerCase();
 }
 export function indexRow(l, a, path, dataPath, extra = {}) {
-  return [l.id, l.account, l.title, l.kind, l.category, l.city, extra.price ?? l.price, l.description, l.photos[0] || null, l.sell_type, l.auction_ends || null, extra.bids || 0, extra.top_bidder || null, l.status, l.created, path, dataPath, searchText(l, a.username)];
+  return [l.id, l.account, l.title, l.kind, l.category, l.city, extra.price ?? l.price, l.description, l.photos[0] || null, l.sell_type, l.auction_ends || null, extra.bids || 0, extra.top_bidder || null, l.status, l.created, path, dataPath, searchText(l, a.username), l.spot?.lat ?? null, l.spot?.lng ?? null];
 }
-export const INSERT_LISTING = 'INSERT OR REPLACE INTO listings(id,account_id,title,kind,category,city,price,description,photo,sell_type,auction_ends,bids,top_bidder,status,created,path,data_path,search) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)';
+export const INSERT_LISTING = 'INSERT OR REPLACE INTO listings(id,account_id,title,kind,category,city,price,description,photo,sell_type,auction_ends,bids,top_bidder,status,created,path,data_path,search,spot_lat,spot_lng) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)';
 
+// The seller's optional map pin. Anyone can see it, so it's only kept when they place one.
+function cleanSpot(v) {
+  if (v === null || v === undefined || v === '') return null;
+  const lat = Number(v.lat), lng = Number(v.lng), A = MAP_AREA;
+  if (!Number.isFinite(lat) || !Number.isFinite(lng) || lat < A.south || lat > A.north || lng < A.west || lng > A.east) fail(400, 'Put the map pin somewhere around Whatcom, Skagit or Snohomish County.');
+  return { lat: Math.round(lat * 1e5) / 1e5, lng: Math.round(lng * 1e5) / 1e5 };
+}
 function cleanFields(b) {
   const kind = b.kind === 'cars' ? 'cars' : 'parts', title = cleanWords(str(b.title, 70)), description = str(b.description, 1500), price = int(b.price, 1, 10000000);
   if (title.length < 4) fail(400, 'Add a title.');
@@ -27,7 +34,7 @@ function cleanFields(b) {
   if (!CITIES.includes(b.city)) fail(400, 'Pick a city.');
   if (!CONDITIONS.includes(b.condition)) fail(400, 'Pick a condition.');
   if (!HANDOFFS.includes(b.handoff)) fail(400, 'Pick a handoff.');
-  const l = { kind, title, description, price, category: b.category, city: b.city, condition: b.condition, handoff: b.handoff, fits: kind === 'parts' ? (str(b.fits, 60) || 'Universal') : null, market_value: int(b.market_value, 1, 20000000), sell_type: b.sell_type === 'auction' ? 'auction' : 'post' };
+  const l = { kind, title, description, price, category: b.category, city: b.city, condition: b.condition, handoff: b.handoff, fits: kind === 'parts' ? (str(b.fits, 60) || 'Universal') : null, market_value: int(b.market_value, 1, 20000000), sell_type: b.sell_type === 'auction' ? 'auction' : 'post', spot: cleanSpot(b.spot) };
   checkWords('listing', l.title, l.description, l.fits);
   if (kind === 'cars') {
     const year = int(b.year, 1900, 2100), miles = int(b.miles, 0, 5000000);
@@ -51,6 +58,17 @@ export async function browse({ db, url }) {
   const limit = Math.min(int(q.get('limit'), 1, 100) || 60, 100), offset = int(q.get('offset'), 0, 100000) || 0;
   const rows = await db.all(`SELECT l.*, a.username FROM listings l JOIN accounts a ON a.id=l.account_id WHERE ${where.join(' AND ')} ORDER BY ${order} LIMIT ? OFFSET ?`, ...params, limit + 1, offset);
   return json({ listings: rows.slice(0, limit).map(r => cardOf(r)), more: rows.length > limit });
+}
+// Everything the map page needs: live listings (at their pin, or the middle of their town), towns and businesses.
+export async function mapData({ db }) {
+  const rows = await db.all("SELECT id,title,kind,city,price,photo,sell_type,auction_ends,spot_lat,spot_lng FROM listings WHERE status='live' ORDER BY created DESC LIMIT 1000");
+  const listings = rows.map(r => {
+    const exact = r.spot_lat !== null && r.spot_lng !== null, town = TOWN_SPOTS[r.city];
+    if (!exact && !town) return null;
+    return { id: r.id, title: r.title, kind: r.kind, city: r.city, price: r.price, photo: r.photo ? `/api/files/${r.photo}?size=thumb` : null, sell_type: r.sell_type, auction_ends: r.auction_ends,
+      lat: exact ? r.spot_lat : town[0], lng: exact ? r.spot_lng : town[1], exact };
+  }).filter(Boolean);
+  return json({ listings, towns: TOWN_SPOTS, businesses: EXAMPLE_BUSINESSES, area: MAP_AREA });
 }
 export async function createDraft({ db, store, request }) {
   const a = await requireAccount(db, request), f = cleanFields(await readJson(request));
@@ -101,7 +119,7 @@ export async function getListing({ db, store, request }, id, account) {
   if (!r || ((r.status === 'hidden' || r.status === 'deleted' || r.status === 'draft') && !mine)) fail(404, 'That listing isn\'t here anymore.');
   const l = await readJsonFile(store, `${r.path}/listing.json`);
   const ended = r.sell_type === 'auction' && r.auction_ends <= Date.now();
-  const out = { ...cardOf(r), photos: l.photos.map(p => `/api/files/${p}`), condition: l.condition, fits: l.fits, handoff: l.handoff, car: l.car || null, market_value: r.sell_type === 'post' ? l.market_value : null, mine, ended };
+  const out = { ...cardOf(r), photos: l.photos.map(p => `/api/files/${p}`), condition: l.condition, fits: l.fits, handoff: l.handoff, car: l.car || null, spot: l.spot || null, market_value: r.sell_type === 'post' ? l.market_value : null, mine, ended };
   out.seller.photo = r.seller_photo ? `/api/files/${r.seller_photo}` : null;
   if (ended) {
     out.won = !!account && account.id === r.top_bidder;
@@ -136,7 +154,7 @@ export async function changeStatus(ctx, id) {
 }
 // Owners can change the words, price and details of a live listing. Photos, type and category stay.
 // A new title renames the folder (ID__Title), and its chats and photos move with it.
-const EDITABLE = ['title', 'description', 'price', 'condition', 'fits', 'city', 'handoff', 'year', 'miles', 'title_status'];
+const EDITABLE = ['title', 'description', 'price', 'condition', 'fits', 'city', 'handoff', 'year', 'miles', 'title_status', 'spot'];
 async function editListing(ctx, a, r, b) {
   const { db, store } = ctx;
   if (r.status !== 'live') fail(400, 'Only live listings can be edited.');
@@ -146,7 +164,7 @@ async function editListing(ctx, a, r, b) {
   for (const k of EDITABLE) if (b[k] !== undefined) merged[k] = b[k];
   const f = cleanFields(merged), lockedPrice = l.sell_type === 'auction' && r.bids > 0;
   if (lockedPrice && f.price !== l.price) fail(400, 'The price can\'t change after bids come in.');
-  const next = { ...l, title: f.title, description: f.description, price: f.price, condition: f.condition, fits: f.fits, city: f.city, handoff: f.handoff, edited: new Date().toISOString() };
+  const next = { ...l, title: f.title, description: f.description, price: f.price, condition: f.condition, fits: f.fits, city: f.city, handoff: f.handoff, spot: f.spot, edited: new Date().toISOString() };
   if (l.kind === 'cars') next.car = f.car;
   let path = r.path, dataPath = r.data_path;
   const folder = folderName(r.id, next.title, 'listing');

@@ -1,0 +1,35 @@
+// Map page, Map button, DEMO tag, and the pickup pin on the edit form. Tiles can't load in the test box, so this checks pins and saving.
+const {chromium,devices}=require('playwright');const [U,O]=process.argv.slice(2);
+(async()=>{const b=await chromium.launch({args:['--use-gl=swiftshader','--enable-unsafe-swiftshader','--ignore-gpu-blocklist']});let bad=0;const ok=(c,m)=>{console.log(c?'ok ':'FAIL',m);if(!c)bad=1};
+const c=await b.newContext({viewport:{width:1300,height:850}});const p=await c.newPage();const errs=[];p.on('pageerror',e=>errs.push(e.message));
+await p.goto(U+'/');await p.waitForSelector('.window');
+const order=await p.evaluate(()=>[...document.querySelector('.topbar-in').children].map(e=>e.className.split(' ')[0]||e.tagName));console.log('header order',order);
+ok(order.indexOf('logo')<order.indexOf('btn')&&order.indexOf('btn')<order.indexOf('search'),'Map button sits between logo and search');
+const demo=await p.$eval('.logo .demo-tag',e=>({t:e.textContent,c:getComputedStyle(e).color}));ok(demo.t==='demo'&&demo.c==='rgb(255, 42, 42)','red DEMO in the logo');
+await p.click('.map-btn');await p.waitForURL(/\/map$/);await p.waitForSelector('#mapBox canvas',{timeout:20000});await p.waitForTimeout(800);
+const pins=await p.evaluate(()=>({biz:document.querySelectorAll('#mapBox .map-pin.business').length,town:document.querySelectorAll('#mapBox .map-pin.town').length,listing:document.querySelectorAll('#mapBox .map-pin.listing').length}));console.log('pins',pins);
+ok(pins.biz===5,'five example businesses');ok(pins.town>=1,'town pins');
+await p.click('#mapBox .map-pin.business');await p.waitForSelector('.map-pop');ok((await p.textContent('.map-pop')).includes('Example business'),'business popup');
+await p.keyboard.press('Escape');await p.click('#mapBox .map-pin.town');await p.waitForSelector('.pop-item');const n=(await p.$$('.pop-item')).length;ok(n>=1,'town popup lists '+n+' listings');
+await p.screenshot({path:`${O}/map-desktop.png`});
+const href=await p.$eval('.pop-item',a=>a.getAttribute('href'));await p.click('.pop-item');await p.waitForURL(u=>new URL(u).pathname===href);ok(true,'popup link opens the listing');
+// edit form: place a pin, save, check it
+await p.goto(U+'/login');await p.waitForSelector('#login');await p.fill('#login','redline riley');await p.fill('#password','boost4life');await p.click('#authForm button[type=submit]');await p.waitForSelector('.window');
+const mine=await p.evaluate(async()=>{const me=(await (await fetch('/api/me')).json()).account;const d=await (await fetch('/api/accounts/'+me.id)).json();return d.listings[0].id});
+await p.goto(U+`/listing/${mine}/edit`);await p.waitForSelector('#spotBox canvas',{timeout:20000});await p.waitForTimeout(600);
+const box=await p.$eval('#spotBox',e=>{const r=e.getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2}});await p.mouse.click(box.x+30,box.y-20);await p.waitForTimeout(300);
+ok(!(await p.$eval('#spotClear',e=>e.hidden)),'pin placed, Remove pin shows');
+await p.click('#editForm button[type=submit]');await p.waitForURL(u=>new URL(u).pathname===`/listing/${mine}`);
+let l=(await p.evaluate(id=>fetch('/api/listings/'+id).then(r=>r.json()),mine)).listing;ok(l.spot&&l.spot.lat>48&&l.spot.lng<-122,'pin saved '+JSON.stringify(l.spot));
+let m=await p.evaluate(()=>fetch('/api/map').then(r=>r.json()));ok(m.listings.some(x=>x.id===mine&&x.exact),'map shows the exact pin');
+await p.goto(U+'/map');await p.waitForSelector('#mapBox .map-pin.listing',{timeout:20000});ok(true,'seller pin on the map page');
+const far=await p.evaluate(id=>fetch('/api/listings/'+id,{method:'PATCH',headers:{'content-type':'application/json'},body:JSON.stringify({action:'edit',spot:{lat:40.7,lng:-74}})}).then(r=>r.json()),mine);ok(/map pin/i.test(far.error||''),'pin far away refused: '+far.error);
+await p.goto(U+`/listing/${mine}/edit`);await p.waitForSelector('#spotBox canvas',{timeout:20000});await p.click('#spotClear');await p.click('#editForm button[type=submit]');await p.waitForURL(u=>new URL(u).pathname===`/listing/${mine}`);
+l=(await p.evaluate(id=>fetch('/api/listings/'+id).then(r=>r.json()),mine)).listing;ok(l.spot===null,'pin removed');
+await p.goto(U+'/sell');await p.waitForSelector('#spotBox canvas',{timeout:20000});ok(true,'sell form has the pin map');
+ok(!errs.length,'no page errors '+errs.join('|'));
+const ph=await (await b.newContext(devices['iPhone 13'])).newPage();const perr=[];ph.on('pageerror',e=>perr.push(e.message));await ph.goto(U+'/');await ph.waitForSelector('.window');
+ok(!!(await ph.$('.map-btn')),'phone has the Map button');await ph.tap('.map-btn');await ph.waitForSelector('#mapBox canvas',{timeout:20000});await ph.waitForTimeout(800);
+const geo=await ph.evaluate(()=>({w:document.documentElement.scrollWidth,vw:innerWidth,map:Math.round(document.getElementById('mapBox').getBoundingClientRect().height)}));console.log('phone',geo);ok(geo.w<=geo.vw&&geo.map>=300,'phone map fits');
+await ph.screenshot({path:`${O}/map-phone.png`});ok(!perr.length,'no phone errors '+perr.join('|'));
+await b.close();process.exit(bad);})();

@@ -12,7 +12,8 @@ export const setupScreen = () => `<div class="setup"><h1 class="main-title">Gett
 /* ---------- frame around every page ---------- */
 export const shell = () => `
 <header class="topbar"><div class="topbar-in">
-  <a class="logo" href="/" aria-label="Autohound home"><img class="avatar" src="${profileAsset('brand-profile.webp')}" alt="" width="36" height="36"><b class="chrome">auto</b><span>hound</span></a>
+  <a class="logo" href="/" aria-label="Autohound home"><img class="avatar" src="${profileAsset('brand-profile.webp')}" alt="" width="36" height="36"><b class="chrome">auto</b><span>hound</span><i class="demo-tag">demo</i></a>
+  <a class="btn plain map-btn" href="/map">Map</a>
   <form class="search" id="searchForm" role="search">
     <input id="searchInput" type="search" placeholder="Search coilovers, 3000GT, Lynden..." aria-label="Search listings">
     <button class="btn" type="submit">Search</button>
@@ -146,6 +147,7 @@ export const sellPage = ({ draft: D, options: o, estimates, max }) => `<div clas
         <label class="field"><span id="sPriceLabel">Price</span><input id="sPrice" type="number" min="1" inputmode="numeric" placeholder="450" value="${esc(D.price)}"></label></div>
       <div class="two"><label class="field"><span>City</span><select id="sCity">${o.cities.map(c => opt(c, c, D.city)).join('')}</select></label>
         <label class="field"><span>Handoff</span><select id="sHandoff">${o.handoffs.map(c => opt(c, c, D.handoff)).join('')}</select></label></div>
+      ${spotPicker(D.spot)}
       <label class="field"><span>Description</span><textarea id="sDesc" rows="5" maxlength="1500" placeholder="What is it, what did it come off of, and is anything wrong with it?">${esc(D.description)}</textarea></label>
       <p class="err" id="sellErr" role="alert" hidden></p><button class="btn" type="submit" id="pubBtn">Publish listing</button>
     </form><div class="panel" id="sellPreview"></div></div></div>`;
@@ -253,6 +255,7 @@ export const editListingPage = ({ listing: l, options: o, priceLocked }) => `<di
       : `<label class="field"><span>Fits</span><input id="eFit" type="text" maxlength="60" value="${esc(l.fits)}"></label>`}
       <div class="two"><label class="field"><span>City</span><select id="eCity">${o.cities.map(c => opt(c, c, l.city)).join('')}</select></label>
         <label class="field"><span>Handoff</span><select id="eHandoff">${o.handoffs.map(c => opt(c, c, l.handoff)).join('')}</select></label></div>
+      ${spotPicker(l.spot)}
       <label class="field"><span>Description</span><textarea id="eDesc" rows="6" maxlength="1500">${esc(l.description)}</textarea></label>
       <p class="err" id="editErr" role="alert" hidden></p>
       <div class="action-row"><a class="btn plain" href="/listing/${esc(l.id)}">Cancel</a><button class="btn" type="submit">Save changes</button></div>
@@ -290,3 +293,24 @@ export function sideNav({ account, path, unread = 0, adminUnread = 0 }) {
     + item('/messages', `Messages${badge(unread)}`, /^\/messages/) + item('/my-listings', 'My listings', /^\/my-listings$|^\/listing\/[^/]+\/edit$/)
     + item('/account', 'Account settings', /^\/account$/) + (account?.admin ? item('/admin', `Site inbox${badge(adminUnread)}`, /^\/admin/) : '');
 }
+
+/* ---------- map ---------- */
+export { mapStyle } from './mapstyle.js';
+export const mapPage = () => `<div class="page map-page">
+    <div class="toolbar"><h1 class="main-title">Map</h1><span class="muted">Sellers and businesses near you. Tap a pin to see what's there.</span></div>
+    <p class="err" id="mapErr" role="alert" hidden></p>
+    <div class="map-box" id="mapBox" role="region" aria-label="Map of listings and businesses"></div>
+    <div class="map-legend"><span><i class="map-pin listing"></i>Seller's pin</span><span><i class="map-pin town"></i>Listings in a town</span><span><i class="map-pin business"></i>Business</span></div>
+  </div>`;
+export function mapPin({ type, count = 1, label = '' }) {
+  return `<button type="button" class="map-pin ${type}" aria-label="${esc(label)}">${count > 1 ? `<b>${count}</b>` : ''}</button>`;
+}
+export function mapPopup({ heading, sub, listings = [] }) {
+  const items = listings.map(l => `<a class="pop-item" href="/listing/${esc(l.id)}">${ph(l.photo, true, l.title)}<span><b class="money">${money(l.price)}</b>${esc(l.title)}</span></a>`).join('');
+  return `<div class="map-pop"><div class="pop-head"><b>${esc(heading)}</b>${sub ? `<span>${esc(sub)}</span>` : ''}</div>${items ? `<div class="pop-list">${items}</div>` : ''}</div>`;
+}
+export const spotPicker = spot => `<div class="field spot-field"><span>Pickup spot on the map (optional)</span>
+    <p class="note">Tap the map to drop a pin where buyers can pick up, then drag it to fine-tune. Anyone can see this pin. Leave it empty and the listing shows at your town instead.</p>
+    <div class="spot-box" id="spotBox"></div>
+    <div class="action-row"><button type="button" class="btn plain" id="spotClear" ${spot ? '' : 'hidden'}>Remove pin</button></div>
+    <p class="err" id="spotErr" role="alert" hidden></p></div>`;

@@ -2,7 +2,7 @@ const {chromium,devices}=require('playwright');const [U,O,tag]=process.argv.slic
 (async()=>{const b=await chromium.launch();let bad=0;const ok=(c,m)=>{console.log(c?'ok ':'FAIL',m);if(!c)bad=1};
 const c=await b.newContext({viewport:{width:1400,height:900}});const p=await c.newPage();const errs=[];p.on('pageerror',e=>errs.push(e.message));
 await p.goto(U+'/');await p.waitForSelector('.window');
-ok(!/demo|made up|nothing is charged|sample photos/i.test(await p.textContent('body')), 'no demo text on home');
+ok(!/made up|nothing is charged|sample photos/i.test(await p.textContent('body')), 'no demo strip text on home');
 const id=await p.evaluate(async()=>{const d=await (await fetch('/api/listings?limit=100')).json();for(const x of d.listings){const l=(await (await fetch('/api/listings/'+x.id)).json()).listing;if(l.photos.length>=2)return l.id}});
 await p.goto(U+'/listing/'+id);await p.waitForSelector('#mainPhoto img');
 const src=()=>p.$eval('#mainPhoto img',i=>i.getAttribute('src'));const first=await src();
@@ -25,5 +25,5 @@ const box=await p.$('#msgText');if(box){const before=await p.textContent('#photo
 await p.goto(U+'/');await p.waitForSelector('.window');await p.keyboard.press('ArrowRight');
 ok(!errs.length,'no page errors '+errs.join('|'));
 const m=await (await b.newContext(devices['iPhone 13'])).newPage();await m.goto(U+'/listing/'+id);await m.waitForSelector('#mainPhoto img');ok(+(await m.$eval('#photoNext',e=>getComputedStyle(e).opacity))>0.5,'phone shows arrows without hover');await m.tap('#photoNext');ok((await m.textContent('#photoCount')).startsWith('2 /'),'phone next tap');
-ok(!/demo|made up|nothing is charged|sample photos/i.test(await m.textContent('body')),'no demo text on phone');await m.screenshot({path:`${O}/listing-phone.png`});
+ok(!/made up|nothing is charged|sample photos/i.test(await m.textContent('body')),'no demo strip text on phone');await m.screenshot({path:`${O}/listing-phone.png`});
 await b.close();process.exit(bad);})();
