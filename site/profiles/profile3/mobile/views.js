@@ -32,9 +32,9 @@ const navButton = (href, label) => {
   return `<a class="btn plain ${here ? 'here' : ''}" ${here ? 'aria-current="page"' : ''} href="${href}">${label}</a>`;
 };
 const twoLabels = (long, short) => `<span class="nav-long">${long}</span><span class="nav-short">${short}</span>`;
-// The header only has Log out. Visitors find Log in and Sign up in the bottom bar.
+// Phones keep the logo line clean: Log out, Log in and Sign up are all in the bottom bar.
 export function headerLinks({ account }) {
-  return account ? '<button type="button" class="btn plain" data-act="logout">Log out</button>' : '';
+  return ''; // Log out is in the bottom bar on phones.
 }
 
 /* ---------- listing window ---------- */
@@ -297,8 +297,8 @@ function navLinks({ account, path, unread = 0, adminUnread = 0 }, long) {
   const item = (href, label, match, main) => { const here = match.test(path); return `<a class="btn ${main ? '' : 'plain'} ${here ? 'here' : ''}" ${here ? 'aria-current="page"' : ''} href="${href}">${label}</a>`; };
   // Visitors only see Browse, Log in and Sign up; the rest needs an account.
   if (!account) return item('/', L('Browse market', 'Browse'), /^\/$/) + item('/login', 'Log in', /^\/login$/) + item('/signup', 'Sign up', /^\/signup$/, true);
-  // The bottom bar keeps three buttons once you're logged in. Everything else is in the waffle menu.
-  if (!long) return item('/', 'Browse', /^\/$/) + item('/messages', `Messages${badge(unread)}`, /^\/messages/) + item('/saved', 'Saved', /^\/saved$/);
+  // Logged in, the bottom bar is Log out, Messages, Saved. Browse is the logo and the waffle menu has the rest.
+  if (!long) return '<button type="button" class="btn plain" data-act="logout">Log out</button>' + item('/messages', `Messages${badge(unread)}`, /^\/messages/) + item('/saved', 'Saved', /^\/saved$/);
   return item('/', L('Browse market', 'Browse'), /^\/$/) + item('/sell', 'Sell', /^\/sell$/, true) + item('/saved', 'Saved', /^\/saved$/)
     + item('/messages', `Messages${badge(unread)}`, /^\/messages/) + item('/my-listings', L('My listings', 'Listings'), /^\/my-listings$|^\/listing\/[^/]+\/edit$/)
     + item('/account', L('Account settings', 'Account'), /^\/account$/) + (account?.admin ? item('/admin', `${L('Site inbox', 'Inbox')}${badge(adminUnread)}`, /^\/admin/) : '');
