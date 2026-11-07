@@ -6,7 +6,14 @@ import { go, needLogin, renderHeader } from '../app.js';
 export async function accountPage() {
   if (!session.account) return needLogin();
   const a = session.account, d = await api('accounts/' + a.id);
-  $('main').innerHTML = view.accountPage({ account: a, photo: d.account.photo, listings: d.listings, favorites: session.favorites });
+  const security = await api('me/email').catch(() => null);
+  $('main').innerHTML = view.accountPage({ account: a, photo: d.account.photo, listings: d.listings, favorites: session.favorites, security });
+  $('loginCodesBtn')?.addEventListener('click', async e => {
+    const on = e.target.dataset.on !== '1', err = $('securityErr');
+    err.hidden = true; e.target.disabled = true;
+    try { await api('me/login-codes', { json: { on } }); toast(on ? 'Login codes turned on' : 'Login codes turned off'); go('/account', true); }
+    catch (er) { err.textContent = er.message; err.hidden = false; e.target.disabled = false; }
+  });
   $('logoutBtn').addEventListener('click', async () => { await api('logout', { method: 'POST' }); session.account = null; session.unread = 0; session.favorites = new Set(); renderHeader(); go('/'); });
   $('photoInput').addEventListener('change', async e => {
     const f = e.target.files[0]; if (!f) return;

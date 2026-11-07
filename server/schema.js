@@ -1,4 +1,4 @@
-// Search index only. Everything except sessions, limits, email_codes and mail_queue can be rebuilt from records/ and data/.
+// Search index only. Everything except sessions, limits, email_codes, login_codes and mail_queue can be rebuilt from records/ and data/.
 export const SCHEMA = [
   `CREATE TABLE IF NOT EXISTS system_state(key TEXT PRIMARY KEY, value TEXT)`,
   `CREATE TABLE IF NOT EXISTS counters(key TEXT PRIMARY KEY, n INTEGER NOT NULL)`,
@@ -19,6 +19,8 @@ export const SCHEMA = [
   `CREATE TABLE IF NOT EXISTS mail_queue(id INTEGER PRIMARY KEY AUTOINCREMENT, received INTEGER NOT NULL, mail_from TEXT, rcpt_to TEXT, raw BLOB NOT NULL, size INTEGER, truncated INTEGER NOT NULL DEFAULT 0, email_id TEXT)`,
   // Email codes waiting to be typed in. Short-lived, like sessions, so not rebuilt from files.
   `CREATE TABLE IF NOT EXISTS email_codes(account_id TEXT PRIMARY KEY, email TEXT NOT NULL, salt TEXT NOT NULL, code_hash TEXT NOT NULL, expires INTEGER NOT NULL, guesses INTEGER NOT NULL DEFAULT 0, sent INTEGER NOT NULL)`,
+  // Login codes for accounts that turned on two-step login. Short-lived, not rebuilt from files.
+  `CREATE TABLE IF NOT EXISTS login_codes(ticket_hash TEXT PRIMARY KEY, account_id TEXT NOT NULL, salt TEXT NOT NULL, code_hash TEXT NOT NULL, expires INTEGER NOT NULL, guesses INTEGER NOT NULL DEFAULT 0)`,
   `CREATE TABLE IF NOT EXISTS sessions(token_hash TEXT PRIMARY KEY, account_id TEXT NOT NULL, expires INTEGER NOT NULL)`,
   `CREATE TABLE IF NOT EXISTS limits(key TEXT PRIMARY KEY, window_start INTEGER NOT NULL, n INTEGER NOT NULL)`,
 ];

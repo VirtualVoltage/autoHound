@@ -1,5 +1,5 @@
 import { ApiError, json, fail, sha256Hex } from './http.js';
-import { signup, login, logout, currentAccount, requireAccount, publicAccount } from './auth.js';
+import { signup, login, loginSalt, loginWithCode, logout, currentAccount, requireAccount, publicAccount } from './auth.js';
 import { browse, createDraft, addPhoto, addThumb, publish, getListing, changeStatus, placeBid, report, sellerPage, favorites, setProfilePhoto, sweepClosedListings } from './listings.js';
 import { sweepIdle, startConversation, inbox, openConversation, sendMessage, addAttachment, unreadCount } from './conversations.js';
 import { serveFile } from './files.js';
@@ -8,16 +8,16 @@ import { rebuildStep } from './rebuild.js';
 import { CITIES, PART_CATEGORIES, CAR_CATEGORIES, CONDITIONS, HANDOFFS, LIMITS } from './config.js';
 import { isId } from './ids.js';
 import { isAdmin, adminSummary, adminInbox, adminMessage, adminRawMessage } from './mail.js';
-import { verifyStatus, resendCode, checkCode } from './verify.js';
+import { verifyStatus, resendCode, checkCode, setLoginCodes } from './verify.js';
 
 let readyUntil = 0;
 const routes = [
   ['POST', /^setup$/, ctx => setupStep(ctx)],
   ['GET', /^options$/, () => json({ cities: CITIES, part_categories: PART_CATEGORIES, car_categories: CAR_CATEGORIES, conditions: CONDITIONS, handoffs: HANDOFFS, limits: { usernameMin: LIMITS.usernameMin, usernameMax: LIMITS.usernameMax, passwordMin: LIMITS.passwordMin, passwordMax: LIMITS.passwordMax, photos: LIMITS.photosPerListing } })],
-  ['POST', /^signup$/, signup], ['POST', /^login$/, login], ['POST', /^logout$/, logout],
+  ['POST', /^signup$/, signup], ['POST', /^login$/, login], ['POST', /^login\/salt$/, loginSalt], ['POST', /^login\/code$/, loginWithCode], ['POST', /^logout$/, logout],
   ['GET', /^me$/, async ctx => { await sweepIdle(ctx, 1); await sweepClosedListings(ctx, 1); const a = await currentAccount(ctx.db, ctx.request), admin = await isAdmin(ctx, a); return json({ account: a ? { ...publicAccount(a), email: a.email || null, email_verified: !!a.email_verified, admin } : null, admin_inbox: admin ? await adminSummary(ctx) : null, unread: a ? await unreadCount(ctx, a) : 0 }); }],
   ['POST', /^me\/photo$/, setProfilePhoto],
-  ['GET', /^me\/email$/, verifyStatus], ['POST', /^me\/email\/code$/, resendCode], ['POST', /^me\/email\/verify$/, checkCode],
+  ['GET', /^me\/email$/, verifyStatus], ['POST', /^me\/email\/code$/, resendCode], ['POST', /^me\/email\/verify$/, checkCode], ['POST', /^me\/login-codes$/, setLoginCodes],
   ['GET', /^favorites$/, favorites], ['POST', /^favorites$/, favorites],
   ['GET', /^listings$/, browse], ['POST', /^listings$/, createDraft],
   ['GET', /^listings\/([^/]+)$/, async (ctx, id) => getListing(ctx, id, await currentAccount(ctx.db, ctx.request))],

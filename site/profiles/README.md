@@ -18,7 +18,8 @@ Copy a profile folder to start a new one. Most changes belong in both `desktop` 
 |---|---|
 | Frame | `#main`, `#toast`. Optional: `#headLinks`, `#searchForm`, `#searchInput` |
 | Home | `#windows`. Optional: `#minPrice`, `#maxPrice`, `[data-sort]`, `#emptyMsg`, `#moreBtn` |
-| Log in, sign up | `#authForm`, `#username`, `#password`, `#authErr`, and `#email` on sign up |
+| Log in, sign up | `#authForm`, `#password`, `#authErr`. Sign up: `#username`, `#email`. Log in: `#login`. Login code step: `#codeForm`, `#loginCode`, `#codeErr` |
+| Your account, security | `#loginCodesBtn` with `data-on`, `#securityErr` |
 | Listing | Optional: `#thumbs` with `#mainPhoto`, `#msgForm` with `#msgText` and `#msgErr`, `#bidForm` with `#bidAmt` and `#bidErr`, `#reportBtn`, `#soldBtn`, `#deleteBtn` |
 | Sell | `#sellForm`, `#upGrid`, `#sPhotos`, `#photoErr`, `#sellPreview`, `#sellErr`, `#pubBtn`, and the `s*` form fields. `[data-for]`, `#sCategoryField`, `#sPriceLabel`, `#useEst` are used if present |
 | Chat | `#thread`, `#attachPreview`, `#composer`, `#attachInput`, `#msgText` |

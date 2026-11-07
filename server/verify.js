@@ -47,7 +47,7 @@ export async function sendCode(ctx, a, { quiet = false } = {}) {
 
 export async function verifyStatus(ctx) {
   const a = await requireAccount(ctx.db, ctx.request), file = await accountFile(ctx, a);
-  return json({ email: file.email || null, verified: !!file.email_verified, ready: sendingReady(ctx.env) });
+  return json({ email: file.email || null, verified: !!file.email_verified, ready: sendingReady(ctx.env), login_codes: !!file.login_codes });
 }
 export async function resendCode(ctx) {
   const a = await requireAccount(ctx.db, ctx.request);
@@ -71,4 +71,47 @@ export async function checkCode(ctx) {
   await ctx.db.run('UPDATE accounts SET email_verified=1 WHERE id=?', a.id);
   await ctx.db.run('DELETE FROM email_codes WHERE account_id=?', a.id);
   return json({ verified: true });
+}
+
+// ---------- optional login codes (two-step login) ----------
+// Off by default. Turned on in account settings, saved as "login_codes": true in account.json.
+// Needs a confirmed email and working email sending, so nobody gets locked out.
+const LOGIN_CODE_MINUTES = 10;
+const hint = email => { const [u, d] = email.split('@'); return `${u.slice(0, 1)}${'*'.repeat(Math.max(1, Math.min(6, u.length - 1)))}@${d}`; };
+export async function loginCodesOn(ctx, a) {
+  const file = await accountFile(ctx, a);
+  return !!(file.login_codes && file.email && file.email_verified && sendingReady(ctx.env));
+}
+export async function sendLoginCode(ctx, a) {
+  await ensureSchemaOnce(ctx.db);
+  if (!await hit(ctx.db, 'login-code:' + a.id, SENDS_PER_HOUR, 3600e3)) fail(429, 'Too many login codes sent. Try again in an hour.');
+  const file = await accountFile(ctx, a), code = randomCode(), salt = crypto.randomUUID(), ticket = [...crypto.getRandomValues(new Uint8Array(24))].map(x => x.toString(16).padStart(2, '0')).join('');
+  await ctx.db.run('DELETE FROM login_codes WHERE expires<?', Date.now());
+  await ctx.db.run('INSERT INTO login_codes(ticket_hash,account_id,salt,code_hash,expires,guesses) VALUES(?,?,?,?,?,0)', await sha256Hex(ticket), a.id, salt, await sha256Hex(salt + code), Date.now() + LOGIN_CODE_MINUTES * 60e3);
+  await sendEmail(ctx.env, { to: file.email, subject: `Your Autohound login code: ${code}`,
+    text: `Hi ${a.username},\n\nYour Autohound login code is ${code}\n\nIt works for ${LOGIN_CODE_MINUTES} minutes. If you didn't just try to log in, change your password.\n\nAutohound\nsupport@autohound.online` });
+  return { ticket, email_hint: hint(file.email) };
+}
+export async function checkLoginCode(ctx, ticket, rawCode) {
+  await ensureSchemaOnce(ctx.db);
+  const code = rawCode.replace(/\D/g, '');
+  if (!/^[0-9a-f]{48}$/.test(ticket)) fail(400, 'That login has expired. Log in again.');
+  if (code.length !== 6) fail(400, 'Enter the 6-digit code from the email.');
+  const key = await sha256Hex(ticket), row = await ctx.db.get('SELECT * FROM login_codes WHERE ticket_hash=?', key);
+  if (!row || row.expires < Date.now()) fail(400, 'That login has expired. Log in again.');
+  if (row.guesses >= MAX_GUESSES) { await ctx.db.run('DELETE FROM login_codes WHERE ticket_hash=?', key); fail(429, 'Too many wrong tries. Log in again.'); }
+  if (await sha256Hex(row.salt + code) !== row.code_hash) {
+    await ctx.db.run('UPDATE login_codes SET guesses=guesses+1 WHERE ticket_hash=?', key);
+    fail(400, `That code isn't right. ${MAX_GUESSES - row.guesses - 1} tries left.`);
+  }
+  await ctx.db.run('DELETE FROM login_codes WHERE ticket_hash=?', key);
+  return ctx.db.get('SELECT * FROM accounts WHERE id=?', row.account_id);
+}
+export async function setLoginCodes(ctx) {
+  const a = await requireAccount(ctx.db, ctx.request), on = (await ctx.request.json().catch(() => ({}))).on === true, file = await accountFile(ctx, a);
+  if (on && !file.email_verified) fail(400, 'Confirm your email first.');
+  if (on && !sendingReady(ctx.env)) fail(400, 'Email codes aren\'t switched on for the site yet.');
+  file.login_codes = on;
+  await writeJsonFile(ctx.store, `${a.path}/account.json`, file);
+  return json({ login_codes: on });
 }

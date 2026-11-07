@@ -79,10 +79,12 @@ export const homePage = ({ q, min, max, sort, sorts, adminInbox, account }) => `
 /* ---------- sign up and log in ---------- */
 export const authPage = ({ signup, limits: L, otherLink }) => `<div class="page"><form class="panel auth" id="authForm" novalidate>
     <h1 class="main-title">${signup ? 'Make an account' : 'Log in'}</h1>
-    <label class="field"><span>Username</span><input id="username" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" maxlength="80"></label>
-    ${signup ? `<label class="field"><span>Email</span><input id="email" type="email" autocomplete="email" autocapitalize="none" spellcheck="false" maxlength="254"></label>` : ''}
+    ${signup ? `<label class="field"><span>Username</span><input id="username" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" maxlength="80"></label>
+    <label class="field"><span>Email</span><input id="email" type="email" autocomplete="email" autocapitalize="none" spellcheck="false" maxlength="254"></label>`
+    : `<label class="field"><span>Email</span><input id="login" type="email" autocomplete="username" autocapitalize="none" spellcheck="false" maxlength="254"></label>`}
     <label class="field"><span>Password</span><input id="password" type="password" autocomplete="${signup ? 'new-password' : 'current-password'}" maxlength="40"></label>
     ${signup ? `<p class="note">Username: ${L.usernameMin} to ${L.usernameMax} characters, with spaces allowed but no underscores. Password: ${L.passwordMin} to ${L.passwordMax} characters. Your email stays private. Password resets by email are coming soon.</p>` : ''}
+    ${signup ? '' : '<p class="note">Accounts made before emails were added can use their username here.</p>'}
     <p class="err" id="authErr" role="alert" hidden></p>
     <button class="btn" type="submit">${signup ? 'Sign up' : 'Log in'}</button>
     <p class="note center-text">${signup ? 'Already have an account?' : 'New here?'}</p>
@@ -184,9 +186,10 @@ export const threadPage = (d, days) => `<div class="page">
     </form><p class="note safety">Meet in a public place, inspect before you pay, and never wire money.</p></div>`;
 
 /* ---------- profile pages ---------- */
-export const accountPage = ({ account: a, photo, listings, favorites }) => `<div class="page">
+export const accountPage = ({ account: a, photo, listings, favorites, security }) => `<div class="page">
     <div class="panel profile">${avatar(photo, 'Your profile picture')}<div class="row-text"><h1 class="main-title">${esc(a.username)}</h1><span class="count">Joined ${shortDate(a.joined)}</span>${a.email ? `<span class="muted">${esc(a.email)}</span>` : ''}</div>
       <div class="action-row"><label class="btn plain" for="photoInput">Change picture</label><input id="photoInput" class="sr" type="file" accept="image/*"><button class="btn plain" id="logoutBtn">Log out</button></div></div>
+    ${securityPanel(security)}
     <div class="toolbar"><h2>Your listings</h2></div>${grid(listings, 'You have no live listings.', favorites)}</div>`;
 export const sellerPage = ({ account: a, listings, favorites }) => `<div class="page"><div class="panel profile">${avatar(a.photo, '')}<div class="row-text"><h1 class="main-title">${esc(a.username)}</h1><span class="count">Joined ${shortDate(a.joined)} · ${listings.length} live listings</span></div></div>${grid(listings, 'No live listings.', favorites)}</div>`;
 export const favoritesPage = ({ listings, favorites }) => `<div class="page"><div class="toolbar"><h1 class="main-title">Favorites</h1></div>${grid(listings, 'Press the star on any listing to save it here.', favorites)}</div>`;
@@ -226,4 +229,21 @@ export const verifyPage = ({ email, ready, sent, next }) => `<div class="page"><
     <button class="btn" type="submit">Confirm email</button>
     <button class="btn plain" type="button" id="resendBtn">Send a new code</button>
     <a class="btn plain" href="${esc(next)}">Skip for now</a>
+  </form></div>`;
+
+/* ---------- account security ---------- */
+export const securityPanel = s => !s ? '' : `<div class="panel security">
+    <div class="toolbar"><h2>Login security</h2></div>
+    <div class="attr"><span class="muted">Email</span><b>${s.email ? `${esc(s.email)} · ${s.verified ? 'confirmed' : 'not confirmed'}` : 'none on this account'}</b></div>
+    <div class="attr"><span class="muted">Email me a code when I log in</span><b>${s.login_codes ? 'On' : 'Off'}</b></div>
+    <p class="note">Optional. When it's on, logging in also asks for a 6-digit code sent to your email.${s.verified ? '' : ' Confirm your email first to use it.'}</p>
+    <p class="err" id="securityErr" role="alert" hidden></p>
+    <div class="action-row">${s.email && !s.verified ? '<a class="btn plain" href="/verify?next=/account">Confirm email</a>' : ''}<button class="btn plain" id="loginCodesBtn" data-on="${s.login_codes ? 1 : 0}" ${!s.login_codes && !s.verified ? 'disabled' : ''}>${s.login_codes ? 'Turn off login codes' : 'Turn on login codes'}</button></div>
+  </div>`;
+export const loginCodePage = ({ emailHint }) => `<div class="page"><form class="panel auth" id="codeForm" novalidate>
+    <h1 class="main-title">Check your email</h1>
+    <p>We sent a 6-digit login code to <b>${esc(emailHint)}</b>. It works for 10 minutes.</p>
+    <label class="field"><span>Code</span><input id="loginCode" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="123456"></label>
+    <p class="err" id="codeErr" role="alert" hidden></p>
+    <button class="btn" type="submit">Log in</button>
   </form></div>`;

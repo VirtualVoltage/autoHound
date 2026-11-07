@@ -53,7 +53,7 @@ h3 { font-size: 13px; color: #fff; }
 @media (prefers-reduced-motion: no-preference) { .logo { animation: flicker 4.6s linear infinite; } .ticker-in { animation: ticker 70s linear infinite; } }
 @keyframes flicker { 0%,6% {opacity:1} 7%,10% {opacity:.25} 11%,17% {opacity:1} 18%,21% {opacity:.45} 22%,27% {opacity:1} 28%,31% {opacity:.15} 32%,54% {opacity:1} 55%,59% {opacity:.35} 60%,67% {opacity:1} 68%,70% {opacity:.6} 71%,87% {opacity:1} 88%,93% {opacity:.2} 94%,100% {opacity:1} }
 @keyframes ticker { to { transform: translateX(-50%); } }
-input[type=text], input[type=search], input[type=password], input[type=number], select, textarea { width: 100%; min-width: 0; padding: 7px 9px; background: var(--sunken); border: 1px solid #4d5a4d; border-top-color: #000; border-left-color: #000; border-radius: 0; }
+input[type=text], input[type=email], input[type=search], input[type=password], input[type=number], select, textarea { width: 100%; min-width: 0; padding: 7px 9px; background: var(--sunken); border: 1px solid #4d5a4d; border-top-color: #000; border-left-color: #000; border-radius: 0; }
 input::placeholder, textarea::placeholder { color: #8f998f; }
 textarea { resize: vertical; }
 .search { flex: 1; display: flex; min-width: 220px; }
@@ -243,3 +243,4 @@ a, button, label, input, select, textarea, summary { touch-action: manipulation;
 .mail-side { grid-auto-flow: column; justify-content: start; align-items: center; gap: 8px; }
 .verify-strip { margin-bottom: 14px; border-color: #ffe14d; }
 .auth .btn.plain { width: 100%; }
+.security { margin-bottom: 14px; display: grid; gap: 8px; }

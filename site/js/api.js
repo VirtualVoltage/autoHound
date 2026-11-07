@@ -33,10 +33,11 @@ export async function refreshSession() {
   session.favorites = new Set(session.account ? (await api('favorites')).ids : []);
 }
 export async function getOptions() { return session.options || (session.options = await api('options')); }
-// Password never leaves the browser. It's stretched here and only the result is sent.
-export async function passwordProof(username, password) {
+// Password never leaves the browser. It's stretched here with the account's salt, and only the result is sent.
+export async function passwordProof(salt, password) {
   const enc = new TextEncoder();
   const key = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveBits']);
-  const bits = await crypto.subtle.deriveBits({ name: 'PBKDF2', hash: 'SHA-256', salt: enc.encode('autohound:' + username.normalize('NFKC').replace(/[_\s]+/g, ' ').trim().toLowerCase()), iterations: 100000 }, key, 256);
+  const bits = await crypto.subtle.deriveBits({ name: 'PBKDF2', hash: 'SHA-256', salt: enc.encode(salt), iterations: 100000 }, key, 256);
   return [...new Uint8Array(bits)].map(x => x.toString(16).padStart(2, '0')).join('');
 }
+export const newClientSalt = () => [...crypto.getRandomValues(new Uint8Array(16))].map(x => x.toString(16).padStart(2, '0')).join('');
