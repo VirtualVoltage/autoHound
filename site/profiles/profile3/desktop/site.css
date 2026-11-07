@@ -266,7 +266,6 @@ main { min-width: 0; }
 .side-nav { position: sticky; top: var(--head-h); align-self: start; height: calc(100vh - var(--head-h)); display: flex; flex-direction: column; gap: 8px; padding: 16px; background: #060906; border-right: 1px solid var(--neon); box-shadow: 2px 0 14px rgba(20,255,30,.35); overflow-y: auto; }
 .side-nav:empty { display: none; }
 .side-nav .btn { justify-content: flex-start; width: 100%; }
-.side-nav::before { content: "Menu"; padding: 0 4px 6px; color: var(--count); font: 400 12px/1 var(--display); text-transform: uppercase; letter-spacing: .08em; }
 @media (max-width: 760px) {
   .layout:has(.side-nav:not(:empty)) { grid-template-columns: minmax(0,1fr); padding-left: var(--gutter-l); }
   .layout:has(.side-nav:not(:empty)) main { padding-left: 0; }
