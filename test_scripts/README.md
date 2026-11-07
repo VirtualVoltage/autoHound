@@ -18,7 +18,7 @@ Older scripts were written for earlier versions of the site, so some no longer m
 | `t38.js`, `t39.js`, `t44.js` | Adding an email in account settings, the code, and what happens when sending fails. |
 | `t43.js` | Listing page photos: hover arrows, arrow keys, thumbnails, description placement. |
 | `t45.js`, `t46.js` | profile3 header (Log out only), side menu, Saved page, log out. |
-| `t41.js`, `t47.js` | Phone bars and header layout. |
+| `t47.js` | Phone header layout. (`t41.js` checks an older phone layout and no longer matches.) |
 | `t25.js`, `t27.js` | Email codes and two-step login (start the server with `EMAIL_LOG=1`). |
 | `t21.js`, `t21-seed.mjs`, `t22.mjs` | Admin site inbox and email parsing (`fixtures/mail/`). |
 | `t32.js`, `t40.js`, `t48.js` | Other profiles, using a copy of the site with `DEFAULT_PROFILE` changed, on port 8792. |

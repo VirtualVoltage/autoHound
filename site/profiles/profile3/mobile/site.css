@@ -355,3 +355,9 @@ body.menu-open { overflow: hidden; }
 /* save star: smaller and see-through so it covers less of the photo */
 .window .star, .star { width: 30px; height: 30px; background: rgba(0,0,0,.15); border-color: rgba(255,255,255,.4); font-size: 16px; text-shadow: 0 0 3px #000, 0 0 6px #000; }
 .star:hover, .star.on { background: rgba(0,0,0,.15); }
+
+/* iPhone Safari: while its toolbar slides away the bar can lag a moment, so its background
+   runs well past the bottom of the screen and nothing scrolls through underneath it */
+html { background: #050705; }
+.side-nav { transform: translateZ(0); will-change: transform; }
+.side-nav::after { content: ""; position: absolute; left: 0; right: 0; top: 100%; height: 120px; background: #050705; pointer-events: none; }
