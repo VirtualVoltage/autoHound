@@ -361,3 +361,8 @@ body.menu-open { overflow: hidden; }
 html { background: #050705; }
 .side-nav { transform: translateZ(0); will-change: transform; }
 .side-nav::after { content: ""; position: absolute; left: 0; right: 0; top: 100%; height: 120px; background: #050705; pointer-events: none; }
+
+/* text boxes just turn green when you click in them, with no extra frame around them */
+input:focus-visible, select:focus-visible, textarea:focus-visible { outline: none; }
+/* bottom bar: a plain green line on top, no glow fading up over the page */
+.side-nav { box-shadow: none; }

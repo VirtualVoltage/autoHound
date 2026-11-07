@@ -332,3 +332,6 @@ main { min-width: 0; }
 /* save star: smaller and see-through so it covers less of the photo */
 .window .star, .star { width: 30px; height: 30px; background: rgba(0,0,0,.15); border-color: rgba(255,255,255,.4); font-size: 16px; text-shadow: 0 0 3px #000, 0 0 6px #000; }
 .star:hover, .star.on { background: rgba(0,0,0,.15); }
+
+/* text boxes just turn green when you click in them, with no extra frame around them */
+input:focus-visible, select:focus-visible, textarea:focus-visible { outline: none; }
