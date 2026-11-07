@@ -312,3 +312,24 @@ a, button, label, input, select, textarea, summary { touch-action: manipulation;
 .chat-window .chat-composer { margin: 0; padding: 8px; border-top: 1px solid var(--line, #2f3f2f); }
 .chat-window .chat-thread:empty ~ .chat-composer { border-top: 0; }
 .chat-window .chat-composer textarea { border: 0; background: transparent; box-shadow: none; outline: none; }
+
+/* admin delete: red button, and a password box before anything is removed */
+.btn.danger { background: #2a0505; background-image: none; border-color: #ff2a2a; color: #fff; text-shadow: none; box-shadow: 0 0 8px rgba(255,42,42,.55); }
+.btn.danger:hover { background: #3d0808; }
+.admin-box { display: grid; gap: 10px; border-color: #ff2a2a; }
+.admin-delete-form { display: grid; gap: 10px; }
+
+/* chat: one fixed-size frame. Messages fill it and scroll inside it, newest at the bottom;
+   the typing line sits at the bottom above Attach and Send, with no divider. */
+.chat-window { height: min(460px, 62vh); grid-template-rows: minmax(0,1fr) auto auto; }
+.chat-window .chat-thread, .chat-window .chat-thread:empty { display: flex; min-height: 0; max-height: none; height: auto; overflow-y: auto; overscroll-behavior: contain; }
+.chat-window .chat-thread > :first-child { margin-top: auto; }
+.chat-window .chat-composer, .chat-window .chat-thread:empty ~ .chat-composer { border-top: 0; padding-top: 0; }
+.chat-window .chat-composer textarea { min-height: 0; height: 64px; max-height: 140px; resize: none; background: rgba(255,255,255,.04); }
+
+/* admin buttons: neon red with the same line pattern as the green ones */
+.btn.admin, .btn.danger { background-color: #1a0506; background-image: repeating-linear-gradient(0deg, rgba(255,60,60,.3) 0 1px, transparent 1px 3px); border-color: #ff2a2a; color: #fff; text-shadow: 0 0 6px #ff2a2a; box-shadow: 0 0 4px #ff2a2a, 0 0 12px rgba(255,42,42,.55), inset 0 0 8px rgba(255,42,42,.18); }
+.btn.admin:hover, .btn.danger:hover, .btn.admin.here { background-color: #2a0709; border-color: #ff5050; box-shadow: 0 0 6px #ff2a2a, 0 0 16px rgba(255,42,42,.7), inset 0 0 10px rgba(255,42,42,.25); }
+.btn.admin .badge-count { border-color: #ff2a2a; color: #ffb3b3; box-shadow: 0 0 5px rgba(255,42,42,.8); }
+.admin-link { color: #ff4040 !important; text-shadow: 0 0 6px rgba(255,42,42,.8); }
+.btn:disabled, .btn[disabled], button:disabled { opacity: .4; cursor: not-allowed; box-shadow: none; }

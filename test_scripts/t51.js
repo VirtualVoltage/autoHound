@@ -11,7 +11,7 @@ ok(g.waffle.x<g.map.x&&g.map.x<g.input.x&&g.input.x<g.go.x&&g.go.r<=g.vw&&g.sw<=
 await p.screenshot({path:`${O}/waffle-${name}-closed.png`,clip:{x:0,y:0,width:dev.viewport.width,height:240}});
 await p.tap('.waffle');await p.waitForSelector('#drawer:not([hidden])');await p.waitForTimeout(200);
 const items=await p.$$eval('#drawerNav a',a=>a.map(x=>x.textContent.trim()));console.log(name,'menu',items);
-ok(items.includes('Browse market')&&items.includes('My listings')&&items.includes('Account settings')&&items.includes('Saved'),name+' menu has the desktop pages');
+ok(items.includes('Browse market')&&items.includes('My listings')&&items.includes('Account settings')&&items.includes('Saved')&&!items.includes('Sell')&&items[1]==='My listings',name+' menu has the desktop pages');
 await p.screenshot({path:`${O}/waffle-${name}-open.png`});
 await p.tap('#drawerNav a[href="/saved"]');await p.waitForURL(/\/saved$/);await p.waitForTimeout(300);ok(await p.$eval('#drawer',d=>d.hidden)&&!(await p.evaluate(()=>document.body.classList.contains('menu-open'))),name+' menu closes after picking a page');
 await p.tap('.waffle');await p.waitForSelector('#drawer:not([hidden])');await p.tap('.drawer-back',{position:{x:dev.viewport.width-20,y:300}});await p.waitForTimeout(200);ok(await p.$eval('#drawer',d=>d.hidden),name+' tapping outside closes it');

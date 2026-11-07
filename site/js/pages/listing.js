@@ -1,6 +1,6 @@
 import { $, money, toast } from '../util.js';
 import { view } from '../theme.js';
-import { api, session } from '../api.js';
+import { api, session, passwordProof } from '../api.js';
 import { go, needLogin } from '../app.js';
 import { mountChat } from '../chat.js';
 
@@ -8,7 +8,7 @@ export async function listingPage(id) {
   let data;
   try { data = await api('listings/' + encodeURIComponent(id)); } catch (e) { if (e.restart) throw e; $('main').innerHTML = view.notFound(e.message); return; }
   const l = data.listing, closed = l.status !== 'live', minBid = l.price + Math.max(5, Math.round(l.price * .025 / 5) * 5);
-  $('main').innerHTML = view.listingPage({ listing: l, favorite: session.favorites.has(l.id), closed, minBid });
+  $('main').innerHTML = view.listingPage({ listing: l, favorite: session.favorites.has(l.id), closed, minBid, admin: !!session.account?.admin });
   // Profiles with a chat box on the listing page (#chatBox): buyers chat here, sellers pick a buyer.
   let chat = null;
   if ($('chatBox')) {
@@ -52,6 +52,20 @@ export async function listingPage(id) {
     if (!v || v < min) { err.textContent = `Enter ${money(min)} or more to lead this auction.`; err.hidden = false; return; }
     try { await api(`listings/${l.id}/bid`, { json: { amount: v } }); toast(`You lead at ${money(v)}`); go(location.pathname, true); }
     catch (er) { err.textContent = er.message; err.hidden = false; }
+  });
+  // Admins can remove anyone's listing after typing their own password.
+  $('adminDeleteBtn')?.addEventListener('click', () => { $('adminDeleteBtn').hidden = true; $('adminDeleteForm').hidden = false; $('adminPw').focus(); });
+  $('adminDeleteCancel')?.addEventListener('click', () => { $('adminDeleteForm').hidden = true; $('adminDeleteBtn').hidden = false; $('adminPw').value = ''; $('adminDeleteErr').hidden = true; });
+  $('adminDeleteForm')?.addEventListener('submit', async e => {
+    e.preventDefault();
+    const err = $('adminDeleteErr'), btn = e.target.querySelector('button[type=submit]'), password = $('adminPw').value;
+    if (!password) { err.textContent = 'Type your password.'; err.hidden = false; return; }
+    err.hidden = true; btn.disabled = true;
+    try {
+      const me = session.account, { salt } = await api('login/salt', { json: { login: me.email || me.username } });
+      await api(`listings/${l.id}/admin-delete`, { json: { proof: await passwordProof(salt, password) } });
+      toast('Listing removed'); go('/');
+    } catch (er) { err.textContent = er.message; err.hidden = false; btn.disabled = false; $('adminPw').value = ''; }
   });
   $('reportBtn')?.addEventListener('click', async e => {
     if (!session.account) return needLogin();

@@ -14,6 +14,13 @@ const randomHex = n => [...crypto.getRandomValues(new Uint8Array(n))].map(x => x
 // The browser's salt is "autohound:acct:" plus a random client_salt saved in private.json. Accounts made before
 // email login use the older salt, "autohound:" plus the username, and keep it, so their passwords still work.
 function checkProof(proof) { if (!/^[0-9a-f]{64}$/.test(proof || '')) fail(400, 'Could not read that password.'); }
+// Checks a logged-in person's password again before a serious action, like an admin delete.
+export async function checkPassword(ctx, a, proof) {
+  checkProof(proof);
+  if (!await hit(ctx.db, 'password:' + a.id, 8, 600e3)) fail(429, 'Too many tries. Wait a few minutes.');
+  const secret = await readJsonFile(ctx.store, `${a.path}/private.json`);
+  if (!secret || await sha256Hex(secret.password.salt + proof) !== secret.password.hash) fail(401, 'That password isn\'t right.');
+}
 const browserSalt = (secret, a) => secret?.password?.client_salt ? `autohound:acct:${secret.password.client_salt}` : `autohound:${usernameKey(a.username)}`;
 // People log in with their email. Accounts that have no email can still use their username.
 export async function findLogin(db, login) {

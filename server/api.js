@@ -8,6 +8,7 @@ import { rebuildStep, ensureSchemaOnce } from './rebuild.js';
 import { CITIES, PART_CATEGORIES, CAR_CATEGORIES, CONDITIONS, HANDOFFS, LIMITS, TOWN_SPOTS, MAP_AREA } from './config.js';
 import { isId } from './ids.js';
 import { isAdmin, adminSummary, adminInbox, adminMessage, adminRawMessage } from './mail.js';
+import { adminDeleteListing } from './admin.js';
 import { verifyStatus, resendCode, checkCode, setLoginCodes, setEmail, sendingReady } from './verify.js';
 
 let readyUntil = 0;
@@ -25,6 +26,7 @@ const routes = [
   ['PATCH', /^listings\/([^/]+)$/, changeStatus],
   ['POST', /^listings\/([^/]+)\/photos$/, addPhoto], ['POST', /^listings\/([^/]+)\/publish$/, publish],
   ['POST', /^listings\/([^/]+)\/bid$/, placeBid], ['POST', /^listings\/([^/]+)\/report$/, report],
+  ['POST', /^listings\/([^/]+)\/admin-delete$/, adminDeleteListing],
   ['POST', /^listings\/([^/]+)\/conversations$/, startConversation],
   ['POST', /^photos\/([^/]+)\/thumb$/, addThumb],
   ['GET', /^conversations$/, inbox], ['GET', /^conversations\/([^/]+)$/, openConversation],

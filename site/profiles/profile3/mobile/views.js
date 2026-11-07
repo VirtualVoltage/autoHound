@@ -62,7 +62,7 @@ export function meter(ratio, value) {
 const grid = (list, empty, favorites) => list.length ? `<div class="windows">${list.map(l => windowCard(l, favorites.has(l.id))).join('')}</div>` : `<div class="empty"><b>${empty}</b></div>`;
 
 /* ---------- home ---------- */
-export const homePage = ({ q, min, max, sort, sorts, adminInbox, account }) => `<div class="page">
+export const homePage = ({ q, min, max, sort, sorts, adminInbox, account }) => `<div class="page home-page">
     ${verifyStrip(account)}
     ${adminStrip(adminInbox)}
     <div class="toolbar">
@@ -103,13 +103,15 @@ function attrs(l) {
   const rows = [['Condition', l.condition], ...(l.kind === 'cars' ? [['Year', l.car.year], ['Odometer', l.car.miles.toLocaleString('en-US')], ['Title status', l.car.title_status], ['Tier', l.category]] : [['Fits', l.fits], ['Category', l.category]]), ['Handoff', l.handoff]];
   return `<div class="panel attrs"><h2>Details</h2>${rows.map(([a, b]) => `<div class="attr"><span class="muted">${a}</span><b>${esc(b)}</b></div>`).join('')}</div>`;
 }
-export function listingPage({ listing: l, favorite, closed, minBid }) {
+export function listingPage({ listing: l, favorite, closed, minBid, admin }) {
   const statusNote = l.status === 'sold' ? '<p class="err">This listing has sold.</p>' : l.status === 'draft' ? '<p class="err">This draft never finished publishing.</p>' : closed ? '<p class="err">This listing is no longer public.</p>' : '';
-  const actions = l.mine ? (closed ? '' : `<a class="btn plain" href="/listing/${esc(l.id)}/edit">Edit listing</a><button class="btn plain" id="soldBtn">Mark sold</button><button class="btn plain" id="deleteBtn">Delete listing</button>`) : `${favoriteButton(l.id, favorite)}${closed ? '' : '<button class="btn plain" id="reportBtn">Report</button>'}`;
+  const actions = l.mine ? (closed ? '' : `<a class="btn plain" href="/listing/${esc(l.id)}/edit">Edit listing</a><button class="btn plain" id="soldBtn">Mark sold</button><button class="btn plain" id="deleteBtn">Delete listing</button>`) : `${favoriteButton(l.id, favorite)}${closed ? '' : '<button class="btn plain" id="reportBtn" disabled title="Coming soon">Report</button>'}`;
+  // Left: photos, then the seller. Right: title and price, chat, details, and the price check last.
   return `<div class="page">
     <div class="back-row"><a class="btn plain" href="/">Back to listings</a></div>
     <div class="post">
       <div class="gallery"><div class="photo-frame"><div id="mainPhoto">${ph(l.photos[0], false, l.title)}</div>${l.photos.length > 1 ? `<button type="button" class="photo-arrow prev" id="photoPrev" aria-label="Previous photo">&#8249;</button><button type="button" class="photo-arrow next" id="photoNext" aria-label="Next photo">&#8250;</button><span class="photo-count" id="photoCount">1 / ${l.photos.length}</span>` : ''}</div>${l.photos.length > 1 ? `<div class="thumbs" id="thumbs">${l.photos.map((p, i) => `<button type="button" data-i="${i}" class="${i === 0 ? 'on' : ''}" aria-label="Show photo ${i + 1}">${ph(p + '?size=thumb', true)}</button>`).join('')}</div>` : ''}
+        <a class="btn plain seller-btn" href="/seller/${esc(l.seller.id)}">${avatar(l.seller.photo, '')}<span>${esc(l.seller.username)}</span></a>
       </div>
       <div class="side">
         <div class="panel">
@@ -118,14 +120,13 @@ export function listingPage({ listing: l, favorite, closed, minBid }) {
           <div class="post-price"><span class="money">${money(l.price)}</span></div>
           <div class="town">${townLine(l.city)}</div>
           ${statusNote}
+          ${admin && !closed ? adminDeleteBox() : ''}
           ${actions ? `<div class="action-row">${actions}</div>` : ''}
         </div>
         ${buyBox(l, minBid)}
-        <div class="panel"><a class="btn plain seller-btn" href="/seller/${esc(l.seller.id)}">${avatar(l.seller.photo, '')}<span>${esc(l.seller.username)}</span></a>
-        </div>
         ${chatPanel(l, closed)}
-        ${l.sell_type === 'post' && l.market_value ? meter(l.price / l.market_value, l.market_value) : ''}
         ${attrs(l)}
+        ${l.sell_type === 'post' && l.market_value ? meter(l.price / l.market_value, l.market_value) : ''}
       </div>
     </div></div>`;
 }
@@ -200,14 +201,14 @@ const mailRow = m => `<a class="inbox-row mail-row ${m.unread ? 'unread' : ''}" 
     <div class="row-text"><b>${esc(m.subject || '(no subject)')}</b><div class="muted">${esc(m.from)}</div><div class="last">${esc(m.preview)}</div></div>
     <div class="mail-side"><span class="count">${esc(mailDate(m.received))}</span>${m.unread ? '<span class="badge-count">New</span>' : ''}</div></a>`;
 export const adminStrip = inbox => inbox ? `<div class="panel admin-strip">
-    <div class="toolbar"><h2>Site inbox</h2><span class="count">${inbox.unread ? `${inbox.unread} new` : 'Nothing new'}</span><a class="btn" href="/admin">Open inbox</a></div>
+    <div class="toolbar"><h2>Site inbox</h2><span class="count">${inbox.unread ? `${inbox.unread} new` : 'Nothing new'}</span><a class="btn admin" href="/admin">Open inbox</a></div>
     ${inbox.latest.length ? `<div class="inbox-list">${inbox.latest.map(mailRow).join('')}</div>` : ''}</div>` : '';
 export const adminInboxPage = ({ messages, waiting }) => `<div class="page">
     <div class="toolbar"><h1 class="main-title">Site inbox</h1><span class="count">support@autohound.online and every other address</span></div>
     ${waiting ? `<p class="note">${waiting} more ${waiting === 1 ? 'email is' : 'emails are'} still being saved. Refresh in a moment.</p>` : ''}
     ${messages.length ? `<div class="inbox-list">${messages.map(mailRow).join('')}</div>` : `<div class="empty"><b>No email yet.</b><span class="muted">Mail sent to any @autohound.online address shows up here.</span></div>`}</div>`;
 export const adminMessagePage = ({ message: m, rawUrl }) => `<div class="page">
-    <div class="back-row"><a class="btn plain" href="/admin">Back to inbox</a></div>
+    <div class="back-row"><a class="btn admin" href="/admin">Back to inbox</a></div>
     <div class="panel">
       <div class="post-title">${esc(m.subject || '(no subject)')}</div>
       <div class="attrs">${[['From', m.from], ['To', m.to], ['Cc', m.cc], ['Reply to', m.reply_to], ['Received', mailDate(m.received)]].filter(([, v]) => v).map(([a, b]) => `<div class="attr"><span class="muted">${a}</span><b>${esc(b)}</b></div>`).join('')}</div>
@@ -272,7 +273,7 @@ export const myListingsPage = ({ listings, favorites }) => `<div class="page"><d
 // Live listings keep their chats here instead of on a separate page.
 export const chatOnListing = true;
 const composer = (placeholder) => `<form class="composer chat-composer" id="composer" novalidate>
-      <textarea id="msgText" rows="8" maxlength="2000" placeholder="${placeholder}" aria-label="Message"></textarea>
+      <textarea id="msgText" rows="2" maxlength="2000" placeholder="${placeholder}" aria-label="Message"></textarea>
       <label class="btn plain" for="attachInput" aria-label="Attach a photo, video or PDF">Attach</label><input id="attachInput" class="sr" type="file" accept="image/*,video/mp4,video/webm,application/pdf">
       <button class="btn" type="submit">Send</button>
     </form>`;
@@ -294,14 +295,14 @@ const NO_SIDE = /^\/(login|signup|verify)$/;
 function navLinks({ account, path, unread = 0, adminUnread = 0 }, long) {
   const L = (a, b) => long ? a : b;
   const badge = n => n ? `<span class="badge-count">${n}</span>` : '';
-  const item = (href, label, match, main) => { const here = match.test(path); return `<a class="btn ${main ? '' : 'plain'} ${here ? 'here' : ''}" ${here ? 'aria-current="page"' : ''} href="${href}">${label}</a>`; };
+  const item = (href, label, match, cls = 'plain') => { const here = match.test(path); return `<a class="btn ${cls} ${here ? 'here' : ''}" ${here ? 'aria-current="page"' : ''} href="${href}">${label}</a>`; };
   // Visitors only see Browse, Log in and Sign up; the rest needs an account.
-  if (!account) return item('/', L('Browse market', 'Browse'), /^\/$/) + item('/login', 'Log in', /^\/login$/) + item('/signup', 'Sign up', /^\/signup$/, true);
+  if (!account) return item('/', L('Browse market', 'Browse'), /^\/$/) + item('/login', 'Log in', /^\/login$/) + item('/signup', 'Sign up', /^\/signup$/, '');
   // Logged in, the bottom bar is Log out, Messages, Saved. Browse is the logo and the waffle menu has the rest.
   if (!long) return '<button type="button" class="btn plain" data-act="logout">Log out</button>' + item('/messages', `Messages${badge(unread)}`, /^\/messages/) + item('/saved', 'Saved', /^\/saved$/);
-  return item('/', L('Browse market', 'Browse'), /^\/$/) + item('/sell', 'Sell', /^\/sell$/, true) + item('/saved', 'Saved', /^\/saved$/)
-    + item('/messages', `Messages${badge(unread)}`, /^\/messages/) + item('/my-listings', L('My listings', 'Listings'), /^\/my-listings$|^\/listing\/[^/]+\/edit$/)
-    + item('/account', L('Account settings', 'Account'), /^\/account$/) + (account?.admin ? item('/admin', `${L('Site inbox', 'Inbox')}${badge(adminUnread)}`, /^\/admin/) : '');
+  return item('/', 'Browse market', /^\/$/) + item('/my-listings', 'My listings', /^\/my-listings$|^\/listing\/[^/]+\/edit$|^\/sell$/) + item('/saved', 'Saved', /^\/saved$/)
+    + item('/messages', `Messages${badge(unread)}`, /^\/messages/) + item('/account', 'Account settings', /^\/account$/)
+    + (account.admin ? item('/admin', `Site inbox${badge(adminUnread)}`, /^\/admin/, 'admin') : '');
 }
 // Bottom bar on main pages (short labels).
 export function sideNav(o) { return NO_SIDE.test(o.path) ? '' : navLinks(o, false); }
@@ -328,3 +329,15 @@ export const spotPicker = spot => `<div class="field spot-field"><span>Pickup sp
     <div class="spot-box" id="spotBox"></div>
     <div class="action-row"><button type="button" class="btn plain" id="spotClear" ${spot ? '' : 'hidden'}>Remove pin</button></div>
     <p class="err" id="spotErr" role="alert" hidden></p></div>`;
+
+/* ---------- admin ---------- */
+// Admins see this on every live listing. Deleting needs the admin's own password.
+export const adminDeleteBox = () => `<div class="admin-box">
+    <button type="button" class="btn danger" id="adminDeleteBtn">Admin delete</button>
+    <form class="admin-delete-form" id="adminDeleteForm" novalidate hidden>
+      <p class="note">This removes the listing for everyone and closes its chats. Type your password to finish.</p>
+      <label class="field"><span>Your password</span><input id="adminPw" type="password" autocomplete="current-password" maxlength="40"></label>
+      <p class="err" id="adminDeleteErr" role="alert" hidden></p>
+      <div class="action-row"><button type="submit" class="btn danger">Delete this listing</button><button type="button" class="btn plain" id="adminDeleteCancel">Cancel</button></div>
+    </form>
+  </div>`;

@@ -27,7 +27,7 @@ export function headerLinks({ account, unread, adminUnread = 0 }) {
   const adminBadge = adminUnread ? `<span class="badge-count">${adminUnread}</span>` : '';
   const badge = unread ? `<span class="badge-count">${unread}</span>` : '', name = account && ([...account.username].length > 16 ? [...account.username].slice(0, 15).join('') + '…' : account.username);
   return (account ? `<a class="btn" href="/sell">Sell</a>` : '') + (account
-    ? `${account.admin ? `<a href="/admin">Site inbox${adminBadge}</a>` : ''}<a href="/saved">Saved</a><a href="/messages">Messages${badge}</a><a href="/account">${esc(name)}</a>`
+    ? `${account.admin ? `<a class="admin-link" href="/admin">Site inbox${adminBadge}</a>` : ''}<a href="/saved">Saved</a><a href="/messages">Messages${badge}</a><a href="/account">${esc(name)}</a>`
     : `<a href="/login">Log in</a><a href="/signup">Sign up</a>`);
 }
 
@@ -101,12 +101,12 @@ function attrs(l) {
   const rows = [['Condition', l.condition], ...(l.kind === 'cars' ? [['Year', l.car.year], ['Odometer', l.car.miles.toLocaleString('en-US')], ['Title status', l.car.title_status], ['Tier', l.category]] : [['Fits', l.fits], ['Category', l.category]]), ['Handoff', l.handoff]];
   return `<div class="panel attrs">${rows.map(([a, b]) => `<div><span class="muted">${a}:</span> <b>${esc(b)}</b></div>`).join('')}</div>`;
 }
-export function listingPage({ listing: l, favorite, closed, minBid }) {
+export function listingPage({ listing: l, favorite, closed, minBid, admin }) {
   const statusNote = l.status === 'sold' ? '<p class="err">This listing has sold.</p>' : l.status === 'draft' ? '<p class="err">This draft never finished publishing.</p>' : closed ? '<p class="err">This listing is no longer public.</p>' : '';
   return `<div class="wrap page">
     <div class="crumb"><a href="/">Home</a> › ${esc(l.category)}</div>
     <div class="actions">
-      ${l.mine ? (closed ? '' : `<a class="btn plain" href="/listing/${esc(l.id)}/edit">Edit listing</a><button class="btn plain" id="soldBtn">Mark sold</button><button class="btn plain" id="deleteBtn">Delete listing</button>`) : `${favoriteButton(l.id, favorite)}${closed ? '' : '<button class="btn plain" id="reportBtn">Report</button>'}`}
+      ${l.mine ? (closed ? '' : `<a class="btn plain" href="/listing/${esc(l.id)}/edit">Edit listing</a><button class="btn plain" id="soldBtn">Mark sold</button><button class="btn plain" id="deleteBtn">Delete listing</button>`) : `${favoriteButton(l.id, favorite)}${closed ? '' : '<button class="btn plain" id="reportBtn" disabled title="Coming soon">Report</button>'}`}
     </div>
     <div class="post-title">${esc(l.title)} <span class="money">${money(l.price)}</span> <span class="town">(${townLine(l.city)})</span></div>
     ${statusNote}
@@ -121,6 +121,7 @@ export function listingPage({ listing: l, favorite, closed, minBid }) {
         ${attrs(l)}
         <div class="panel"><a class="seller-card" href="/seller/${esc(l.seller.id)}">${avatar(l.seller.photo, '')}<b>${esc(l.seller.username)}</b></a>
         </div>
+        ${admin && !closed ? adminDeleteBox() : ''}
         ${chatPanel(l, closed)}
       </div>
     </div></div>`;
@@ -195,7 +196,7 @@ const mailRow = m => `<a class="inbox-row mail-row ${m.unread ? 'unread' : ''}" 
     <div class="row-text"><b>${esc(m.subject || '(no subject)')}</b><div class="muted">${esc(m.from)}</div><div class="last">${esc(m.preview)}</div></div>
     <div class="mail-side"><span class="count">${esc(mailDate(m.received))}</span>${m.unread ? '<span class="badge-count">New</span>' : ''}</div></a>`;
 export const adminStrip = inbox => inbox ? `<div class="panel admin-strip">
-    <div class="sec-head"><h2>Site inbox</h2><span class="count">${inbox.unread ? `${inbox.unread} new` : 'Nothing new'}</span><a class="btn" href="/admin">Open inbox</a></div>
+    <div class="sec-head"><h2>Site inbox</h2><span class="count">${inbox.unread ? `${inbox.unread} new` : 'Nothing new'}</span><a class="btn admin" href="/admin">Open inbox</a></div>
     ${inbox.latest.length ? `<div class="inbox-list">${inbox.latest.map(mailRow).join('')}</div>` : ''}</div>` : '';
 export const adminInboxPage = ({ messages, waiting }) => `<div class="wrap page">
     <div class="sec-head"><h1 class="main-title">Site inbox</h1><span class="count">support@autohound.online and every other address</span></div>
@@ -267,7 +268,7 @@ export const myListingsPage = ({ listings, favorites }) => `<div class="wrap pag
 // Live listings keep their chats here instead of on a separate page.
 export const chatOnListing = true;
 const composer = (placeholder) => `<form class="composer chat-composer" id="composer" novalidate>
-      <textarea id="msgText" rows="8" maxlength="2000" placeholder="${placeholder}" aria-label="Message"></textarea>
+      <textarea id="msgText" rows="2" maxlength="2000" placeholder="${placeholder}" aria-label="Message"></textarea>
       <label class="btn plain" for="attachInput" aria-label="Attach a photo, video or PDF">Attach</label><input id="attachInput" class="sr" type="file" accept="image/*,video/mp4,video/webm,application/pdf">
       <button class="btn" type="submit">Send</button>
     </form>`;
@@ -303,3 +304,15 @@ export const spotPicker = spot => `<div class="field spot-field"><span>Pickup sp
     <div class="spot-box" id="spotBox"></div>
     <div class="action-row"><button type="button" class="btn plain" id="spotClear" ${spot ? '' : 'hidden'}>Remove pin</button></div>
     <p class="err" id="spotErr" role="alert" hidden></p></div>`;
+
+/* ---------- admin ---------- */
+// Admins see this on every live listing. Deleting needs the admin's own password.
+export const adminDeleteBox = () => `<div class="panel admin-box">
+    <button type="button" class="btn danger" id="adminDeleteBtn">Admin delete</button>
+    <form class="admin-delete-form" id="adminDeleteForm" novalidate hidden>
+      <p class="note">This removes the listing for everyone and closes its chats. Type your password to finish.</p>
+      <label class="field"><span>Your password</span><input id="adminPw" type="password" autocomplete="current-password" maxlength="40"></label>
+      <p class="err" id="adminDeleteErr" role="alert" hidden></p>
+      <div class="action-row"><button type="submit" class="btn danger">Delete this listing</button><button type="button" class="btn plain" id="adminDeleteCancel">Cancel</button></div>
+    </form>
+  </div>`;

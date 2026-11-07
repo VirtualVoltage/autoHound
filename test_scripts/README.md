@@ -9,6 +9,9 @@ Older scripts were written for earlier versions of the site, so some no longer m
 
 ## The main ones
 
+`source test_scripts/fresh-store.sh` starts the node server on port 8791 with a fresh, fully set up store and makes "redline riley" an admin (it sets `NP`, so `kill $NP` stops it). Clear `work/wt/.wrangler` before wrangler runs so old test data doesn't trip the tests.
+
+
 | Script | What it checks |
 | --- | --- |
 | `run6.sh` → `t6.js` | Full flow on `server/node-server.js` with a fresh store: signup, selling with photos, chat, bids, deleting, phone layout. |
@@ -25,6 +28,7 @@ Older scripts were written for earlier versions of the site, so some no longer m
 | `t32.js`, `t40.js`, `t48.js` | Other profiles, using a copy of the site with `DEFAULT_PROFILE` changed, on port 8792. |
 | `t8.js` | Phone layout audit. Needs a fresh store. |
 | `t53.js`, `t31.js` | Listing chat box: one frame for messages and typing; buyer, seller tabs, photos, replies, sold chats. |
+| `t54.js` | Admin delete: red button for admins only, wrong password refused, listing moved to backups with `removed_by_admin`. Run as `t54.js <url> <store folder>` after `fresh-store.sh`. |
 | `t51.js` | profile3 phones: square magnifying-glass button and the waffle slide-out menu. |
 | `t49.js`, `t50.js` | Map page, Map button, DEMO tag, example businesses, and the pickup pin on the sell and edit forms (`t50.js` for other profiles). Map tiles can't load in the test box, so these check pins and saving. |
 

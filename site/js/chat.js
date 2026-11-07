@@ -8,7 +8,13 @@ import { needLogin } from './app.js';
 export function mountChat({ id = null, listingId = null, onStart } = {}) {
   let convId = id, me = session.account?.id, poll = null;
   const pending = [], seen = new Set(), thread = $('thread'), box = $('msgText');
-  const add = m => { if (seen.has(m.id)) return; seen.add(m.id); thread.insertAdjacentHTML('beforeend', view.bubble(m, me)); thread.scrollTop = thread.scrollHeight; };
+  // The chat opens at the newest message. It stays pinned there unless you scroll up to read, and photos
+  // that finish loading later keep it pinned too.
+  let pinned = true;
+  const toBottom = () => { thread.scrollTop = thread.scrollHeight; };
+  thread.addEventListener('scroll', () => { pinned = thread.scrollHeight - thread.scrollTop - thread.clientHeight < 60; });
+  thread.addEventListener('load', () => { if (pinned) toBottom(); }, true);
+  const add = m => { if (seen.has(m.id)) return; seen.add(m.id); thread.insertAdjacentHTML('beforeend', view.bubble(m, me)); if (pinned || m.from === me) toBottom(); };
   const load = async () => {
     if (!convId) return;
     const d = await api('conversations/' + encodeURIComponent(convId));
@@ -45,7 +51,7 @@ export function mountChat({ id = null, listingId = null, onStart } = {}) {
         convId = r.id; box.value = ''; await load(); startPolling(); onStart?.(convId);
       } else {
         const r = await api(`conversations/${convId}/messages`, { json: { text, attachments: pending } });
-        box.value = ''; pending.length = 0; $('attachPreview').innerHTML = ''; r.messages.forEach(add);
+        box.value = ''; pending.length = 0; $('attachPreview').innerHTML = ''; pinned = true; r.messages.forEach(add);
       }
     } catch (er) { toast(er.message); }
     btn.disabled = false; box.focus();
