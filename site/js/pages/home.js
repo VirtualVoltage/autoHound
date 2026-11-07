@@ -31,7 +31,7 @@ export async function homePage() {
   const q = new URLSearchParams(location.search).get('q') || '';
   if ($('searchInput')) $('searchInput').value = q;
   const first = await api('listings?limit=40');
-  $('main').innerHTML = view.homePage({ q, min: state.min, max: state.max, sort: state.sort, sorts: SORTS, tickerListings: mix(first.listings) });
+  $('main').innerHTML = view.homePage({ q, min: state.min, max: state.max, sort: state.sort, sorts: SORTS, tickerListings: mix(first.listings), adminInbox: session.adminInbox });
   let timer;
   const refilter = () => { clearTimeout(timer); timer = setTimeout(() => { state.min = $('minPrice')?.value ?? ''; state.max = $('maxPrice')?.value ?? ''; load(false); }, 300); };
   $('minPrice')?.addEventListener('input', refilter); $('maxPrice')?.addEventListener('input', refilter);

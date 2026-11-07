@@ -241,3 +241,11 @@ main { min-width: 0; }
   .up-x { width: 32px; height: 32px; }
 }
 @media (max-width: 350px) { .two { gap: 8px; } .sorts { gap: 4px; } .sorts .btn { font-size: 12px; white-space: nowrap; } }
+
+/* admin inbox */
+.admin-strip .inbox-list { gap: 6px; }
+.inbox-row.mail-row { grid-template-columns: minmax(0,1fr) auto; padding: 10px 12px; }
+.mail-side { display: grid; justify-items: end; gap: 4px; }
+.mail-row .badge-count { margin: 0; }
+.mail-body { white-space: pre-wrap; overflow-wrap: anywhere; }
+.mail-row .row-text > * { overflow-wrap: anywhere; }

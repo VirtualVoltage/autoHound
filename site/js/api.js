@@ -26,10 +26,10 @@ export async function api(path, opts = {}) {
   return d;
 }
 export const upload = (path, blob) => api(path, { method: 'POST', headers: { 'content-type': blob.type || 'image/jpeg' }, body: blob });
-export const session = { account: null, unread: 0, favorites: new Set(), options: null };
+export const session = { account: null, unread: 0, adminInbox: null, favorites: new Set(), options: null };
 export async function refreshSession() {
   const d = await api('me');
-  session.account = d.account; session.unread = d.unread;
+  session.account = d.account; session.unread = d.unread; session.adminInbox = d.admin_inbox || null;
   session.favorites = new Set(session.account ? (await api('favorites')).ids : []);
 }
 export async function getOptions() { return session.options || (session.options = await api('options')); }

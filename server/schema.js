@@ -1,4 +1,4 @@
-// Search index only. Everything except sessions and limits can be rebuilt from records/ and data/.
+// Search index only. Everything except sessions, limits and mail_queue can be rebuilt from records/ and data/.
 export const SCHEMA = [
   `CREATE TABLE IF NOT EXISTS system_state(key TEXT PRIMARY KEY, value TEXT)`,
   `CREATE TABLE IF NOT EXISTS counters(key TEXT PRIMARY KEY, n INTEGER NOT NULL)`,
@@ -13,6 +13,10 @@ export const SCHEMA = [
   `CREATE INDEX IF NOT EXISTS conv_activity ON conversations(status, last_activity)`,
   `CREATE TABLE IF NOT EXISTS files(id TEXT PRIMARY KEY, path TEXT NOT NULL, ext TEXT, owner_account TEXT, listing_id TEXT, conversation_id TEXT)`,
   `CREATE TABLE IF NOT EXISTS reports(listing_id TEXT NOT NULL, account_id TEXT NOT NULL, PRIMARY KEY(listing_id, account_id))`,
+  `CREATE TABLE IF NOT EXISTS inbox(id TEXT PRIMARY KEY, path TEXT NOT NULL, data_path TEXT NOT NULL, from_addr TEXT, to_addr TEXT, subject TEXT, received TEXT NOT NULL, unread INTEGER NOT NULL DEFAULT 1, preview TEXT)`,
+  `CREATE INDEX IF NOT EXISTS inbox_received ON inbox(received)`,
+  // Emails waiting to be saved into records/inbox. Filled by the mail intake worker, emptied by processMailQueue.
+  `CREATE TABLE IF NOT EXISTS mail_queue(id INTEGER PRIMARY KEY AUTOINCREMENT, received INTEGER NOT NULL, mail_from TEXT, rcpt_to TEXT, raw BLOB NOT NULL, size INTEGER, truncated INTEGER NOT NULL DEFAULT 0, email_id TEXT)`,
   `CREATE TABLE IF NOT EXISTS sessions(token_hash TEXT PRIMARY KEY, account_id TEXT NOT NULL, expires INTEGER NOT NULL)`,
   `CREATE TABLE IF NOT EXISTS limits(key TEXT PRIMARY KEY, window_start INTEGER NOT NULL, n INTEGER NOT NULL)`,
 ];
@@ -24,4 +28,4 @@ export const MIGRATIONS = [
 export const AFTER_MIGRATIONS = [
   `CREATE UNIQUE INDEX IF NOT EXISTS accounts_email ON accounts(lower(email))`,
 ];
-export const REBUILDABLE_TABLES = ['accounts', 'listings', 'conversations', 'files', 'reports'];
+export const REBUILDABLE_TABLES = ['accounts', 'listings', 'conversations', 'files', 'reports', 'inbox'];

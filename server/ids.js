@@ -10,7 +10,8 @@ export async function nextId(db, type) {
   const row = await db.get('INSERT INTO counters(key,n) VALUES(?,0) ON CONFLICT(key) DO UPDATE SET n=n+1 RETURNING n', key);
   return `${key}.${pad(row.n, 5)}`;
 }
-export const ID_PATTERN = /^[ALPFCM]\.\d\d\.\d\d\.\d\d\.\d{5,}$/;
+// A account, L listing, P photo, F file, C chat, M message, E email to the site's inbox.
+export const ID_PATTERN = /^[ALPFCME]\.\d\d\.\d\d\.\d\d\.\d{5,}$/;
 export const isId = (s, type) => ID_PATTERN.test(s || '') && (!type || s[0] === type);
 
 // Folder names are ID__title. The title keeps real words, with _ in place of spaces.

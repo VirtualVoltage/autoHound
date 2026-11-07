@@ -231,3 +231,13 @@ a, button, label, input, select, textarea, summary { touch-action: manipulation;
   .crumb a, .note a, .thread-head a { display: inline-block; padding-block: 10px; }
   .composer textarea { min-height: 44px; }
 }
+
+/* admin inbox */
+.admin-strip { margin-bottom: 14px; }
+.inbox-row.mail-row { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 10px; }
+.mail-side { display: grid; justify-items: end; gap: 4px; }
+.mail-body { white-space: pre-wrap; overflow-wrap: anywhere; }
+.attr { display: flex; justify-content: space-between; gap: 10px; }
+.mail-row .row-text > * { overflow-wrap: anywhere; }
+.inbox-row.mail-row { grid-template-columns: minmax(0,1fr); gap: 6px; }
+.mail-side { grid-auto-flow: column; justify-content: start; align-items: center; gap: 8px; }

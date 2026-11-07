@@ -7,17 +7,19 @@ import { sellPage } from './pages/sell.js';
 import { authPage } from './pages/auth.js';
 import { inboxPage, threadPage } from './pages/messages.js';
 import { accountPage, sellerPage, favoritesPage } from './pages/account.js';
+import { adminInboxPage, adminMessagePage } from './pages/admin.js';
 
 const ROUTES = [
   [/^\/$/, homePage], [/^\/listing\/([^/]+)$/, listingPage], [/^\/sell$/, sellPage],
   [/^\/signup$/, () => authPage('signup')], [/^\/login$/, () => authPage('login')],
   [/^\/messages$/, inboxPage], [/^\/messages\/([^/]+)$/, threadPage],
   [/^\/account$/, accountPage], [/^\/favorites$/, favoritesPage], [/^\/seller\/([^/]+)$/, sellerPage],
+  [/^\/admin$/, adminInboxPage], [/^\/admin\/([^/]+)$/, adminMessagePage],
 ];
 let leave = null, token = 0;
 export function go(path, replace) { history[replace ? 'replaceState' : 'pushState']({}, '', path); route(); }
 export function needLogin() { go('/login?next=' + encodeURIComponent(location.pathname + location.search), true); }
-export function renderHeader() { const h = $('headLinks'); if (h) h.innerHTML = view.headerLinks({ account: session.account, unread: session.unread }); }
+export function renderHeader() { const h = $('headLinks'); if (h) h.innerHTML = view.headerLinks({ account: session.account, unread: session.unread, adminUnread: session.adminInbox?.unread || 0 }); }
 async function route() {
   if (leave) { try { leave(); } catch {} leave = null; }
   const mine = ++token, path = location.pathname.replace(/(.)\/$/, '$1');
@@ -53,7 +55,7 @@ document.addEventListener('error', e => {
 }, true);
 addEventListener('popstate', route);
 setInterval(() => document.querySelectorAll('[data-end]').forEach(n => { n.textContent = timeLeft(+n.dataset.end - Date.now()); }), 1000);
-setInterval(async () => { if (session.account && !document.hidden) { try { const d = await api('me'); if (d.unread !== session.unread) { session.unread = d.unread; renderHeader(); } } catch {} } }, 30000);
+setInterval(async () => { if (session.account && !document.hidden) { try { const d = await api('me'); if (d.unread !== session.unread || (d.admin_inbox?.unread || 0) !== (session.adminInbox?.unread || 0)) { session.unread = d.unread; session.adminInbox = d.admin_inbox || null; renderHeader(); } } catch {} } }, 30000);
 
 (async function start() {
   $('app').innerHTML = view.shell();

@@ -24,10 +24,11 @@ export const shell = () => `
 <main id="main"></main>
 <footer><div class="wrap foot-note">Sample photos came from public GitHub projects and belong to their owners. Replace them before a real launch.</div></footer>
 <div id="toast" class="toast" role="status" hidden></div>`;
-export function headerLinks({ account, unread }) {
+export function headerLinks({ account, unread, adminUnread = 0 }) {
+  const adminBadge = adminUnread ? `<span class="badge-count">${adminUnread}</span>` : '';
   const badge = unread ? `<span class="badge-count">${unread}</span>` : '', name = account && ([...account.username].length > 16 ? [...account.username].slice(0, 15).join('') + '…' : account.username);
   return `<a class="btn" href="/sell">Sell</a>` + (account
-    ? `<a href="/favorites">Favorites</a><a href="/messages">Messages${badge}</a><a href="/account">${esc(name)}</a>`
+    ? `${account.admin ? `<a href="/admin">Site inbox${adminBadge}</a>` : ''}<a href="/favorites">Favorites</a><a href="/messages">Messages${badge}</a><a href="/account">${esc(name)}</a>`
     : `<a href="/login">Log in</a><a href="/signup">Sign up</a>`);
 }
 
@@ -60,8 +61,9 @@ function ticker(list) {
   const items = list.slice(0, 8).map(l => `<span class="tk-i">${esc(l.title.toUpperCase())} <span class="money">${money(l.price)}</span> <span class="town">${esc(l.city.toUpperCase())}</span></span>`).join('');
   return items ? `<div class="ticker" aria-hidden="true"><div class="ticker-in">${items}${items}</div></div>` : '';
 }
-export const homePage = ({ q, min, max, sort, sorts, tickerListings }) => `<div class="banner"><img src="${profileAsset('brand-banner.webp')}" alt="Autohound: a dog carrying a wrench in its mouth"></div>${ticker(tickerListings)}
+export const homePage = ({ q, min, max, sort, sorts, tickerListings, adminInbox }) => `<div class="banner"><img src="${profileAsset('brand-banner.webp')}" alt="Autohound: a dog carrying a wrench in its mouth"></div>${ticker(tickerListings)}
   <div class="wrap page">
+    ${adminStrip(adminInbox)}
     <h1 class="main-title center">${q ? `Results for ${esc(q)}` : 'Popular listings'}</h1>
     <div class="filters">
       <div class="price-range"><b>Price</b><input id="minPrice" type="number" min="0" inputmode="numeric" placeholder="min" aria-label="Minimum price" value="${esc(min)}"><span>to</span><input id="maxPrice" type="number" min="0" inputmode="numeric" placeholder="max" aria-label="Maximum price" value="${esc(max)}"></div>
@@ -182,3 +184,26 @@ export const accountPage = ({ account: a, photo, listings, favorites }) => `<div
     <h2 style="margin-bottom:10px">Your listings</h2>${grid(listings, 'You have no live listings.', favorites)}</div>`;
 export const sellerPage = ({ account: a, listings, favorites }) => `<div class="wrap page"><div class="profile">${avatar(a.photo, '')}<div style="display:grid;gap:6px"><h1 class="main-title">${esc(a.username)}</h1><span class="muted">Joined ${shortDate(a.joined)} · ${listings.length} live listings</span></div></div>${grid(listings, 'No live listings.', favorites)}</div>`;
 export const favoritesPage = ({ listings, favorites }) => `<div class="wrap page"><h1 class="main-title" style="margin-bottom:12px">Favorites</h1>${grid(listings, 'Press the star on any listing to save it here.', favorites)}</div>`;
+
+/* ---------- admin: the site's own inbox ---------- */
+const mailDate = iso => clock(iso);
+const mailRow = m => `<a class="inbox-row mail-row ${m.unread ? 'unread' : ''}" href="/admin/${esc(m.id)}">
+    <div class="row-text"><b>${esc(m.subject || '(no subject)')}</b><div class="muted">${esc(m.from)}</div><div class="last">${esc(m.preview)}</div></div>
+    <div class="mail-side"><span class="count">${esc(mailDate(m.received))}</span>${m.unread ? '<span class="badge-count">New</span>' : ''}</div></a>`;
+export const adminStrip = inbox => inbox ? `<div class="panel admin-strip">
+    <div class="sec-head"><h2>Site inbox</h2><span class="count">${inbox.unread ? `${inbox.unread} new` : 'Nothing new'}</span><a class="btn" href="/admin">Open inbox</a></div>
+    ${inbox.latest.length ? `<div class="inbox-list">${inbox.latest.map(mailRow).join('')}</div>` : ''}</div>` : '';
+export const adminInboxPage = ({ messages, waiting }) => `<div class="wrap page">
+    <div class="sec-head"><h1 class="main-title">Site inbox</h1><span class="count">support@autohound.online and every other address</span></div>
+    ${waiting ? `<p class="note">${waiting} more ${waiting === 1 ? 'email is' : 'emails are'} still being saved. Refresh in a moment.</p>` : ''}
+    ${messages.length ? `<div class="inbox-list">${messages.map(mailRow).join('')}</div>` : `<div class="empty"><b>No email yet.</b><span class="muted">Mail sent to any @autohound.online address shows up here.</span></div>`}</div>`;
+export const adminMessagePage = ({ message: m, rawUrl }) => `<div class="wrap page">
+    <div class="crumb"><a href="/admin">Site inbox</a></div>
+    <div class="panel">
+      <div class="post-title">${esc(m.subject || '(no subject)')}</div>
+      <div class="attrs">${[['From', m.from], ['To', m.to], ['Cc', m.cc], ['Reply to', m.reply_to], ['Received', mailDate(m.received)]].filter(([, v]) => v).map(([a, b]) => `<div class="attr"><span class="muted">${a}</span><b>${esc(b)}</b></div>`).join('')}</div>
+      ${m.attachments?.length ? `<div class="attr"><span class="muted">Attachments</span><b>${m.attachments.map(x => esc(x.name)).join(', ')}</b></div>` : ''}
+      ${m.truncated ? '<p class="err">This email was too big, so only the first part was saved.</p>' : ''}
+      <div class="actions"><a class="btn plain" href="${esc(rawUrl)}" target="_blank" rel="noopener" download>Download original email</a></div>
+    </div>
+    <div class="panel"><p class="mail-body">${esc(m.text || '(This email has no text.)')}</p></div></div>`;

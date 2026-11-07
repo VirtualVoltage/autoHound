@@ -28,12 +28,14 @@ Unless the owner says a big change is coming, act as if real people depend on th
 - After 7 days with no message, a chat moves to the next `backupN`, and each new message resets the timer. Sold or removed listings keep their chat in both inboxes until then.
 - Sold or removed listings move to `records/backups/listings/<date>__listings/` and the matching `data/` folder, sorted by the listing's ID date. Their chats move out first. Older ones move one per visit, and a move cut off partway finishes on a later visit.
 - Public text (usernames, listings, and any future comments) goes through `server/wordfilter.js`, which blocks slurs and profanity. Private chats are never filtered.
+- An account is an admin only while its `account.json` has `"admin": true`. It's toggled by hand, never by the site. Admins see the site inbox in the menu and at the top of the home page.
+- Email sent to any @autohound.online address goes to the site's own inbox. The `autohound-mail` Worker (`workers/mail-intake.js`, deployed by hand) puts it in `mail_queue`, and `server/mail.js` saves it as `records/inbox/<date>__inbox/E.ID__Subject/message.json` plus `message.eml` in the matching `data/` folder. Email is shown as plain text only, never as HTML.
 - Auction pages never show buyers a market value comparison.
 - The home page shows popular listing windows, with only search and price filters.
 
-## Preview in the Claude app
+## Viewing the site
 
-After any visual change, rebuild the side panel preview and republish it to the same artifact, https://claude.ai/artifact/55jiC8kWCX265RgCgnoXfb. Run a local server on a fresh sample copy, then `node scripts/build-preview.mjs <local url> <out.html>`. Never point it at the live site.
+The owner watches the live site in the Claude desktop app's browser pane. The old sample preview artifact is retired. `scripts/build-preview.mjs` still works if a sample preview is ever wanted.
 
 ## Before a real launch
 

@@ -4,6 +4,7 @@ import { readJsonFile, readLines } from './http.js';
 import { idOf, isId, dayFolder, parseName, folderTitle } from './ids.js';
 import { usernameKey } from './auth.js';
 import { indexRow, INSERT_LISTING } from './listings.js';
+import { indexInbox } from './mail.js';
 
 const extOf = parts => { const n = parts[parts.length - 1]; return n.includes('.') ? n.split('.').pop().toLowerCase() : null; };
 export async function ensureSchema(db) {
@@ -27,6 +28,7 @@ export async function rebuildStep(ctx, cursor, problems = []) {
   for (const day of (await store.listFolders('records/accounts')).sort()) for (const a of (await store.listFolders(`records/accounts/${day}`)).sort()) accounts.push(`${day}/${a}`);
   if (cursor < accounts.length) { await indexAccount(ctx, accounts[cursor], problems); return { cursor: cursor + 1, total: accounts.length, done: false, problems }; }
   await indexArchivedListings(ctx, problems);
+  await indexInbox(ctx, problems);
   await indexArchived(ctx, problems);
   await repairCounters(ctx);
   return { cursor, total: accounts.length, done: true, problems };
@@ -130,5 +132,7 @@ async function repairCounters(ctx) {
 export async function rebuildAll(ctx, log = () => {}) {
   let s = await rebuildStep(ctx, null, []);
   while (!s.done) { log(`${s.cursor}/${s.total} accounts`); s = await rebuildStep(ctx, s.cursor, s.problems); }
+  // The index is complete, so the site shouldn't run first-time setup again.
+  await ctx.db.run("INSERT INTO system_state(key,value) VALUES('ready','1') ON CONFLICT(key) DO UPDATE SET value='1'");
   return s;
 }

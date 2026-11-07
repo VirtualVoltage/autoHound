@@ -27,10 +27,11 @@ const navButton = (href, label) => {
   const here = href === '/' ? location.pathname === '/' : location.pathname.startsWith(href);
   return `<a class="btn plain ${here ? 'here' : ''}" ${here ? 'aria-current="page"' : ''} href="${href}">${label}</a>`;
 };
-export function headerLinks({ account, unread }) {
+export function headerLinks({ account, unread, adminUnread = 0 }) {
+  const adminBadge = adminUnread ? `<span class="badge-count">${adminUnread}</span>` : '';
   const badge = unread ? `<span class="badge-count">${unread}</span>` : '';
   return navButton('/', 'Browse all') + (account
-    ? navButton('/favorites', 'Favorites') + navButton('/messages', `Messages${badge}`) + navButton('/account', `<span class="nav-name">${esc(account.username)}</span>`)
+    ? (account.admin ? navButton('/admin', `Site inbox${adminBadge}`) : '') + navButton('/favorites', 'Favorites') + navButton('/messages', `Messages${badge}`) + navButton('/account', `<span class="nav-name">${esc(account.username)}</span>`)
     : navButton('/login', 'Log in') + navButton('/signup', 'Sign up')) + `<a class="btn" href="/sell">Sell</a>`;
 }
 
@@ -59,7 +60,8 @@ export function meter(ratio, value) {
 const grid = (list, empty, favorites) => list.length ? `<div class="windows">${list.map(l => windowCard(l, favorites.has(l.id))).join('')}</div>` : `<div class="empty"><b>${empty}</b></div>`;
 
 /* ---------- home ---------- */
-export const homePage = ({ q, min, max, sort, sorts }) => `<div class="page">
+export const homePage = ({ q, min, max, sort, sorts, adminInbox }) => `<div class="page">
+    ${adminStrip(adminInbox)}
     <div class="toolbar">
       <h1 class="main-title">${q ? `Results for ${esc(q)}` : 'Popular listings'}</h1>
       <div class="price-range"><span>Price</span><input id="minPrice" type="number" min="0" inputmode="numeric" placeholder="Min" aria-label="Minimum price" value="${esc(min)}"><span>to</span><input id="maxPrice" type="number" min="0" inputmode="numeric" placeholder="Max" aria-label="Maximum price" value="${esc(max)}"></div>
@@ -184,3 +186,26 @@ export const accountPage = ({ account: a, photo, listings, favorites }) => `<div
     <div class="toolbar"><h2>Your listings</h2></div>${grid(listings, 'You have no live listings.', favorites)}</div>`;
 export const sellerPage = ({ account: a, listings, favorites }) => `<div class="page"><div class="panel profile">${avatar(a.photo, '')}<div class="row-text"><h1 class="main-title">${esc(a.username)}</h1><span class="count">Joined ${shortDate(a.joined)} · ${listings.length} live listings</span></div></div>${grid(listings, 'No live listings.', favorites)}</div>`;
 export const favoritesPage = ({ listings, favorites }) => `<div class="page"><div class="toolbar"><h1 class="main-title">Favorites</h1></div>${grid(listings, 'Press the star on any listing to save it here.', favorites)}</div>`;
+
+/* ---------- admin: the site's own inbox ---------- */
+const mailDate = iso => clock(iso);
+const mailRow = m => `<a class="inbox-row mail-row ${m.unread ? 'unread' : ''}" href="/admin/${esc(m.id)}">
+    <div class="row-text"><b>${esc(m.subject || '(no subject)')}</b><div class="muted">${esc(m.from)}</div><div class="last">${esc(m.preview)}</div></div>
+    <div class="mail-side"><span class="count">${esc(mailDate(m.received))}</span>${m.unread ? '<span class="badge-count">New</span>' : ''}</div></a>`;
+export const adminStrip = inbox => inbox ? `<div class="panel admin-strip">
+    <div class="toolbar"><h2>Site inbox</h2><span class="count">${inbox.unread ? `${inbox.unread} new` : 'Nothing new'}</span><a class="btn" href="/admin">Open inbox</a></div>
+    ${inbox.latest.length ? `<div class="inbox-list">${inbox.latest.map(mailRow).join('')}</div>` : ''}</div>` : '';
+export const adminInboxPage = ({ messages, waiting }) => `<div class="page">
+    <div class="toolbar"><h1 class="main-title">Site inbox</h1><span class="count">support@autohound.online and every other address</span></div>
+    ${waiting ? `<p class="note">${waiting} more ${waiting === 1 ? 'email is' : 'emails are'} still being saved. Refresh in a moment.</p>` : ''}
+    ${messages.length ? `<div class="inbox-list">${messages.map(mailRow).join('')}</div>` : `<div class="empty"><b>No email yet.</b><span class="muted">Mail sent to any @autohound.online address shows up here.</span></div>`}</div>`;
+export const adminMessagePage = ({ message: m, rawUrl }) => `<div class="page">
+    <div class="back-row"><a class="btn plain" href="/admin">Back to inbox</a></div>
+    <div class="panel">
+      <div class="post-title">${esc(m.subject || '(no subject)')}</div>
+      <div class="attrs">${[['From', m.from], ['To', m.to], ['Cc', m.cc], ['Reply to', m.reply_to], ['Received', mailDate(m.received)]].filter(([, v]) => v).map(([a, b]) => `<div class="attr"><span class="muted">${a}</span><b>${esc(b)}</b></div>`).join('')}</div>
+      ${m.attachments?.length ? `<div class="attr"><span class="muted">Attachments</span><b>${m.attachments.map(x => esc(x.name)).join(', ')}</b></div>` : ''}
+      ${m.truncated ? '<p class="err">This email was too big, so only the first part was saved.</p>' : ''}
+      <div class="action-row"><a class="btn plain" href="${esc(rawUrl)}" target="_blank" rel="noopener" download>Download original email</a></div>
+    </div>
+    <div class="panel"><p class="mail-body">${esc(m.text || '(This email has no text.)')}</p></div></div>`;

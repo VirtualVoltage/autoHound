@@ -8,16 +8,21 @@ const setState = (db, key, value) => db.run('INSERT INTO system_state(key,value)
 export async function isReady(db) { try { return (await getState(db, 'ready')) === '1'; } catch { return false; } }
 
 // Fresh server: copy in the demo accounts a few files at a time, then build the index from those files.
+// If records/ already has accounts, nothing is copied: a missing index only gets rebuilt, and real data is never overwritten.
 export async function setupStep(ctx) {
   const { db, store, assets } = ctx;
   await ensureSchema(db);
   if ((await getState(db, 'ready')) === '1') return json({ done: true, progress: 1 });
   const total = SEED_RECORDS.length + SEED_ASSETS.length;
-  let i = +(await getState(db, 'seed_cursor') || 0);
+  let cursor = await getState(db, 'seed_cursor');
+  if (cursor === null && (await store.listFolders('records/accounts')).length) { cursor = total; await setState(db, 'seed_cursor', total); }
+  let i = +(cursor || 0);
   if (i < total) {
     for (let n = 0; n < 15 && i < total; n++, i++) {
-      if (i < SEED_RECORDS.length) await store.writeText(SEED_RECORDS[i].path, SEED_RECORDS[i].text);
-      else { const a = SEED_ASSETS[i - SEED_RECORDS.length]; await store.writeBytes(a.path, await assets.read(a.asset)); }
+      const path = i < SEED_RECORDS.length ? SEED_RECORDS[i].path : SEED_ASSETS[i - SEED_RECORDS.length].path;
+      if (await store.exists(path)) continue;
+      if (i < SEED_RECORDS.length) await store.writeText(path, SEED_RECORDS[i].text);
+      else await store.writeBytes(path, await assets.read(SEED_ASSETS[i - SEED_RECORDS.length].asset));
     }
     await setState(db, 'seed_cursor', i);
     return json({ done: false, progress: i / total * 0.8 });
