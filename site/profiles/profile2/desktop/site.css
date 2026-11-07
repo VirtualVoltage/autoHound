@@ -58,7 +58,6 @@ textarea { display: block; resize: vertical; }
 .two { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: var(--gap); }
 
 /* frame: logo on the left, search in the middle, buttons on the top right */
-.demo-strip { padding: 4px 16px; background: #052a07; color: #e6ffe6; font-size: 11px; text-align: center; }
 .topbar { position: sticky; top: 0; z-index: 10; background: #050705; border-bottom: 1px solid var(--neon); box-shadow: 0 2px 16px rgba(20,255,30,.55); }
 .topbar-in, .layout { width: 100%; max-width: 1480px; margin: 0 auto; padding-left: var(--gutter-l); padding-right: var(--gutter-r); }
 .topbar-in { display: grid; grid-template-columns: auto minmax(0,1fr) auto; align-items: center; gap: 20px; padding-block: 8px; }
@@ -263,3 +262,15 @@ main { min-width: 0; }
 /* Add or fix an email in account settings */
 .email-add { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; margin: 10px 0; }
 .email-add .field { flex: 1 1 240px; min-width: 0; margin: 0; }
+
+/* listing photos: arrows on hover, arrow keys, and the current thumbnail lit up */
+.photo-frame { position: relative; min-width: 0; }
+.photo-arrow { position: absolute; top: 50%; z-index: 2; display: flex; align-items: center; justify-content: center; width: 46px; height: 66px; margin-top: -33px; padding: 0 0 4px; background: rgba(0,0,0,.65); border: 1px solid var(--neon); color: #fff; font: 700 38px/1 sans-serif; text-shadow: 0 0 8px var(--neon); box-shadow: 0 0 12px rgba(42,255,50,.45); cursor: pointer; opacity: 0; transition: opacity .15s; }
+.photo-arrow.prev { left: 10px; }
+.photo-arrow.next { right: 10px; }
+.photo-frame:hover .photo-arrow, .photo-arrow:focus-visible { opacity: 1; }
+.photo-arrow:hover { background: rgba(10,40,12,.85); }
+.photo-count { position: absolute; right: 10px; bottom: 10px; z-index: 2; padding: 2px 8px; background: rgba(0,0,0,.65); color: #fff; font-size: 12px; font-weight: 700; }
+@media (hover: none) { .photo-arrow { opacity: .85; width: 40px; height: 56px; margin-top: -28px; font-size: 32px; } }
+.thumbs button.on { border-color: var(--neon); box-shadow: 0 0 10px rgba(42,255,50,.6); }
+.post-desc { display: grid; gap: 6px; margin: 4px 0 10px; }

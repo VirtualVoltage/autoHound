@@ -4,7 +4,7 @@ import { api, upload, session, getOptions } from '../api.js';
 import { go, needLogin } from '../app.js';
 
 const MAX = 8;
-// Rough demo estimates, used for the price guide.
+// Rough estimates, used for the price guide.
 const ESTIMATES = [['Coilovers', 900, 'Suspension'], ['Clutch kit', 420, 'Drivetrain'], ['Wheels, set of 4', 1100, 'Wheels & Tires'], ['Turbocharger', 1250, 'Engine'], ['Standalone ECU', 700, 'Electrical'], ['Headlight pair', 260, 'Lighting'], ['Tires, set of 4', 520, 'Wheels & Tires'], ['Big brake kit', 980, 'Brakes'], ['Intake', 180, 'Engine'], ['Bucket seats, pair', 650, 'Interior'], ['Interior panels', 220, 'Interior']];
 const COND_FACTOR = { New: 1.2, 'Like new': 1.05, Excellent: 1, Good: .9, Fair: .7, 'Parts only': .4 };
 const blank = () => ({ kind: 'parts', part: 'other', category: 'Engine', tier: 'Daily', year: '', miles: '', title_status: 'Clean', condition: 'Good', sell_type: 'post', price: '', title: '', fits: '', city: 'Lynden', handoff: 'Meet up or pick up', description: '', photos: [] });

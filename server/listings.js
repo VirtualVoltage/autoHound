@@ -56,7 +56,7 @@ export async function createDraft({ db, store, request }) {
   const a = await requireAccount(db, request), f = cleanFields(await readJson(request));
   if (!await hit(db, 'post:' + a.id, LIMITS.listingsPerHour, 3600e3)) fail(429, `You can post ${LIMITS.listingsPerHour} listings an hour. Try again later.`);
   const live = await db.get("SELECT COUNT(*) n FROM listings WHERE status='live'");
-  if (live.n >= LIMITS.totalLiveListings) fail(409, 'The demo is full right now.');
+  if (live.n >= LIMITS.totalLiveListings) fail(409, 'Autohound is full right now. Try again later.');
   const id = await nextId(db, 'L'), folder = folderName(id, f.title, 'listing'), path = `${a.path}/listings/${folder}`, dataPath = `${a.data_path}/listings/${folder}`;
   const created = new Date().toISOString();
   const l = { id, account: a.id, ...f, photos: [], status: 'draft', created, auction_ends: f.sell_type === 'auction' ? Date.now() + LIMITS.auctionMs : null };

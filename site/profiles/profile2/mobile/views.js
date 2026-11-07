@@ -7,11 +7,10 @@ export const ph = (src, cover, alt = '') => src ? `<span class="ph ${cover ? 'co
 export const missingPhoto = () => `<span class="ph missing">Photo unavailable</span>`;
 export const avatar = (src, alt = '') => `<img class="avatar" src="${esc(src || profileAsset('brand-profile.webp'))}" alt="${esc(alt)}">`;
 export const notFound = (msg = 'That page isn\'t here.') => `<div class="page"><div class="empty"><b>${esc(msg)}</b><a class="btn" href="/">Browse listings</a></div></div>`;
-export const setupScreen = () => `<div class="setup"><h1 class="main-title">Setting up the demo</h1><div class="bar"><i id="setupBar" style="width:0"></i></div><p class="muted">This only happens once.</p></div>`;
+export const setupScreen = () => `<div class="setup"><h1 class="main-title">Getting Autohound ready</h1><div class="bar"><i id="setupBar" style="width:0"></i></div><p class="muted">This only happens once.</p></div>`;
 
 /* ---------- frame around every page ---------- */
 export const shell = () => `
-<div class="demo-strip">Demo. The demo accounts and listings are made up, and anything you post is public. Nothing is charged.</div>
 <header class="topbar"><div class="topbar-in">
   <a class="logo" href="/" aria-label="Autohound home"><img class="avatar" src="${profileAsset('brand-profile.webp')}" alt="" width="36" height="36"><b class="chrome">auto</b><span>hound</span></a>
   <form class="search" id="searchForm" role="search">
@@ -23,7 +22,6 @@ export const shell = () => `
   <nav class="rail" id="headLinks" aria-label="Main"></nav>
   <main id="main"></main>
 </div>
-<footer class="foot-note">Sample photos came from public GitHub projects and belong to their owners. Replace them before a real launch.</footer>
 <div id="toast" class="toast" role="status" hidden></div>`;
 const navButton = (href, label) => {
   const here = href === '/' ? location.pathname === '/' : location.pathname.startsWith(href);
@@ -110,7 +108,7 @@ export function listingPage({ listing: l, favorite, closed, minBid }) {
   return `<div class="page">
     <div class="back-row"><a class="btn plain" href="/">Back to listings</a></div>
     <div class="post">
-      <div class="gallery"><div id="mainPhoto">${ph(l.photos[0], false, l.title)}</div>${l.photos.length > 1 ? `<div class="thumbs" id="thumbs">${l.photos.map((p, i) => `<button data-i="${i}" aria-label="Show photo ${i + 1}">${ph(p + '?size=thumb', true)}</button>`).join('')}</div>` : ''}
+      <div class="gallery"><div class="photo-frame"><div id="mainPhoto">${ph(l.photos[0], false, l.title)}</div>${l.photos.length > 1 ? `<button type="button" class="photo-arrow prev" id="photoPrev" aria-label="Previous photo">&#8249;</button><button type="button" class="photo-arrow next" id="photoNext" aria-label="Next photo">&#8250;</button><span class="photo-count" id="photoCount">1 / ${l.photos.length}</span>` : ''}</div>${l.photos.length > 1 ? `<div class="thumbs" id="thumbs">${l.photos.map((p, i) => `<button type="button" data-i="${i}" class="${i === 0 ? 'on' : ''}" aria-label="Show photo ${i + 1}">${ph(p + '?size=thumb', true)}</button>`).join('')}</div>` : ''}
         <div class="panel"><h2>Description</h2><p class="body-text">${esc(l.description)}</p><p class="count">Posted ${shortDate(l.created)}</p></div>
       </div>
       <div class="side">

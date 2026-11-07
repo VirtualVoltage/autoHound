@@ -52,7 +52,7 @@ export async function handle(request, base) {
     if (!r) fail(405, 'Not allowed.');
     if (route !== 'setup') {
       if (Date.now() > readyUntil) {
-        if (!await isReady(base.db)) return json({ setup: true, error: 'Setting up the demo.' }, 503);
+        if (!await isReady(base.db)) return json({ setup: true, error: 'Getting Autohound ready.' }, 503);
         readyUntil = Date.now() + 30000;
       }
     }

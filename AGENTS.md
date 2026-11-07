@@ -37,6 +37,8 @@ Unless the owner says a big change is coming, act as if real people depend on th
 - Features belong to every profile: logic in `server/` and `site/js`, with matching views in each profile. Only layout choices, like profile3's side menu and header buttons, are profile-specific.
 - Owners can edit a live listing's words, price and details, but not photos, type or category. A new title renames its folder, and its chats and photos move with it. Auctions with bids keep their price.
 - Auction pages never show buyers a market value comparison.
+- The site never calls itself a demo. No demo strips, sample-photo notes or demo wording in page text or messages.
+- Listing pages in every profile: thumbnails sit under the big photo, arrow buttons show on hover (always on phones), and the left and right arrow keys change photos except while typing. In profile3 the description sits right under the title on the right.
 - The home page shows popular listing windows, with only search and price filters.
 
 ## Viewing the site

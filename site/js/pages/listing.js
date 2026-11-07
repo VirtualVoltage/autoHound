@@ -20,9 +20,24 @@ export async function listingPage(id) {
       $('chatTabs')?.addEventListener('click', e => { const b = e.target.closest('[data-chat]'); if (b) open(b.dataset.chat); });
     } else chat = mountChat({ id: l.chat || null, listingId: l.id });
   }
-  $('thumbs')?.addEventListener('click', e => {
-    const b = e.target.closest('button'); if (b) $('mainPhoto').innerHTML = view.ph(l.photos[+b.dataset.i], false, l.title);
-  });
+  // Photos: thumbnails, the arrow buttons on the big photo, and the left and right arrow keys.
+  let at = 0;
+  const show = i => {
+    const n = l.photos.length; if (n < 2) return;
+    at = (i + n) % n;
+    $('mainPhoto').innerHTML = view.ph(l.photos[at], false, l.title);
+    document.querySelectorAll('#thumbs [data-i]').forEach(b => b.classList.toggle('on', +b.dataset.i === at));
+    if ($('photoCount')) $('photoCount').textContent = `${at + 1} / ${n}`;
+  };
+  $('thumbs')?.addEventListener('click', e => { const b = e.target.closest('[data-i]'); if (b) show(+b.dataset.i); });
+  $('photoPrev')?.addEventListener('click', () => show(at - 1));
+  $('photoNext')?.addEventListener('click', () => show(at + 1));
+  const onKey = e => {
+    if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey || e.target.closest?.('input, textarea, select, [contenteditable]')) return;
+    if (e.key === 'ArrowLeft') { e.preventDefault(); show(at - 1); }
+    else if (e.key === 'ArrowRight') { e.preventDefault(); show(at + 1); }
+  };
+  if (l.photos.length > 1) document.addEventListener('keydown', onKey);
   $('msgForm')?.addEventListener('submit', async e => {
     e.preventDefault();
     if (!session.account) return needLogin();
@@ -50,5 +65,5 @@ export async function listingPage(id) {
     if (b.dataset.sure) return change('delete', 'Listing deleted', '/account');
     b.dataset.sure = '1'; b.textContent = 'Press again to delete';
   });
-  return () => chat?.stop();
+  return () => { chat?.stop(); document.removeEventListener('keydown', onKey); };
 }
