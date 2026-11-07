@@ -26,7 +26,7 @@ export const shell = () => `
 export function headerLinks({ account, unread, adminUnread = 0 }) {
   const adminBadge = adminUnread ? `<span class="badge-count">${adminUnread}</span>` : '';
   const badge = unread ? `<span class="badge-count">${unread}</span>` : '', name = account && ([...account.username].length > 16 ? [...account.username].slice(0, 15).join('') + '…' : account.username);
-  return `<a class="btn" href="/sell">Sell</a>` + (account
+  return (account ? `<a class="btn" href="/sell">Sell</a>` : '') + (account
     ? `${account.admin ? `<a href="/admin">Site inbox${adminBadge}</a>` : ''}<a href="/saved">Saved</a><a href="/messages">Messages${badge}</a><a href="/account">${esc(name)}</a>`
     : `<a href="/login">Log in</a><a href="/signup">Sign up</a>`);
 }
@@ -66,7 +66,7 @@ export const homePage = ({ q, min, max, sort, sorts, tickerListings, adminInbox,
     ${adminStrip(adminInbox)}
     <h1 class="main-title center">${q ? `Results for ${esc(q)}` : 'Popular'}</h1>
     <div class="filters">
-      <div class="price-range"><b>Price</b><input id="minPrice" type="number" min="0" inputmode="numeric" placeholder="min" aria-label="Minimum price" value="${esc(min)}"><span>to</span><input id="maxPrice" type="number" min="0" inputmode="numeric" placeholder="max" aria-label="Maximum price" value="${esc(max)}"></div>
+      <div class="price-range"><b>Price</b><input id="minPrice" type="number" min="0" inputmode="numeric" placeholder="min" aria-label="Minimum price" value="${esc(min)}"><input id="maxPrice" type="number" min="0" inputmode="numeric" placeholder="max" aria-label="Maximum price" value="${esc(max)}"></div>
       <div class="sorts" role="group" aria-label="Sort listings">${sorts.map(([k, t]) => `<button data-sort="${k}" class="${sort === k ? 'on' : ''}" aria-pressed="${sort === k}">${t}</button>`).join('')}</div>
     </div>
     <div id="windows" class="windows"></div>

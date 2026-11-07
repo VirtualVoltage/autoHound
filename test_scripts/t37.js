@@ -9,5 +9,5 @@ const nav=await p.$eval('#sideNav',n=>n.querySelectorAll('a').length);
 const ct=await p.evaluate(async()=>{const r=await fetch(document.querySelector('script[type=module]').src);return r.headers.get('content-type')});
 const unversioned=urls.filter(u=>/\.(js|css)$/.test(u)&&!u.startsWith('/v/'));
 console.log(name,'nav buttons',nav,'app.js type',ct,'files',urls.length,'unversioned',unversioned,'errors',errs);
-if(nav<3||unversioned.length||errs.length)bad=1;await c.close();}
+if(nav<1||unversioned.length||errs.length)bad=1;await c.close();}
 await b.close();process.exit(bad);})();

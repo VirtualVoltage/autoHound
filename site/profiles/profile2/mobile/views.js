@@ -32,7 +32,7 @@ const twoLabels = (long, short) => `<span class="nav-long">${long}</span><span c
 export function headerLinks({ account, unread, adminUnread = 0 }) {
   const adminBadge = adminUnread ? `<span class="badge-count">${adminUnread}</span>` : '';
   const badge = unread ? `<span class="badge-count">${unread}</span>` : '';
-  return `<a class="btn" href="/sell">Sell</a>${navButton('/', twoLabels('Browse all', 'Home'))}` + (account
+  return (account ? `<a class="btn" href="/sell">Sell</a>` : '') + navButton('/', twoLabels('Browse all', 'Home')) + (account
     ? (account.admin ? navButton('/admin', `Inbox${adminBadge}`) : '') + navButton('/saved', 'Saved') + navButton('/messages', `Messages${badge}`) + navButton('/account', twoLabels(esc(account.username), 'Account'))
     : navButton('/login', 'Log in') + navButton('/signup', 'Sign up'));
 }
@@ -67,7 +67,7 @@ export const homePage = ({ q, min, max, sort, sorts, adminInbox, account }) => `
     ${adminStrip(adminInbox)}
     <div class="toolbar">
       <h1 class="main-title">${q ? `Results for ${esc(q)}` : 'Popular'}</h1>
-      <div class="price-range"><span>Price</span><input id="minPrice" type="number" min="0" inputmode="numeric" placeholder="Min" aria-label="Minimum price" value="${esc(min)}"><span>to</span><input id="maxPrice" type="number" min="0" inputmode="numeric" placeholder="Max" aria-label="Maximum price" value="${esc(max)}"></div>
+      <div class="price-range"><span>Price</span><input id="minPrice" type="number" min="0" inputmode="numeric" placeholder="Min" aria-label="Minimum price" value="${esc(min)}"><input id="maxPrice" type="number" min="0" inputmode="numeric" placeholder="Max" aria-label="Maximum price" value="${esc(max)}"></div>
       <div class="sorts" role="group" aria-label="Sort listings">${sorts.map(([k, t]) => `<button class="btn plain ${sort === k ? 'on' : ''}" data-sort="${k}" aria-pressed="${sort === k}">${t}</button>`).join('')}</div>
     </div>
     <div id="windows" class="windows"></div>

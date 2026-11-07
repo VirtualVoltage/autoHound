@@ -26,9 +26,22 @@ export function needLogin() { go('/login?next=' + encodeURIComponent(location.pa
 export function renderHeader() {
   const h = $('headLinks'); if (h) h.innerHTML = view.headerLinks({ account: session.account, unread: session.unread, adminUnread: session.adminInbox?.unread || 0 });
   // Profiles with a side menu export sideNav. It returns nothing on pages that shouldn't show it.
-  const s = $('sideNav'); if (s && view.sideNav) s.innerHTML = view.sideNav({ account: session.account, path: location.pathname, unread: session.unread, adminUnread: session.adminInbox?.unread || 0 });
+  const nav = { account: session.account, path: location.pathname, unread: session.unread, adminUnread: session.adminInbox?.unread || 0 };
+  const s = $('sideNav'); if (s && view.sideNav) s.innerHTML = view.sideNav(nav);
+  // Profiles with a slide-out menu (a waffle button) export drawerNav.
+  const d = $('drawerNav'); if (d && view.drawerNav) d.innerHTML = view.drawerNav(nav);
 }
+// The slide-out menu: [data-act="menu"] opens it, [data-act="menu-close"], Escape or going to a page closes it.
+function setMenu(open) {
+  const d = $('drawer'); if (!d) return;
+  d.hidden = !open; document.querySelectorAll('.drawer-back').forEach(b => { b.hidden = !open; });
+  document.body.classList.toggle('menu-open', open);
+  document.querySelectorAll('[data-act="menu"]').forEach(b => b.setAttribute('aria-expanded', open));
+  if (open) d.querySelector('a, button')?.focus();
+}
+addEventListener('keydown', e => { if (e.key === 'Escape' && document.body.classList.contains('menu-open')) setMenu(false); });
 async function route() {
+  setMenu(false);
   if (leave) { try { leave(); } catch {} leave = null; }
   const mine = ++token, path = location.pathname.replace(/(.)\/$/, '$1');
   const m = ROUTES.map(([re, fn]) => ({ fn, hit: path.match(re) })).find(x => x.hit);
@@ -56,6 +69,8 @@ document.addEventListener('click', async e => {
     return;
   }
   if (e.target.closest('[data-act="logout"]')) { e.preventDefault(); return logOut(); }
+  if (e.target.closest('[data-act="menu"]')) { e.preventDefault(); return setMenu($('drawer')?.hidden ?? false); }
+  if (e.target.closest('[data-act="menu-close"]')) { e.preventDefault(); return setMenu(false); }
   const a = e.target.closest('a[href]');
   if (a && a.origin === location.origin && !a.target && !e.metaKey && !e.ctrlKey && !e.shiftKey) { e.preventDefault(); go(a.pathname + a.search); }
 });

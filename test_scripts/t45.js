@@ -4,7 +4,8 @@ const texts=p=>p.evaluate(()=>({head:[...document.querySelectorAll('#headLinks >
 for (const [name,opts] of [['desktop',{viewport:{width:1300,height:800}}],['desktop900',{viewport:{width:900,height:800}}],['iphone13',devices['iPhone 13']],['iphoneSE',devices['iPhone SE']]]){
 const c=await b.newContext(opts);const p=await c.newPage();const errs=[];p.on('pageerror',e=>errs.push(e.message));
 await p.goto(U+'/');await p.waitForSelector('.window');let t=await texts(p);console.log(name,'logged out',JSON.stringify(t));
-ok(t.head.join()==='Log in,Sign up',name+' visitors see Log in and Sign up only');
+const phone=name.startsWith('iphone');
+ok(phone?(t.head.length===0&&t.side.join()==='Browse,Log in,Sign up'):(t.head.join()==='Log in,Sign up'&&t.side.join()==='Browse market'),name+' visitors only see Browse and Log in / Sign up');
 ok(!/favorit/i.test(await p.textContent('body')+await p.evaluate(()=>[...document.querySelectorAll('[aria-label]')].map(e=>e.getAttribute('aria-label')).join(' '))),name+' no "favorite" wording');
 await p.goto(U+'/login');await p.waitForSelector('#login');await p.fill('#login','redline riley');await p.fill('#password','boost4life');await p.click('#authForm button[type=submit]');await p.waitForSelector('.window');await p.waitForTimeout(400);
 t=await texts(p);console.log(name,'logged in',JSON.stringify(t));
@@ -19,6 +20,6 @@ await p.click('#sideNav a[href="/saved"]');await p.waitForURL(/\/saved$/);await 
 await p.goto(U+'/favorites');await p.waitForURL(/\/saved$/);ok(true,name+' old /favorites link goes to /saved');
 const lid=await p.$eval('.window a[href^="/listing/"]',a=>a.getAttribute('href'));await p.goto(U+lid);await p.waitForSelector('[data-act="favorite"][data-style="button"], #soldBtn');if(await p.$('#soldBtn'))console.log(name,'saved listing is your own, skipped Save button check');else ok((await p.textContent('[data-act="favorite"][data-style="button"]')).includes('Saved'),name+' listing page button says Saved');
 await p.click('#sideNav a[href="/messages"]');await p.waitForURL(/\/messages$/);ok(true,name+' Messages from menu');
-await p.click('#headLinks [data-act="logout"]');await p.waitForURL(u=>new URL(u).pathname==='/');await p.waitForTimeout(500);t=await texts(p);ok(t.head.join()==='Log in,Sign up'&&!(await p.evaluate(()=>fetch('/api/me').then(r=>r.json()))).account,name+' Log out works');
+await p.click('#headLinks [data-act="logout"]');await p.waitForURL(u=>new URL(u).pathname==='/');await p.waitForTimeout(500);t=await texts(p);ok(!t.side.includes('Saved')&&!t.side.includes('Sell')&&!(await p.evaluate(()=>fetch('/api/me').then(r=>r.json()))).account,name+' Log out works and hides account pages');
 ok(!errs.length,name+' no page errors '+errs.join('|'));await c.close();}
 await b.close();process.exit(bad);})();

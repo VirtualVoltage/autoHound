@@ -14,11 +14,14 @@ export const shell = () => `
 <header class="topbar"><div class="topbar-in">
   <div class="head-top"><a class="logo" href="/" aria-label="Autohound home"><img class="avatar" src="${profileAsset('brand-profile.webp')}" alt="" width="36" height="36"><b class="chrome">auto</b><span>hound</span><i class="demo-tag">demo</i></a><nav class="head-links" id="headLinks" aria-label="Account"></nav></div>
   <form class="search" id="searchForm" role="search">
+    <button type="button" class="btn plain square-btn waffle" data-act="menu" aria-label="Menu" aria-expanded="false" aria-controls="drawer"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><g fill="currentColor"><rect x="3" y="3" width="5" height="5"/><rect x="9.5" y="3" width="5" height="5"/><rect x="16" y="3" width="5" height="5"/><rect x="3" y="9.5" width="5" height="5"/><rect x="9.5" y="9.5" width="5" height="5"/><rect x="16" y="9.5" width="5" height="5"/><rect x="3" y="16" width="5" height="5"/><rect x="9.5" y="16" width="5" height="5"/><rect x="16" y="16" width="5" height="5"/></g></svg></button>
     <a class="btn plain map-btn" href="/map">Map</a>
     <input id="searchInput" type="search" placeholder="Search coilovers, 3000GT, Lynden..." aria-label="Search listings">
-    <button class="btn" type="submit">Search</button>
+    <button class="btn square-btn" type="submit" aria-label="Search"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="2.6"/><path d="M15.5 15.5 21 21" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"/></svg></button>
   </form>
 </div></header>
+<div class="drawer-back" data-act="menu-close" hidden></div>
+<nav class="drawer" id="drawer" aria-label="Menu" hidden><div class="drawer-head"><b>Menu</b><button type="button" class="btn plain square-btn" data-act="menu-close" aria-label="Close menu">&times;</button></div><div class="drawer-links" id="drawerNav"></div></nav>
 <nav class="side-nav" id="sideNav" aria-label="Your pages"></nav>
 <div class="layout">
   <main id="main"></main>
@@ -29,9 +32,9 @@ const navButton = (href, label) => {
   return `<a class="btn plain ${here ? 'here' : ''}" ${here ? 'aria-current="page"' : ''} href="${href}">${label}</a>`;
 };
 const twoLabels = (long, short) => `<span class="nav-long">${long}</span><span class="nav-short">${short}</span>`;
-// The side menu holds the pages, so the header only has Log out (or Log in and Sign up).
+// The header only has Log out. Visitors find Log in and Sign up in the bottom bar.
 export function headerLinks({ account }) {
-  return account ? '<button type="button" class="btn plain" data-act="logout">Log out</button>' : navButton('/login', 'Log in') + navButton('/signup', 'Sign up');
+  return account ? '<button type="button" class="btn plain" data-act="logout">Log out</button>' : '';
 }
 
 /* ---------- listing window ---------- */
@@ -64,7 +67,7 @@ export const homePage = ({ q, min, max, sort, sorts, adminInbox, account }) => `
     ${adminStrip(adminInbox)}
     <div class="toolbar">
       <h1 class="main-title">${q ? `Results for ${esc(q)}` : 'Popular'}</h1>
-      <div class="price-range"><span>Price</span><input id="minPrice" type="number" min="0" inputmode="numeric" placeholder="Min" aria-label="Minimum price" value="${esc(min)}"><span>to</span><input id="maxPrice" type="number" min="0" inputmode="numeric" placeholder="Max" aria-label="Maximum price" value="${esc(max)}"></div>
+      <div class="price-range"><span>Price</span><input id="minPrice" type="number" min="0" inputmode="numeric" placeholder="Min" aria-label="Minimum price" value="${esc(min)}"><input id="maxPrice" type="number" min="0" inputmode="numeric" placeholder="Max" aria-label="Maximum price" value="${esc(max)}"></div>
       <div class="sorts" role="group" aria-label="Sort listings">${sorts.map(([k, t]) => `<button class="btn plain ${sort === k ? 'on' : ''}" data-sort="${k}" aria-pressed="${sort === k}">${t}</button>`).join('')}</div>
     </div>
     <div id="windows" class="windows"></div>
@@ -288,14 +291,20 @@ export function chatPanel(l, closed) {
 /* ---------- side menu (profile3) ---------- */
 // Shown under the header line on the main pages. Hidden on log in, sign up and code pages.
 const NO_SIDE = /^\/(login|signup|verify)$/;
-export function sideNav({ account, path, unread = 0, adminUnread = 0 }) {
-  if (NO_SIDE.test(path)) return '';
+function navLinks({ account, path, unread = 0, adminUnread = 0 }, long) {
+  const L = (a, b) => long ? a : b;
   const badge = n => n ? `<span class="badge-count">${n}</span>` : '';
   const item = (href, label, match, main) => { const here = match.test(path); return `<a class="btn ${main ? '' : 'plain'} ${here ? 'here' : ''}" ${here ? 'aria-current="page"' : ''} href="${href}">${label}</a>`; };
-  return item('/', 'Browse', /^\/$/) + item('/sell', 'Sell', /^\/sell$/, true) + item('/saved', 'Saved', /^\/saved$/)
-    + item('/messages', `Messages${badge(unread)}`, /^\/messages/) + item('/my-listings', 'Listings', /^\/my-listings$|^\/listing\/[^/]+\/edit$/)
-    + item('/account', 'Account', /^\/account$/) + (account?.admin ? item('/admin', `Inbox${badge(adminUnread)}`, /^\/admin/) : '');
+  // Visitors only see Browse, Log in and Sign up; the rest needs an account.
+  if (!account) return item('/', L('Browse market', 'Browse'), /^\/$/) + item('/login', 'Log in', /^\/login$/) + item('/signup', 'Sign up', /^\/signup$/, true);
+  return item('/', L('Browse market', 'Browse'), /^\/$/) + item('/sell', 'Sell', /^\/sell$/, true) + item('/saved', 'Saved', /^\/saved$/)
+    + item('/messages', `Messages${badge(unread)}`, /^\/messages/) + item('/my-listings', L('My listings', 'Listings'), /^\/my-listings$|^\/listing\/[^/]+\/edit$/)
+    + item('/account', L('Account settings', 'Account'), /^\/account$/) + (account?.admin ? item('/admin', `${L('Site inbox', 'Inbox')}${badge(adminUnread)}`, /^\/admin/) : '');
 }
+// Bottom bar on main pages (short labels).
+export function sideNav(o) { return NO_SIDE.test(o.path) ? '' : navLinks(o, false); }
+// The slide-out menu from the waffle button: the same pages as the desktop side menu.
+export const drawerNav = o => navLinks(o, true);
 
 /* ---------- map ---------- */
 export { mapStyle } from './mapstyle.js';

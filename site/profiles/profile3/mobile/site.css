@@ -336,3 +336,22 @@ input, select, textarea { font-size: 16px; }
 
 /* red DEMO after the logo lettering; the logo's scan lines run through it too */
 .logo .demo-tag { margin-left: 4px; font-style: italic; color: #ff2a2a; text-shadow: 0 0 6px rgba(255,30,30,.9), 0 0 14px rgba(255,30,30,.55); }
+
+/* search row: waffle menu, Map, search box, and a square magnifying glass */
+.search { grid-template-columns: auto auto minmax(0,1fr) auto; gap: 6px; }
+.square-btn { width: var(--h); min-width: var(--h); padding: 0; justify-content: center; }
+.square-btn svg { display: block; }
+/* slide-out menu from the waffle button */
+.drawer { position: fixed; inset: 0 auto 0 0; z-index: 60; display: flex; flex-direction: column; width: min(300px, 84vw); padding: calc(12px + env(safe-area-inset-top, 0px)) 14px calc(14px + env(safe-area-inset-bottom, 0px)) max(14px, env(safe-area-inset-left, 0px)); background: #060906; border-right: 1px solid var(--neon); box-shadow: 4px 0 24px rgba(20,255,30,.4); overflow-y: auto; }
+.drawer-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; }
+.drawer-head b { color: var(--price); font: italic 400 18px/1 var(--display); text-transform: uppercase; text-shadow: var(--glow); }
+.drawer-head .square-btn { font-size: 26px; }
+.drawer-links { display: flex; flex-direction: column; gap: 8px; }
+.drawer-links .btn { justify-content: flex-start; width: 100%; }
+.drawer-links .badge-count { margin-left: auto; }
+.drawer-back { position: fixed; inset: 0; z-index: 55; background: rgba(0,0,0,.6); }
+body.menu-open { overflow: hidden; }
+
+/* save star: smaller and see-through so it covers less of the photo */
+.window .star, .star { width: 30px; height: 30px; background: rgba(0,0,0,.15); border-color: rgba(255,255,255,.4); font-size: 16px; text-shadow: 0 0 3px #000, 0 0 6px #000; }
+.star:hover, .star.on { background: rgba(0,0,0,.15); }

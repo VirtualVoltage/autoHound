@@ -61,7 +61,7 @@ export const homePage = ({ q, min, max, sort, sorts, adminInbox, account }) => `
     ${adminStrip(adminInbox)}
     <div class="toolbar">
       <h1 class="main-title">${q ? `Results for ${esc(q)}` : 'Popular'}</h1>
-      <div class="price-range"><span>Price</span><input id="minPrice" type="number" min="0" inputmode="numeric" placeholder="Min" aria-label="Minimum price" value="${esc(min)}"><span>to</span><input id="maxPrice" type="number" min="0" inputmode="numeric" placeholder="Max" aria-label="Maximum price" value="${esc(max)}"></div>
+      <div class="price-range"><span>Price</span><input id="minPrice" type="number" min="0" inputmode="numeric" placeholder="Min" aria-label="Minimum price" value="${esc(min)}"><input id="maxPrice" type="number" min="0" inputmode="numeric" placeholder="Max" aria-label="Maximum price" value="${esc(max)}"></div>
       <div class="sorts" role="group" aria-label="Sort listings">${sorts.map(([k, t]) => `<button class="btn plain ${sort === k ? 'on' : ''}" data-sort="${k}" aria-pressed="${sort === k}">${t}</button>`).join('')}</div>
     </div>
     <div id="windows" class="windows"></div>
@@ -289,6 +289,8 @@ export function sideNav({ account, path, unread = 0, adminUnread = 0 }) {
   if (NO_SIDE.test(path)) return '';
   const badge = n => n ? `<span class="badge-count">${n}</span>` : '';
   const item = (href, label, match, main) => { const here = match.test(path); return `<a class="btn ${main ? '' : 'plain'} ${here ? 'here' : ''}" ${here ? 'aria-current="page"' : ''} href="${href}">${label}</a>`; };
+  // Visitors only see Browse market; the rest needs an account.
+  if (!account) return item('/', 'Browse market', /^\/$/);
   return item('/', 'Browse market', /^\/$/) + item('/sell', 'Sell', /^\/sell$/, true) + item('/saved', 'Saved', /^\/saved$/)
     + item('/messages', `Messages${badge(unread)}`, /^\/messages/) + item('/my-listings', 'My listings', /^\/my-listings$|^\/listing\/[^/]+\/edit$/)
     + item('/account', 'Account settings', /^\/account$/) + (account?.admin ? item('/admin', `Site inbox${badge(adminUnread)}`, /^\/admin/) : '');

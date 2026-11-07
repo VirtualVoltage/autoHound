@@ -328,3 +328,7 @@ main { min-width: 0; }
 
 /* red DEMO after the logo lettering; the logo's scan lines run through it too */
 .logo .demo-tag { margin-left: 4px; font-style: italic; color: #ff2a2a; text-shadow: 0 0 6px rgba(255,30,30,.9), 0 0 14px rgba(255,30,30,.55); }
+
+/* save star: smaller and see-through so it covers less of the photo */
+.window .star, .star { width: 30px; height: 30px; background: rgba(0,0,0,.15); border-color: rgba(255,255,255,.4); font-size: 16px; text-shadow: 0 0 3px #000, 0 0 6px #000; }
+.star:hover, .star.on { background: rgba(0,0,0,.15); }
