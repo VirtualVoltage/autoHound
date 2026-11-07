@@ -290,3 +290,6 @@ main { min-width: 0; }
 @media (hover: none) { .photo-arrow { opacity: .85; width: 40px; height: 56px; margin-top: -28px; font-size: 32px; } }
 .thumbs button.on { border-color: var(--neon); box-shadow: 0 0 10px rgba(42,255,50,.6); }
 .post-desc { display: grid; gap: 6px; margin: 4px 0 10px; }
+
+/* side menu holds Sell, Saved and Messages too; unread counts sit on the right */
+.side-nav .badge-count { margin-left: auto; }

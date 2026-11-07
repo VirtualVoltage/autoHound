@@ -1,7 +1,7 @@
 import { $, toast, shrink } from '../util.js';
 import { view } from '../theme.js';
 import { api, upload, session } from '../api.js';
-import { go, needLogin, renderHeader } from '../app.js';
+import { go, needLogin, renderHeader, logOut } from '../app.js';
 
 export async function accountPage() {
   if (!session.account) return needLogin();
@@ -24,7 +24,7 @@ export async function accountPage() {
       go(r.verified ? '/account' : `/verify?next=${encodeURIComponent('/account')}${r.sent ? '&sent=1' : ''}`, true);
     } catch (er) { err.textContent = er.message; err.hidden = false; btn.disabled = false; }
   });
-  $('logoutBtn').addEventListener('click', async () => { await api('logout', { method: 'POST' }); session.account = null; session.unread = 0; session.favorites = new Set(); renderHeader(); go('/'); });
+  $('logoutBtn')?.addEventListener('click', logOut);
   $('photoInput').addEventListener('change', async e => {
     const f = e.target.files[0]; if (!f) return;
     try { const b = await shrink(f, 512, .82, 300 * 1024), r = await upload('me/photo', b); session.account.photo = r.photo; toast('Picture updated'); go('/account', true); } catch (er) { toast(er.message); }

@@ -32,13 +32,13 @@ export function headerLinks({ account, unread, adminUnread = 0 }) {
   const adminBadge = adminUnread ? `<span class="badge-count">${adminUnread}</span>` : '';
   const badge = unread ? `<span class="badge-count">${unread}</span>` : '';
   return `<a class="btn" href="/sell">Sell</a>${navButton('/', twoLabels('Browse all', 'Home'))}` + (account
-    ? (account.admin ? navButton('/admin', `Inbox${adminBadge}`) : '') + navButton('/favorites', 'Favorites') + navButton('/messages', `Messages${badge}`) + navButton('/account', twoLabels(esc(account.username), 'Account'))
+    ? (account.admin ? navButton('/admin', `Inbox${adminBadge}`) : '') + navButton('/saved', 'Saved') + navButton('/messages', `Messages${badge}`) + navButton('/account', twoLabels(esc(account.username), 'Account'))
     : navButton('/login', 'Log in') + navButton('/signup', 'Sign up'));
 }
 
 /* ---------- listing window ---------- */
-export const star = (id, on) => `<button class="star ${on ? 'on' : ''}" data-act="favorite" data-style="star" data-id="${esc(id)}" aria-pressed="${on}" aria-label="${on ? 'Remove from favorites' : 'Add to favorites'}">${on ? '★' : '☆'}</button>`;
-export const favoriteButton = (id, on) => `<button class="btn plain" data-act="favorite" data-style="button" data-id="${esc(id)}">${on ? '★ Favorited' : '☆ Favorite'}</button>`;
+export const star = (id, on) => `<button class="star ${on ? 'on' : ''}" data-act="favorite" data-style="star" data-id="${esc(id)}" aria-pressed="${on}" aria-label="${on ? 'Remove from saved' : 'Save this listing'}">${on ? '★' : '☆'}</button>`;
+export const favoriteButton = (id, on) => `<button class="btn plain" data-act="favorite" data-style="button" data-id="${esc(id)}">${on ? '★ Saved' : '☆ Save'}</button>`;
 export function windowCard(l, favorite) {
   const live = l.sell_type === 'auction' && l.auction_ends > Date.now();
   const flag = live ? '<span class="flag">AUCTION</span>' : l.kind === 'cars' ? `<span class="flag dark">${esc(l.category.toUpperCase())}</span>` : '';
@@ -65,7 +65,7 @@ export const homePage = ({ q, min, max, sort, sorts, adminInbox, account }) => `
     ${verifyStrip(account)}
     ${adminStrip(adminInbox)}
     <div class="toolbar">
-      <h1 class="main-title">${q ? `Results for ${esc(q)}` : 'Popular listings'}</h1>
+      <h1 class="main-title">${q ? `Results for ${esc(q)}` : 'Popular'}</h1>
       <div class="price-range"><span>Price</span><input id="minPrice" type="number" min="0" inputmode="numeric" placeholder="Min" aria-label="Minimum price" value="${esc(min)}"><span>to</span><input id="maxPrice" type="number" min="0" inputmode="numeric" placeholder="Max" aria-label="Maximum price" value="${esc(max)}"></div>
       <div class="sorts" role="group" aria-label="Sort listings">${sorts.map(([k, t]) => `<button class="btn plain ${sort === k ? 'on' : ''}" data-sort="${k}" aria-pressed="${sort === k}">${t}</button>`).join('')}</div>
     </div>
@@ -190,7 +190,7 @@ export const accountPage = ({ account: a, photo, listings, favorites, security }
     ${securityPanel(security)}
     <div class="toolbar"><h2>Your listings</h2></div>${grid(listings, 'You have no live listings.', favorites)}</div>`;
 export const sellerPage = ({ account: a, listings, favorites }) => `<div class="page"><div class="panel profile">${avatar(a.photo, '')}<div class="row-text"><h1 class="main-title">${esc(a.username)}</h1><span class="count">Joined ${shortDate(a.joined)} · ${listings.length} live listings</span></div></div>${grid(listings, 'No live listings.', favorites)}</div>`;
-export const favoritesPage = ({ listings, favorites }) => `<div class="page"><div class="toolbar"><h1 class="main-title">Favorites</h1></div>${grid(listings, 'Press the star on any listing to save it here.', favorites)}</div>`;
+export const favoritesPage = ({ listings, favorites }) => `<div class="page"><div class="toolbar"><h1 class="main-title">Saved</h1></div>${grid(listings, 'Press the star on any listing to save it here.', favorites)}</div>`;
 
 /* ---------- admin: the site's own inbox ---------- */
 const mailDate = iso => clock(iso);

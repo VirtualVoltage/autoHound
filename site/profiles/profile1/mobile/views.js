@@ -26,13 +26,13 @@ export function headerLinks({ account, unread, adminUnread = 0 }) {
   const adminBadge = adminUnread ? `<span class="badge-count">${adminUnread}</span>` : '';
   const badge = unread ? `<span class="badge-count">${unread}</span>` : '', name = account && ([...account.username].length > 16 ? [...account.username].slice(0, 15).join('') + '…' : account.username);
   return `<a class="btn" href="/sell">Sell</a>` + (account
-    ? `${account.admin ? `<a href="/admin">Site inbox${adminBadge}</a>` : ''}<a href="/favorites">Favorites</a><a href="/messages">Messages${badge}</a><a href="/account">${esc(name)}</a>`
+    ? `${account.admin ? `<a href="/admin">Site inbox${adminBadge}</a>` : ''}<a href="/saved">Saved</a><a href="/messages">Messages${badge}</a><a href="/account">${esc(name)}</a>`
     : `<a href="/login">Log in</a><a href="/signup">Sign up</a>`);
 }
 
 /* ---------- listing window ---------- */
-export const star = (id, on) => `<button class="star ${on ? 'on' : ''}" data-act="favorite" data-style="star" data-id="${esc(id)}" aria-pressed="${on}" aria-label="${on ? 'Remove from favorites' : 'Add to favorites'}">${on ? '★' : '☆'}</button>`;
-export const favoriteButton = (id, on) => `<button class="btn plain" data-act="favorite" data-style="button" data-id="${esc(id)}">${on ? '★ Favorited' : '☆ Favorite'}</button>`;
+export const star = (id, on) => `<button class="star ${on ? 'on' : ''}" data-act="favorite" data-style="star" data-id="${esc(id)}" aria-pressed="${on}" aria-label="${on ? 'Remove from saved' : 'Save this listing'}">${on ? '★' : '☆'}</button>`;
+export const favoriteButton = (id, on) => `<button class="btn plain" data-act="favorite" data-style="button" data-id="${esc(id)}">${on ? '★ Saved' : '☆ Save'}</button>`;
 export function windowCard(l, favorite) {
   const live = l.sell_type === 'auction' && l.auction_ends > Date.now();
   const flag = live ? '<span class="flag">AUCTION</span>' : l.kind === 'cars' ? `<span class="flag dark">${esc(l.category.toUpperCase())}</span>` : '';
@@ -63,7 +63,7 @@ export const homePage = ({ q, min, max, sort, sorts, tickerListings, adminInbox,
   <div class="wrap page">
     ${verifyStrip(account)}
     ${adminStrip(adminInbox)}
-    <h1 class="main-title center">${q ? `Results for ${esc(q)}` : 'Popular listings'}</h1>
+    <h1 class="main-title center">${q ? `Results for ${esc(q)}` : 'Popular'}</h1>
     <div class="filters">
       <div class="price-range"><b>Price</b><input id="minPrice" type="number" min="0" inputmode="numeric" placeholder="min" aria-label="Minimum price" value="${esc(min)}"><span>to</span><input id="maxPrice" type="number" min="0" inputmode="numeric" placeholder="max" aria-label="Maximum price" value="${esc(max)}"></div>
       <div class="sorts" role="group" aria-label="Sort listings">${sorts.map(([k, t]) => `<button data-sort="${k}" class="${sort === k ? 'on' : ''}" aria-pressed="${sort === k}">${t}</button>`).join('')}</div>
@@ -185,7 +185,7 @@ export const accountPage = ({ account: a, photo, listings, favorites, security }
     ${securityPanel(security)}
     <h2 style="margin-bottom:10px">Your listings</h2>${grid(listings, 'You have no live listings.', favorites)}</div>`;
 export const sellerPage = ({ account: a, listings, favorites }) => `<div class="wrap page"><div class="profile">${avatar(a.photo, '')}<div style="display:grid;gap:6px"><h1 class="main-title">${esc(a.username)}</h1><span class="muted">Joined ${shortDate(a.joined)} · ${listings.length} live listings</span></div></div>${grid(listings, 'No live listings.', favorites)}</div>`;
-export const favoritesPage = ({ listings, favorites }) => `<div class="wrap page"><h1 class="main-title" style="margin-bottom:12px">Favorites</h1>${grid(listings, 'Press the star on any listing to save it here.', favorites)}</div>`;
+export const favoritesPage = ({ listings, favorites }) => `<div class="wrap page"><h1 class="main-title" style="margin-bottom:12px">Saved</h1>${grid(listings, 'Press the star on any listing to save it here.', favorites)}</div>`;
 
 /* ---------- admin: the site's own inbox ---------- */
 const mailDate = iso => clock(iso);

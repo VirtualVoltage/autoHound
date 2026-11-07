@@ -17,7 +17,7 @@ Unless the owner says a big change is coming, act as if real people depend on th
 
 ## Rules decided by the owner
 
-- Everything visual lives in `site/profiles/`, including page HTML in `views.js`. Each profile has a `desktop` and a `mobile` folder, usually changed together, with small differences to suit each. `site/js/profile.js` picks the active profile and loads `mobile` on phones. Tablets get `desktop`. Shared logic in `site/js` must not write page HTML. `profile1` is the original look. `profile3` is the active look: profile2 plus a side menu (Browse market, My listings, Account settings) under the header line on main pages, not on log in, sign up or code pages. On phones profile3 flips profile2's layout: the main buttons sit in a row under the header and the side menu is the bottom bar. `profile2` is the earlier look: neon colors, a simple marketplace layout, every action a real button, buttons at the top right on desktop and in a bottom bar on mobile. Visitors can't switch profiles.
+- Everything visual lives in `site/profiles/`, including page HTML in `views.js`. Each profile has a `desktop` and a `mobile` folder, usually changed together, with small differences to suit each. `site/js/profile.js` picks the active profile and loads `mobile` on phones. Tablets get `desktop`. Shared logic in `site/js` must not write page HTML. `profile1` is the original look. `profile3` is the active look: profile2 plus a side menu (Browse market, Sell, Saved, Messages, My listings, Account settings, and Site inbox for admins) under the header line on main pages, not on log in, sign up or code pages. Its header only has Log out, or Log in and Sign up for visitors. On phones the side menu is the bottom bar with short labels, and Log out sits on the logo line. `profile2` is the earlier look: neon colors, a simple marketplace layout, every action a real button, buttons at the top right on desktop and in a bottom bar on mobile. Visitors can't switch profiles.
 - `profile1` theme: black and neon green, early 2000s tuner. White text and titles, green main title and prices, yellow towns, gray counts.
 - Text goes in `records/`. Photos, videos and PDFs go in `data/`, using the same layout.
 - IDs look like `L.26.11.04.00000`. Folder names are `ID__title`, and `__` only ever separates the two. Titles use `_` for spaces in folder names.
@@ -39,7 +39,8 @@ Unless the owner says a big change is coming, act as if real people depend on th
 - Auction pages never show buyers a market value comparison.
 - The site never calls itself a demo. No demo strips, sample-photo notes or demo wording in page text or messages.
 - Listing pages in every profile: thumbnails sit under the big photo, arrow buttons show on hover (always on phones), and the left and right arrow keys change photos except while typing. In profile3 the description sits right under the title on the right.
-- The home page shows popular listing windows, with only search and price filters.
+- Starred listings are called Saved everywhere (page `/saved`; old `/favorites` links redirect). The code still says favorites internally.
+- The home page shows popular listing windows under the title "Popular", with only search and price filters.
 
 ## Viewing the site
 

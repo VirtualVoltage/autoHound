@@ -15,7 +15,7 @@ const ROUTES = [
   [/^\/$/, homePage], [/^\/listing\/([^/]+)$/, listingPage], [/^\/listing\/([^/]+)\/edit$/, editListingPage], [/^\/sell$/, sellPage],
   [/^\/signup$/, () => authPage('signup')], [/^\/login$/, () => authPage('login')],
   [/^\/messages$/, inboxPage], [/^\/messages\/([^/]+)$/, threadPage],
-  [/^\/account$/, accountPage], [/^\/my-listings$/, myListingsPage], [/^\/favorites$/, favoritesPage], [/^\/seller\/([^/]+)$/, sellerPage],
+  [/^\/account$/, accountPage], [/^\/my-listings$/, myListingsPage], [/^\/saved$/, favoritesPage], [/^\/favorites$/, () => go('/saved' + location.search, true)], [/^\/seller\/([^/]+)$/, sellerPage],
   [/^\/verify$/, verifyPage],
   [/^\/admin$/, adminInboxPage], [/^\/admin\/([^/]+)$/, adminMessagePage],
 ];
@@ -25,7 +25,7 @@ export function needLogin() { go('/login?next=' + encodeURIComponent(location.pa
 export function renderHeader() {
   const h = $('headLinks'); if (h) h.innerHTML = view.headerLinks({ account: session.account, unread: session.unread, adminUnread: session.adminInbox?.unread || 0 });
   // Profiles with a side menu export sideNav. It returns nothing on pages that shouldn't show it.
-  const s = $('sideNav'); if (s && view.sideNav) s.innerHTML = view.sideNav({ account: session.account, path: location.pathname });
+  const s = $('sideNav'); if (s && view.sideNav) s.innerHTML = view.sideNav({ account: session.account, path: location.pathname, unread: session.unread, adminUnread: session.adminInbox?.unread || 0 });
 }
 async function route() {
   if (leave) { try { leave(); } catch {} leave = null; }
@@ -54,9 +54,16 @@ document.addEventListener('click', async e => {
     document.querySelectorAll(`[data-act="favorite"][data-id="${CSS.escape(id)}"]`).forEach(b => { b.outerHTML = b.dataset.style === 'button' ? view.favoriteButton(id, on) : view.star(id, on); });
     return;
   }
+  if (e.target.closest('[data-act="logout"]')) { e.preventDefault(); return logOut(); }
   const a = e.target.closest('a[href]');
   if (a && a.origin === location.origin && !a.target && !e.metaKey && !e.ctrlKey && !e.shiftKey) { e.preventDefault(); go(a.pathname + a.search); }
 });
+// Log out from any page (the header button, or the one in account settings).
+export async function logOut() {
+  try { await api('logout', { method: 'POST' }); } catch (er) { toast(er.message); return; }
+  session.account = null; session.unread = 0; session.adminInbox = null; session.favorites = new Set();
+  renderHeader(); go('/');
+}
 document.addEventListener('error', e => {
   if (e.target.tagName === 'IMG' && e.target.parentElement?.classList.contains('ph')) e.target.parentElement.outerHTML = view.missingPhoto();
 }, true);
