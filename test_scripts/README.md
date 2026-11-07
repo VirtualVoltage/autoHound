@@ -19,7 +19,8 @@ Older scripts were written for earlier versions of the site, so some no longer m
 | `t43.js` | Listing page photos: hover arrows, arrow keys, thumbnails, description placement. |
 | `t45.js`, `t46.js` | profile3 header (Log out only), side menu, Saved page, log out. |
 | `t47.js` | Phone header layout. (`t41.js` checks an older phone layout and no longer matches.) |
-| `t25.js`, `t27.js` | Email codes and two-step login (start the server with `EMAIL_LOG=1`). |
+| `t52.js` | Required email confirmation: no skip, redirects to the confirm page, server refuses posts until confirmed (start the server with `EMAIL_LOG=1`). |
+| `t25.js`, `t27.js` | Older email code and two-step login checks. They expect the old Skip button and header links, so they no longer match. |
 | `t21.js`, `t21-seed.mjs`, `t22.mjs` | Admin site inbox and email parsing (`fixtures/mail/`). |
 | `t32.js`, `t40.js`, `t48.js` | Other profiles, using a copy of the site with `DEFAULT_PROFILE` changed, on port 8792. |
 | `t8.js` | Phone layout audit. Needs a fresh store. |

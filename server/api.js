@@ -8,14 +8,14 @@ import { rebuildStep, ensureSchemaOnce } from './rebuild.js';
 import { CITIES, PART_CATEGORIES, CAR_CATEGORIES, CONDITIONS, HANDOFFS, LIMITS, TOWN_SPOTS, MAP_AREA } from './config.js';
 import { isId } from './ids.js';
 import { isAdmin, adminSummary, adminInbox, adminMessage, adminRawMessage } from './mail.js';
-import { verifyStatus, resendCode, checkCode, setLoginCodes, setEmail } from './verify.js';
+import { verifyStatus, resendCode, checkCode, setLoginCodes, setEmail, sendingReady } from './verify.js';
 
 let readyUntil = 0;
 const routes = [
   ['POST', /^setup$/, ctx => setupStep(ctx)],
   ['GET', /^options$/, () => json({ cities: CITIES, part_categories: PART_CATEGORIES, car_categories: CAR_CATEGORIES, conditions: CONDITIONS, handoffs: HANDOFFS, town_spots: TOWN_SPOTS, map_area: MAP_AREA, limits: { usernameMin: LIMITS.usernameMin, usernameMax: LIMITS.usernameMax, passwordMin: LIMITS.passwordMin, passwordMax: LIMITS.passwordMax, photos: LIMITS.photosPerListing } })],
   ['POST', /^signup$/, signup], ['POST', /^login$/, login], ['POST', /^login\/salt$/, loginSalt], ['POST', /^login\/code$/, loginWithCode], ['POST', /^logout$/, logout],
-  ['GET', /^me$/, async ctx => { await sweepIdle(ctx, 1); await sweepClosedListings(ctx, 1); const a = await currentAccount(ctx.db, ctx.request), admin = await isAdmin(ctx, a); return json({ account: a ? { ...publicAccount(a), email: a.email || null, email_verified: !!a.email_verified, admin } : null, admin_inbox: admin ? await adminSummary(ctx) : null, unread: a ? await unreadCount(ctx, a) : 0 }); }],
+  ['GET', /^me$/, async ctx => { await sweepIdle(ctx, 1); await sweepClosedListings(ctx, 1); const a = await currentAccount(ctx.db, ctx.request), admin = await isAdmin(ctx, a); return json({ account: a ? { ...publicAccount(a), email: a.email || null, email_verified: !!a.email_verified, must_verify: !!(a.email && !a.email_verified && sendingReady(ctx.env)), admin } : null, admin_inbox: admin ? await adminSummary(ctx) : null, unread: a ? await unreadCount(ctx, a) : 0 }); }],
   ['POST', /^me\/photo$/, setProfilePhoto],
   ['GET', /^me\/email$/, verifyStatus], ['PUT', /^me\/email$/, setEmail], ['POST', /^me\/email\/code$/, resendCode], ['POST', /^me\/email\/verify$/, checkCode], ['POST', /^me\/login-codes$/, setLoginCodes],
   ['GET', /^favorites$/, favorites], ['POST', /^favorites$/, favorites],
@@ -39,6 +39,7 @@ const routes = [
     return json(await rebuildStep(ctx, b.cursor ?? null, []));
   }],
 ];
+const UNCONFIRMED_OK = /^(setup|signup|login|login\/salt|login\/code|logout|me\/email|me\/email\/code|me\/email\/verify|admin\/rebuild)$/;
 export async function handle(request, base) {
   const url = new URL(request.url), route = url.pathname.replace(/^\/api\//, '').replace(/\/$/, ''), ctx = { ...base, request, url };
   try {
@@ -58,6 +59,11 @@ export async function handle(request, base) {
       }
       // New columns (like listing map pins) get added once per server start.
       await ensureSchemaOnce(base.db);
+      // An account with an unconfirmed email can only confirm it, fix it or log out. Skipped while email can't be sent.
+      if (request.method !== 'GET' && !UNCONFIRMED_OK.test(route) && sendingReady(base.env)) {
+        const a = await currentAccount(base.db, request);
+        if (a && a.email && !a.email_verified) fail(403, 'Confirm your email first. Enter the 6-digit code we sent you.');
+      }
     }
     const args = r.hit.slice(1).map(decodeURIComponent);
     for (const a of args) if (!isId(a)) fail(404, 'Not found.');

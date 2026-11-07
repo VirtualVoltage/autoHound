@@ -228,7 +228,7 @@ export const verifyPage = ({ email, ready, sent, next }) => `<div class="page"><
     <p class="err" id="verifyErr" role="alert" hidden></p>
     <button class="btn" type="submit">Confirm email</button>
     <button class="btn plain" type="button" id="resendBtn">Send a new code</button>
-    <a class="btn plain" href="${esc(next)}">Skip for now</a>
+    ${ready ? '<a class="btn plain" href="/account">Wrong email? Fix it</a>' : `<a class="btn plain" href="${esc(next)}">Continue</a>`}
   </form></div>`;
 
 /* ---------- account security ---------- */
@@ -297,6 +297,8 @@ function navLinks({ account, path, unread = 0, adminUnread = 0 }, long) {
   const item = (href, label, match, main) => { const here = match.test(path); return `<a class="btn ${main ? '' : 'plain'} ${here ? 'here' : ''}" ${here ? 'aria-current="page"' : ''} href="${href}">${label}</a>`; };
   // Visitors only see Browse, Log in and Sign up; the rest needs an account.
   if (!account) return item('/', L('Browse market', 'Browse'), /^\/$/) + item('/login', 'Log in', /^\/login$/) + item('/signup', 'Sign up', /^\/signup$/, true);
+  // The bottom bar keeps three buttons once you're logged in. Everything else is in the waffle menu.
+  if (!long) return item('/', 'Browse', /^\/$/) + item('/messages', `Messages${badge(unread)}`, /^\/messages/) + item('/saved', 'Saved', /^\/saved$/);
   return item('/', L('Browse market', 'Browse'), /^\/$/) + item('/sell', 'Sell', /^\/sell$/, true) + item('/saved', 'Saved', /^\/saved$/)
     + item('/messages', `Messages${badge(unread)}`, /^\/messages/) + item('/my-listings', L('My listings', 'Listings'), /^\/my-listings$|^\/listing\/[^/]+\/edit$/)
     + item('/account', L('Account settings', 'Account'), /^\/account$/) + (account?.admin ? item('/admin', `${L('Site inbox', 'Inbox')}${badge(adminUnread)}`, /^\/admin/) : '');

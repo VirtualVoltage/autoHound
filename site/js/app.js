@@ -44,6 +44,8 @@ async function route() {
   setMenu(false);
   if (leave) { try { leave(); } catch {} leave = null; }
   const mine = ++token, path = location.pathname.replace(/(.)\/$/, '$1');
+  // Email confirmation is required: until then only the confirm page, account settings (to fix the email) and log in pages open.
+  if (session.account?.must_verify && !/^\/(verify|account|login|signup)$/.test(path)) { history.replaceState({}, '', '/verify?next=' + encodeURIComponent(path + location.search)); return route(); }
   const m = ROUTES.map(([re, fn]) => ({ fn, hit: path.match(re) })).find(x => x.hit);
   scrollTo(0, 0);
   renderHeader();

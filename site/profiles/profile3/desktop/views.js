@@ -222,7 +222,7 @@ export const verifyPage = ({ email, ready, sent, next }) => `<div class="page"><
     <p class="err" id="verifyErr" role="alert" hidden></p>
     <button class="btn" type="submit">Confirm email</button>
     <button class="btn plain" type="button" id="resendBtn">Send a new code</button>
-    <a class="btn plain" href="${esc(next)}">Skip for now</a>
+    ${ready ? '<a class="btn plain" href="/account">Wrong email? Fix it</a>' : `<a class="btn plain" href="${esc(next)}">Continue</a>`}
   </form></div>`;
 
 /* ---------- account security ---------- */

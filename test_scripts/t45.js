@@ -10,7 +10,7 @@ ok(!/favorit/i.test(await p.textContent('body')+await p.evaluate(()=>[...documen
 await p.goto(U+'/login');await p.waitForSelector('#login');await p.fill('#login','redline riley');await p.fill('#password','boost4life');await p.click('#authForm button[type=submit]');await p.waitForSelector('.window');await p.waitForTimeout(400);
 t=await texts(p);console.log(name,'logged in',JSON.stringify(t));
 ok(t.head.join()==='Log out',name+' header only has Log out');
-ok(['Sell','Saved'].every(x=>t.side.includes(x))&&t.side.some(x=>x.startsWith('Messages')),name+' menu has Sell, Saved, Messages');
+ok(name.startsWith('iphone')?(t.side.length===3&&t.side[0]==='Browse'&&t.side[1].startsWith('Messages')&&t.side[2]==='Saved'):(['Sell','Saved'].every(x=>t.side.includes(x))&&t.side.some(x=>x.startsWith('Messages'))),name+(name.startsWith('iphone')?' bottom bar is Browse, Messages, Saved':' menu has Sell, Saved, Messages'));
 const geo=await p.evaluate(()=>{const h=document.querySelector('header').getBoundingClientRect(),s=document.getElementById('sideNav').getBoundingClientRect();const clipped=[...document.querySelectorAll('#sideNav .btn,#headLinks .btn')].filter(b=>b.scrollWidth>b.clientWidth+1).map(b=>b.textContent);return {headBottom:Math.round(h.bottom),sideTop:Math.round(s.top),over:document.documentElement.scrollWidth,w:innerWidth,clipped}});console.log(name,JSON.stringify(geo));
 if(geo.over>geo.w)ok(false,name+' page scrolls sideways');
 await p.screenshot({path:`${O}/nav-${name}.png`});
