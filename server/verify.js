@@ -65,7 +65,10 @@ export async function setEmail(ctx) {
   file.email = email; file.email_verified = false;
   await writeJsonFile(ctx.store, `${a.path}/account.json`, file);
   await ctx.db.run('DELETE FROM email_codes WHERE account_id=?', a.id);
-  return json({ email, ...(await sendCode(ctx, a, { quiet: true })) });
+  // The email is saved either way. If sending fails, the confirm page offers "Send a new code".
+  let sent = { sent: false };
+  try { sent = await sendCode(ctx, a, { quiet: true }); } catch (e) { console.error('Email code not sent', e?.message || e); }
+  return json({ email, ...sent });
 }
 export async function resendCode(ctx) {
   const a = await requireAccount(ctx.db, ctx.request);
