@@ -14,6 +14,16 @@ export async function accountPage() {
     try { await api('me/login-codes', { json: { on } }); toast(on ? 'Login codes turned on' : 'Login codes turned off'); go('/account', true); }
     catch (er) { err.textContent = er.message; err.hidden = false; e.target.disabled = false; }
   });
+  $('emailForm')?.addEventListener('submit', async e => {
+    e.preventDefault();
+    const err = $('securityErr'), btn = e.target.querySelector('button');
+    err.hidden = true; btn.disabled = true;
+    try {
+      const r = await api('me/email', { method: 'PUT', json: { email: $('newEmail').value } });
+      toast('Email saved');
+      go(r.verified ? '/account' : `/verify?next=${encodeURIComponent('/account')}${r.sent ? '&sent=1' : ''}`, true);
+    } catch (er) { err.textContent = er.message; err.hidden = false; btn.disabled = false; }
+  });
   $('logoutBtn').addEventListener('click', async () => { await api('logout', { method: 'POST' }); session.account = null; session.unread = 0; session.favorites = new Set(); renderHeader(); go('/'); });
   $('photoInput').addEventListener('change', async e => {
     const f = e.target.files[0]; if (!f) return;

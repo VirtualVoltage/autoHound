@@ -33,7 +33,7 @@ export async function authPage(mode) {
       return;
     }
     const login = $('login').value.trim();
-    if (!login || !password) return show('Enter your email and password.');
+    if (!login || !password) return show('Enter your email or username and your password.');
     if (!login.includes('@') && login.includes('_')) return show('Underscores are prohibited.');
     btn.disabled = true;
     try {

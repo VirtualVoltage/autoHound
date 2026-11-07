@@ -215,18 +215,18 @@ main { min-width: 0; }
 .post, .sell-grid { grid-template-columns: minmax(0,1fr); } #sellPreview { position: static; } .preview-win { max-width: 280px; }
 
 
-/* phone layout: buttons sit in a bar along the bottom, like an app */
+/* phone layout: the main buttons sit in a row under the header, and the side menu is a bar along the bottom, like an app */
 .topbar { position: static; }
 .topbar-in, .layout { display: block; }
 .logo { margin-bottom: 8px; }
 .search { max-width: none; }
-.rail { position: fixed; inset: auto 0 0; z-index: 20; grid-auto-flow: column; grid-auto-columns: minmax(0,1fr); gap: 6px; padding: 6px max(8px, env(safe-area-inset-right, 0px)) calc(6px + env(safe-area-inset-bottom, 0px)) max(8px, env(safe-area-inset-left, 0px)); background: #050705; border-top: 1px solid var(--neon); box-shadow: 0 -2px 16px rgba(20,255,30,.55); }
+.rail { position: static; grid-auto-flow: column; grid-auto-columns: minmax(0,1fr); gap: 6px; padding: 10px 0 0; }
 .rail .btn { position: relative; justify-content: center; padding: 0 2px; font-size: 12px; }
 .rail .nav-long { display: none; }
 .rail .nav-short { display: inline; }
 .rail .badge-count { position: absolute; top: -6px; right: -2px; margin: 0; min-width: 18px; padding: 0 3px; line-height: 16px; }
-body { padding-bottom: calc(60px + env(safe-area-inset-bottom, 0px)); }
-.toast { bottom: calc(68px + env(safe-area-inset-bottom, 0px)); }
+body:has(.side-nav:not(:empty)) { padding-bottom: calc(60px + env(safe-area-inset-bottom, 0px)); }
+body:has(.side-nav:not(:empty)) .toast { bottom: calc(68px + env(safe-area-inset-bottom, 0px)); }
 .main-title { font-size: 19px; }
 .price-range, .sorts { width: 100%; }
 .price-range input { flex: 1; width: auto; }
@@ -270,7 +270,11 @@ input, select, textarea { font-size: 16px; }
 .chat-thread { min-height: 220px; max-height: 420px; }
 .chat-composer { grid-template-columns: minmax(0,1fr) minmax(0,1fr); align-items: stretch; }
 .chat-composer textarea { grid-column: 1 / -1; height: auto; min-height: calc(var(--h) * 4.75); resize: vertical; }
-/* side menu: a row of buttons under the header line on phones */
-.side-nav { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0,1fr); gap: 6px; padding: 10px max(16px, env(safe-area-inset-right, 0px)) 0 max(16px, env(safe-area-inset-left, 0px)); }
+/* side menu: a bar of buttons along the bottom on phones */
+.side-nav { position: fixed; inset: auto 0 0; z-index: 20; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0,1fr); gap: 6px; padding: 6px max(8px, env(safe-area-inset-right, 0px)) calc(6px + env(safe-area-inset-bottom, 0px)) max(8px, env(safe-area-inset-left, 0px)); background: #050705; border-top: 1px solid var(--neon); box-shadow: 0 -2px 16px rgba(20,255,30,.55); }
 .side-nav:empty { display: none; }
 .side-nav .btn { padding-inline: 4px; font-size: 13px; }
+
+/* Add or fix an email in account settings */
+.email-add { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; margin: 10px 0; }
+.email-add .field { flex: 1 1 240px; min-width: 0; margin: 0; }

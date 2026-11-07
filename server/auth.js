@@ -30,7 +30,7 @@ async function fakeSalt(db, login) {
 }
 export async function loginSalt({ db, store, request }) {
   const b = await readJson(request), login = String(b.login || '').trim();
-  if (!login) fail(400, 'Enter your email.');
+  if (!login) fail(400, 'Enter your email or username.');
   if (!await hit(db, 'login-salt:' + await clientKey(request), 60, 600e3)) fail(429, 'Too many tries. Wait a few minutes.');
   const a = await findLogin(db, login), secret = a && await readJsonFile(store, `${a.path}/private.json`);
   return json({ salt: secret ? browserSalt(secret, a) : await fakeSalt(db, login) });

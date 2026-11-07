@@ -8,7 +8,7 @@ import { rebuildStep } from './rebuild.js';
 import { CITIES, PART_CATEGORIES, CAR_CATEGORIES, CONDITIONS, HANDOFFS, LIMITS } from './config.js';
 import { isId } from './ids.js';
 import { isAdmin, adminSummary, adminInbox, adminMessage, adminRawMessage } from './mail.js';
-import { verifyStatus, resendCode, checkCode, setLoginCodes } from './verify.js';
+import { verifyStatus, resendCode, checkCode, setLoginCodes, setEmail } from './verify.js';
 
 let readyUntil = 0;
 const routes = [
@@ -17,7 +17,7 @@ const routes = [
   ['POST', /^signup$/, signup], ['POST', /^login$/, login], ['POST', /^login\/salt$/, loginSalt], ['POST', /^login\/code$/, loginWithCode], ['POST', /^logout$/, logout],
   ['GET', /^me$/, async ctx => { await sweepIdle(ctx, 1); await sweepClosedListings(ctx, 1); const a = await currentAccount(ctx.db, ctx.request), admin = await isAdmin(ctx, a); return json({ account: a ? { ...publicAccount(a), email: a.email || null, email_verified: !!a.email_verified, admin } : null, admin_inbox: admin ? await adminSummary(ctx) : null, unread: a ? await unreadCount(ctx, a) : 0 }); }],
   ['POST', /^me\/photo$/, setProfilePhoto],
-  ['GET', /^me\/email$/, verifyStatus], ['POST', /^me\/email\/code$/, resendCode], ['POST', /^me\/email\/verify$/, checkCode], ['POST', /^me\/login-codes$/, setLoginCodes],
+  ['GET', /^me\/email$/, verifyStatus], ['PUT', /^me\/email$/, setEmail], ['POST', /^me\/email\/code$/, resendCode], ['POST', /^me\/email\/verify$/, checkCode], ['POST', /^me\/login-codes$/, setLoginCodes],
   ['GET', /^favorites$/, favorites], ['POST', /^favorites$/, favorites],
   ['GET', /^listings$/, browse], ['POST', /^listings$/, createDraft],
   ['GET', /^listings\/([^/]+)$/, async (ctx, id) => getListing(ctx, id, await currentAccount(ctx.db, ctx.request))],

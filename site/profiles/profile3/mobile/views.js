@@ -82,7 +82,7 @@ export const authPage = ({ signup, limits: L, otherLink }) => `<div class="page"
     <h1 class="main-title">${signup ? 'Make an account' : 'Log in'}</h1>
     ${signup ? `<label class="field"><span>Username</span><input id="username" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" maxlength="80"></label>
     <label class="field"><span>Email</span><input id="email" type="email" autocomplete="email" autocapitalize="none" spellcheck="false" maxlength="254"></label>`
-    : `<label class="field"><span>Email</span><input id="login" type="email" autocomplete="username" autocapitalize="none" spellcheck="false" maxlength="254"></label>`}
+    : `<label class="field"><span>Email or username</span><input id="login" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" maxlength="254"></label>`}
     <label class="field"><span>Password</span><input id="password" type="password" autocomplete="${signup ? 'new-password' : 'current-password'}" maxlength="40"></label>
     ${signup ? `<p class="note">Username: ${L.usernameMin} to ${L.usernameMax} characters. Underscores are prohibited. Password: ${L.passwordMin} to ${L.passwordMax} characters. Your email stays private. Password resets by email are coming soon.</p>` : ''}
     ${signup ? '' : '<p class="note">Accounts made before emails were added can use their username here.</p>'}
@@ -236,6 +236,7 @@ export const verifyPage = ({ email, ready, sent, next }) => `<div class="page"><
 export const securityPanel = s => !s ? '' : `<div class="panel security">
     <div class="toolbar"><h2>Login security</h2></div>
     <div class="attr"><span class="muted">Email</span><b>${s.email ? `${esc(s.email)} · ${s.verified ? 'confirmed' : 'not confirmed'}` : 'none on this account'}</b></div>
+    ${s.email && s.verified ? '' : `<form class="email-add" id="emailForm" novalidate><label class="field"><span>${s.email ? 'Fix your email' : 'Add an email'}</span><input id="newEmail" type="email" autocomplete="email" autocapitalize="none" spellcheck="false" maxlength="254" value="${esc(s.email || '')}"></label><button class="btn" type="submit">Save email</button></form>`}
     <div class="attr"><span class="muted">Email me a code when I log in</span><b>${s.login_codes ? 'On' : 'Off'}</b></div>
     <p class="note">Optional. When it's on, logging in also asks for a 6-digit code sent to your email.${s.verified ? '' : ' Confirm your email first to use it.'}</p>
     <p class="err" id="securityErr" role="alert" hidden></p>

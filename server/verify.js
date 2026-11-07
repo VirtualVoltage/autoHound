@@ -2,7 +2,7 @@
 // Codes are stored only as a salted hash, expire after 15 minutes, and allow 5 guesses.
 // Sending uses Resend when RESEND_API_KEY is set. Without it, nothing is sent and the site says so.
 import { fail, json, sha256Hex, readJsonFile, writeJsonFile, hit } from './http.js';
-import { requireAccount } from './auth.js';
+import { requireAccount, cleanEmail } from './auth.js';
 import { ensureSchemaOnce } from './rebuild.js';
 
 export const FROM = 'Autohound <support@autohound.online>';
@@ -48,6 +48,24 @@ export async function sendCode(ctx, a, { quiet = false } = {}) {
 export async function verifyStatus(ctx) {
   const a = await requireAccount(ctx.db, ctx.request), file = await accountFile(ctx, a);
   return json({ email: file.email || null, verified: !!file.email_verified, ready: sendingReady(ctx.env), login_codes: !!file.login_codes });
+}
+// Adds an email to an account that has none (older accounts), or fixes one that isn't confirmed yet.
+// A confirmed email can't be changed here. A confirmation code is sent right after, when sending works.
+export async function setEmail(ctx) {
+  const a = await requireAccount(ctx.db, ctx.request);
+  await ensureSchemaOnce(ctx.db);
+  const file = await accountFile(ctx, a);
+  if (file.email && file.email_verified) fail(400, 'Your email is already confirmed.');
+  const email = cleanEmail((await ctx.request.json().catch(() => ({}))).email);
+  if (file.email === email) return json({ email, ...(await sendCode(ctx, a, { quiet: true })) });
+  if (!await hit(ctx.db, 'set-email:' + a.id, 10, 3600e3)) fail(429, 'Too many email changes. Try again in an hour.');
+  if (await ctx.db.get('SELECT id FROM accounts WHERE lower(email)=lower(?) AND id<>?', email, a.id)) fail(409, 'That email is already on another account.');
+  try { await ctx.db.run('UPDATE accounts SET email=?, email_verified=0 WHERE id=?', email, a.id); }
+  catch { fail(409, 'That email is already on another account.'); }
+  file.email = email; file.email_verified = false;
+  await writeJsonFile(ctx.store, `${a.path}/account.json`, file);
+  await ctx.db.run('DELETE FROM email_codes WHERE account_id=?', a.id);
+  return json({ email, ...(await sendCode(ctx, a, { quiet: true })) });
 }
 export async function resendCode(ctx) {
   const a = await requireAccount(ctx.db, ctx.request);
