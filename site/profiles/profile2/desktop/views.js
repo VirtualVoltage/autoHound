@@ -74,8 +74,9 @@ export const homePage = ({ q, min, max, sort, sorts }) => `<div class="page">
 export const authPage = ({ signup, limits: L, otherLink }) => `<div class="page"><form class="panel auth" id="authForm" novalidate>
     <h1 class="main-title">${signup ? 'Make an account' : 'Log in'}</h1>
     <label class="field"><span>Username</span><input id="username" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" maxlength="80"></label>
+    ${signup ? `<label class="field"><span>Email</span><input id="email" type="email" autocomplete="email" autocapitalize="none" spellcheck="false" maxlength="254"></label>` : ''}
     <label class="field"><span>Password</span><input id="password" type="password" autocomplete="${signup ? 'new-password' : 'current-password'}" maxlength="40"></label>
-    ${signup ? `<p class="note">Username: ${L.usernameMin} to ${L.usernameMax} characters, with spaces allowed but no underscores. Password: ${L.passwordMin} to ${L.passwordMax} characters. There's no email, so a lost password can't be reset yet.</p>` : ''}
+    ${signup ? `<p class="note">Username: ${L.usernameMin} to ${L.usernameMax} characters, with spaces allowed but no underscores. Password: ${L.passwordMin} to ${L.passwordMax} characters. Your email stays private. Password resets by email are coming soon.</p>` : ''}
     <p class="err" id="authErr" role="alert" hidden></p>
     <button class="btn" type="submit">${signup ? 'Sign up' : 'Log in'}</button>
     <p class="note center-text">${signup ? 'Already have an account?' : 'New here?'}</p>
@@ -178,7 +179,7 @@ export const threadPage = (d, days) => `<div class="page">
 
 /* ---------- profile pages ---------- */
 export const accountPage = ({ account: a, photo, listings, favorites }) => `<div class="page">
-    <div class="panel profile">${avatar(photo, 'Your profile picture')}<div class="row-text"><h1 class="main-title">${esc(a.username)}</h1><span class="count">Joined ${shortDate(a.joined)}</span></div>
+    <div class="panel profile">${avatar(photo, 'Your profile picture')}<div class="row-text"><h1 class="main-title">${esc(a.username)}</h1><span class="count">Joined ${shortDate(a.joined)}</span>${a.email ? `<span class="muted">${esc(a.email)}</span>` : ''}</div>
       <div class="action-row"><label class="btn plain" for="photoInput">Change picture</label><input id="photoInput" class="sr" type="file" accept="image/*"><button class="btn plain" id="logoutBtn">Log out</button></div></div>
     <div class="toolbar"><h2>Your listings</h2></div>${grid(listings, 'You have no live listings.', favorites)}</div>`;
 export const sellerPage = ({ account: a, listings, favorites }) => `<div class="page"><div class="panel profile">${avatar(a.photo, '')}<div class="row-text"><h1 class="main-title">${esc(a.username)}</h1><span class="count">Joined ${shortDate(a.joined)} · ${listings.length} live listings</span></div></div>${grid(listings, 'No live listings.', favorites)}</div>`;

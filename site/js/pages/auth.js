@@ -15,13 +15,14 @@ export async function authPage(mode) {
     err.hidden = true;
     if (username.includes('_')) return show('Usernames use spaces, not underscores.');
     if (signup) {
+      if (!$('email').value.trim()) return show('Add your email address.');
       const u = countChars(username.replace(/\s+/g, ' ')), p = countChars(password);
       if (u < L.usernameMin || u > L.usernameMax) return show(`Usernames must be ${L.usernameMin} to ${L.usernameMax} characters.`);
       if (p < L.passwordMin || p > L.passwordMax) return show(`Passwords must be ${L.passwordMin} to ${L.passwordMax} characters.`);
     } else if (!username || !password) return show('Enter your username and password.');
     btn.disabled = true;
     try {
-      await api(signup ? 'signup' : 'login', { json: { username, proof: await passwordProof(username, password) } });
+      await api(signup ? 'signup' : 'login', { json: { username, ...(signup ? { email: $('email').value.trim() } : {}), proof: await passwordProof(username, password) } });
       await refreshSession(); renderHeader(); go(safeNext, true);
     } catch (er) { show(er.message); btn.disabled = false; }
   });

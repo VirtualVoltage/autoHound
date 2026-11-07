@@ -1,4 +1,4 @@
-import { SCHEMA, REBUILDABLE_TABLES } from './schema.js';
+import { SCHEMA, MIGRATIONS, AFTER_MIGRATIONS, REBUILDABLE_TABLES } from './schema.js';
 import { LIMITS } from './config.js';
 import { readJsonFile, readLines } from './http.js';
 import { idOf, isId, dayFolder, parseName, folderTitle } from './ids.js';
@@ -6,7 +6,14 @@ import { usernameKey } from './auth.js';
 import { indexRow, INSERT_LISTING } from './listings.js';
 
 const extOf = parts => { const n = parts[parts.length - 1]; return n.includes('.') ? n.split('.').pop().toLowerCase() : null; };
-export async function ensureSchema(db) { await db.batch(SCHEMA.map(s => [s])); }
+export async function ensureSchema(db) {
+  await db.batch(SCHEMA.map(s => [s]));
+  for (const s of MIGRATIONS) { try { await db.run(s); } catch (e) { if (!/duplicate column/i.test(String(e?.message || e))) throw e; } }
+  await db.batch(AFTER_MIGRATIONS.map(s => [s]));
+}
+// Runs ensureSchema once per server process, for code that needs the newest columns.
+let schemaReady = null;
+export const ensureSchemaOnce = db => (schemaReady ||= ensureSchema(db).catch(e => { schemaReady = null; throw e; }));
 
 // The whole index comes from the files. Each step handles one account, so it works on small hosts too.
 export async function rebuildStep(ctx, cursor, problems = []) {
@@ -28,7 +35,7 @@ async function indexAccount(ctx, folder, problems) {
   const { db, store } = ctx, path = `records/accounts/${folder}`, dataPath = `data/accounts/${folder}`;
   const a = await readJsonFile(store, `${path}/account.json`);
   if (!a) { problems.push(`${path}: account.json is missing`); return; }
-  await db.run('INSERT OR REPLACE INTO accounts(id,username,username_key,path,data_path,photo,joined,status) VALUES(?,?,?,?,?,?,?,?)', a.id, a.username, usernameKey(a.username), path, dataPath, a.profile_photo, a.joined, a.status || 'active');
+  await db.run('INSERT OR REPLACE INTO accounts(id,username,username_key,path,data_path,photo,joined,status,email) VALUES(?,?,?,?,?,?,?,?,?)', a.id, a.username, usernameKey(a.username), path, dataPath, a.profile_photo, a.joined, a.status || 'active', a.email || null);
   const files = await indexDataTree(ctx, dataPath, a.id);
   const keys = await store.listAll(path + '/');
   for (const k of keys.filter(k => k.endsWith('/listing.json'))) {

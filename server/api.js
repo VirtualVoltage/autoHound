@@ -13,7 +13,7 @@ const routes = [
   ['POST', /^setup$/, ctx => setupStep(ctx)],
   ['GET', /^options$/, () => json({ cities: CITIES, part_categories: PART_CATEGORIES, car_categories: CAR_CATEGORIES, conditions: CONDITIONS, handoffs: HANDOFFS, limits: { usernameMin: LIMITS.usernameMin, usernameMax: LIMITS.usernameMax, passwordMin: LIMITS.passwordMin, passwordMax: LIMITS.passwordMax, photos: LIMITS.photosPerListing } })],
   ['POST', /^signup$/, signup], ['POST', /^login$/, login], ['POST', /^logout$/, logout],
-  ['GET', /^me$/, async ctx => { await sweepIdle(ctx, 1); await sweepClosedListings(ctx, 1); const a = await currentAccount(ctx.db, ctx.request); return json({ account: publicAccount(a), unread: a ? await unreadCount(ctx, a) : 0 }); }],
+  ['GET', /^me$/, async ctx => { await sweepIdle(ctx, 1); await sweepClosedListings(ctx, 1); const a = await currentAccount(ctx.db, ctx.request); return json({ account: a ? { ...publicAccount(a), email: a.email || null } : null, unread: a ? await unreadCount(ctx, a) : 0 }); }],
   ['POST', /^me\/photo$/, setProfilePhoto],
   ['GET', /^favorites$/, favorites], ['POST', /^favorites$/, favorites],
   ['GET', /^listings$/, browse], ['POST', /^listings$/, createDraft],

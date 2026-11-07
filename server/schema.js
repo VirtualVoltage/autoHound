@@ -2,7 +2,7 @@
 export const SCHEMA = [
   `CREATE TABLE IF NOT EXISTS system_state(key TEXT PRIMARY KEY, value TEXT)`,
   `CREATE TABLE IF NOT EXISTS counters(key TEXT PRIMARY KEY, n INTEGER NOT NULL)`,
-  `CREATE TABLE IF NOT EXISTS accounts(id TEXT PRIMARY KEY, username TEXT NOT NULL, username_key TEXT NOT NULL UNIQUE, path TEXT NOT NULL, data_path TEXT NOT NULL, photo TEXT, joined TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'active')`,
+  `CREATE TABLE IF NOT EXISTS accounts(id TEXT PRIMARY KEY, username TEXT NOT NULL, username_key TEXT NOT NULL UNIQUE, path TEXT NOT NULL, data_path TEXT NOT NULL, photo TEXT, joined TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'active', email TEXT)`,
   `CREATE TABLE IF NOT EXISTS listings(id TEXT PRIMARY KEY, account_id TEXT NOT NULL, title TEXT NOT NULL, kind TEXT NOT NULL, category TEXT NOT NULL, city TEXT NOT NULL, price INTEGER NOT NULL, description TEXT NOT NULL, photo TEXT, sell_type TEXT NOT NULL, auction_ends INTEGER, bids INTEGER NOT NULL DEFAULT 0, top_bidder TEXT, status TEXT NOT NULL, created TEXT NOT NULL, path TEXT NOT NULL, data_path TEXT NOT NULL, search TEXT NOT NULL)`,
   `CREATE INDEX IF NOT EXISTS listings_browse ON listings(status, created)`,
   `CREATE INDEX IF NOT EXISTS listings_price ON listings(status, price)`,
@@ -15,5 +15,13 @@ export const SCHEMA = [
   `CREATE TABLE IF NOT EXISTS reports(listing_id TEXT NOT NULL, account_id TEXT NOT NULL, PRIMARY KEY(listing_id, account_id))`,
   `CREATE TABLE IF NOT EXISTS sessions(token_hash TEXT PRIMARY KEY, account_id TEXT NOT NULL, expires INTEGER NOT NULL)`,
   `CREATE TABLE IF NOT EXISTS limits(key TEXT PRIMARY KEY, window_start INTEGER NOT NULL, n INTEGER NOT NULL)`,
+];
+// Changes for databases made before a column existed. Each one may fail harmlessly if it was already applied.
+export const MIGRATIONS = [
+  `ALTER TABLE accounts ADD COLUMN email TEXT`,
+];
+// Indexes that need a migrated column.
+export const AFTER_MIGRATIONS = [
+  `CREATE UNIQUE INDEX IF NOT EXISTS accounts_email ON accounts(lower(email))`,
 ];
 export const REBUILDABLE_TABLES = ['accounts', 'listings', 'conversations', 'files', 'reports'];

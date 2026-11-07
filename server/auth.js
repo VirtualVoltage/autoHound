@@ -2,6 +2,7 @@ import { LIMITS } from './config.js';
 import { ApiError, fail, hit, json, readJson, readJsonFile, writeJsonFile, sha256Hex, clientKey } from './http.js';
 import { nextId, folderName, letterFolder } from './ids.js';
 import { checkWords } from './wordfilter.js';
+import { ensureSchemaOnce } from './rebuild.js';
 
 const COOKIE = 'ah_session';
 export const usernameKey = u => u.normalize('NFKC').replace(/[_\s]+/g, ' ').trim().toLowerCase();
@@ -30,6 +31,14 @@ export async function requireAccount(db, request) {
   if (!a) throw new ApiError(401, 'Log in first.');
   return a;
 }
+// Emails keep their own rules: underscores and anything else valid in an address are fine, and it's saved as typed.
+export function cleanEmail(raw) {
+  const email = String(raw ?? '').replace(/[\u0000-\u001f\u007f]/g, '').trim();
+  if (!email) fail(400, 'Add your email address.');
+  if (/\s/.test(email)) fail(400, 'Email addresses can\'t have spaces in them.');
+  if (email.length > 254 || !/^[^@]+@[^@]+\.[^@.]{2,}$/.test(email) || /^\.|\.\.|\.@|@\.|@-/.test(email)) fail(400, 'That email address doesn\'t look right.');
+  return email;
+}
 export const publicAccount = a => a && ({ id: a.id, username: a.username, joined: a.joined, photo: a.photo ? `/api/files/${a.photo}` : null });
 
 export async function signup({ db, store, request }) {
@@ -38,16 +47,19 @@ export async function signup({ db, store, request }) {
   const n = countChars(username);
   if (n < LIMITS.usernameMin || n > LIMITS.usernameMax) fail(400, `Usernames must be ${LIMITS.usernameMin} to ${LIMITS.usernameMax} characters.`);
   checkWords('username', username);
+  const email = cleanEmail(b.email);
   checkProof(b.proof);
+  await ensureSchemaOnce(db);
   if (!await hit(db, 'signup:' + await clientKey(request), LIMITS.signupsPerHour, 3600e3)) fail(429, 'Too many new accounts from here. Try again later.');
   const key = usernameKey(username);
   if (await db.get('SELECT id FROM accounts WHERE username_key=?', key)) fail(409, 'That username is taken.');
+  if (await db.get('SELECT id FROM accounts WHERE lower(email)=lower(?)', email)) fail(409, 'That email is already on another account.');
   const id = await nextId(db, 'A'), folder = `${letterFolder(username)}/${folderName(id, username, 'user')}`, path = `records/accounts/${folder}`, joined = new Date().toISOString();
   try {
-    await db.run('INSERT INTO accounts(id,username,username_key,path,data_path,photo,joined) VALUES(?,?,?,?,?,NULL,?)', id, username, key, path, `data/accounts/${folder}`, joined);
-  } catch { fail(409, 'That username is taken.'); }
+    await db.run('INSERT INTO accounts(id,username,username_key,path,data_path,photo,joined,email) VALUES(?,?,?,?,?,NULL,?,?)', id, username, key, path, `data/accounts/${folder}`, joined, email);
+  } catch { fail(409, 'That username or email is already taken.'); }
   const salt = randomHex(16);
-  await writeJsonFile(store, `${path}/account.json`, { id, username, joined, status: 'active', profile_photo: null });
+  await writeJsonFile(store, `${path}/account.json`, { id, username, email, joined, status: 'active', profile_photo: null });
   await writeJsonFile(store, `${path}/private.json`, { password: { method: 'browser-pbkdf2-sha256-100000+server-sha256', salt, hash: await sha256Hex(salt + b.proof) } });
   await writeJsonFile(store, `${path}/favorites.json`, []);
   const account = await db.get('SELECT * FROM accounts WHERE id=?', id);
