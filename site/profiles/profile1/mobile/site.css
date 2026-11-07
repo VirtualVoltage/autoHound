@@ -241,3 +241,5 @@ a, button, label, input, select, textarea, summary { touch-action: manipulation;
 .mail-row .row-text > * { overflow-wrap: anywhere; }
 .inbox-row.mail-row { grid-template-columns: minmax(0,1fr); gap: 6px; }
 .mail-side { grid-auto-flow: column; justify-content: start; align-items: center; gap: 8px; }
+.verify-strip { margin-bottom: 14px; border-color: #ffe14d; }
+.auth .btn.plain { width: 100%; }

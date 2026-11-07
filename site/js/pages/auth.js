@@ -22,8 +22,9 @@ export async function authPage(mode) {
     } else if (!username || !password) return show('Enter your username and password.');
     btn.disabled = true;
     try {
-      await api(signup ? 'signup' : 'login', { json: { username, ...(signup ? { email: $('email').value.trim() } : {}), proof: await passwordProof(username, password) } });
-      await refreshSession(); renderHeader(); go(safeNext, true);
+      const r = await api(signup ? 'signup' : 'login', { json: { username, ...(signup ? { email: $('email').value.trim() } : {}), proof: await passwordProof(username, password) } });
+      await refreshSession(); renderHeader();
+      go(signup ? `/verify?next=${encodeURIComponent(safeNext)}${r.code?.sent ? '&sent=1' : ''}` : safeNext, true);
     } catch (er) { show(er.message); btn.disabled = false; }
   });
 }

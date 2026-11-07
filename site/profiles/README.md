@@ -23,6 +23,7 @@ Copy a profile folder to start a new one. Most changes belong in both `desktop` 
 | Sell | `#sellForm`, `#upGrid`, `#sPhotos`, `#photoErr`, `#sellPreview`, `#sellErr`, `#pubBtn`, and the `s*` form fields. `[data-for]`, `#sCategoryField`, `#sPriceLabel`, `#useEst` are used if present |
 | Chat | `#thread`, `#attachPreview`, `#composer`, `#attachInput`, `#msgText` |
 | Your account | `#logoutBtn`, `#photoInput` |
+| Confirm email | `#verifyForm`, `#code`, `#verifyErr`, `#resendBtn` |
 | Site inbox (admins) | Nothing required. Link rows to `/admin/<id>`, and keep email text as plain text, never HTML |
 
 Favorite buttons use `data-act="favorite"`, `data-id` and `data-style`. Keep to the owner's rules in `AGENTS.md`, like never showing IDs in page text or market value on auctions.

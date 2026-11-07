@@ -37,7 +37,7 @@ async function indexAccount(ctx, folder, problems) {
   const { db, store } = ctx, path = `records/accounts/${folder}`, dataPath = `data/accounts/${folder}`;
   const a = await readJsonFile(store, `${path}/account.json`);
   if (!a) { problems.push(`${path}: account.json is missing`); return; }
-  await db.run('INSERT OR REPLACE INTO accounts(id,username,username_key,path,data_path,photo,joined,status,email) VALUES(?,?,?,?,?,?,?,?,?)', a.id, a.username, usernameKey(a.username), path, dataPath, a.profile_photo, a.joined, a.status || 'active', a.email || null);
+  await db.run('INSERT OR REPLACE INTO accounts(id,username,username_key,path,data_path,photo,joined,status,email,email_verified) VALUES(?,?,?,?,?,?,?,?,?,?)', a.id, a.username, usernameKey(a.username), path, dataPath, a.profile_photo, a.joined, a.status || 'active', a.email || null, a.email_verified ? 1 : 0);
   const files = await indexDataTree(ctx, dataPath, a.id);
   const keys = await store.listAll(path + '/');
   for (const k of keys.filter(k => k.endsWith('/listing.json'))) {

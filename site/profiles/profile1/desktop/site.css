@@ -239,3 +239,5 @@ a, button, label, input, select, textarea, summary { touch-action: manipulation;
 .mail-body { white-space: pre-wrap; overflow-wrap: anywhere; }
 .attr { display: flex; justify-content: space-between; gap: 10px; }
 .mail-row .row-text > * { overflow-wrap: anywhere; }
+.verify-strip { margin-bottom: 14px; border-color: #ffe14d; }
+.auth .btn.plain { width: 100%; }

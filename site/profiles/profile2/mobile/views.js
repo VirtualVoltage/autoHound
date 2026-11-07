@@ -63,7 +63,8 @@ export function meter(ratio, value) {
 const grid = (list, empty, favorites) => list.length ? `<div class="windows">${list.map(l => windowCard(l, favorites.has(l.id))).join('')}</div>` : `<div class="empty"><b>${empty}</b></div>`;
 
 /* ---------- home ---------- */
-export const homePage = ({ q, min, max, sort, sorts, adminInbox }) => `<div class="page">
+export const homePage = ({ q, min, max, sort, sorts, adminInbox, account }) => `<div class="page">
+    ${verifyStrip(account)}
     ${adminStrip(adminInbox)}
     <div class="toolbar">
       <h1 class="main-title">${q ? `Results for ${esc(q)}` : 'Popular listings'}</h1>
@@ -120,7 +121,7 @@ export function listingPage({ listing: l, favorite, closed, minBid }) {
         </div>
         ${buyBox(l, minBid)}
         <div class="panel"><a class="btn plain seller-btn" href="/seller/${esc(l.seller.id)}">${avatar(l.seller.photo, '')}<span>${esc(l.seller.username)}</span></a>
-          ${l.mine || closed ? '' : `<form id="msgForm" class="stack" novalidate><label class="field"><span>Message the seller</span><textarea id="msgText" rows="3" maxlength="2000">Is this still available?</textarea></label><p class="err" id="msgErr" hidden></p><button class="btn" type="submit">Send message</button></form>`}
+          ${l.mine || closed ? '' : `<form id="msgForm" class="stack" novalidate><label class="field"><span>Message the seller</span><textarea id="msgText" rows="3" maxlength="2000" placeholder="Write a message to the seller"></textarea></label><p class="err" id="msgErr" hidden></p><button class="btn" type="submit">Send message</button></form>`}
         </div>
         ${l.sell_type === 'post' && l.market_value ? meter(l.price / l.market_value, l.market_value) : ''}
         ${attrs(l)}
@@ -212,3 +213,17 @@ export const adminMessagePage = ({ message: m, rawUrl }) => `<div class="page">
       <div class="action-row"><a class="btn plain" href="${esc(rawUrl)}" target="_blank" rel="noopener" download>Download original email</a></div>
     </div>
     <div class="panel"><p class="mail-body">${esc(m.text || '(This email has no text.)')}</p></div></div>`;
+
+/* ---------- confirming an email ---------- */
+export const verifyStrip = account => account && account.email && !account.email_verified ? `<div class="panel verify-strip">
+    <div class="toolbar"><h2>Confirm your email</h2><span class="muted">${esc(account.email)}</span><a class="btn" href="/verify">Enter code</a></div></div>` : '';
+export const verifyPage = ({ email, ready, sent, next }) => `<div class="page"><form class="panel auth" id="verifyForm" novalidate>
+    <h1 class="main-title">Confirm your email</h1>
+    ${ready ? `<p>${sent ? 'We sent' : 'We\'ll send'} a 6-digit code from support@autohound.online to <b>${esc(email)}</b>. Check your spam folder if it isn't there.</p>`
+      : `<p>Email codes aren't switched on yet, so no code could be sent to <b>${esc(email)}</b>. You can keep using Autohound and confirm later.</p>`}
+    <label class="field"><span>Code</span><input id="code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="123456"></label>
+    <p class="err" id="verifyErr" role="alert" hidden></p>
+    <button class="btn" type="submit">Confirm email</button>
+    <button class="btn plain" type="button" id="resendBtn">Send a new code</button>
+    <a class="btn plain" href="${esc(next)}">Skip for now</a>
+  </form></div>`;

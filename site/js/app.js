@@ -8,12 +8,14 @@ import { authPage } from './pages/auth.js';
 import { inboxPage, threadPage } from './pages/messages.js';
 import { accountPage, sellerPage, favoritesPage } from './pages/account.js';
 import { adminInboxPage, adminMessagePage } from './pages/admin.js';
+import { verifyPage } from './pages/verify.js';
 
 const ROUTES = [
   [/^\/$/, homePage], [/^\/listing\/([^/]+)$/, listingPage], [/^\/sell$/, sellPage],
   [/^\/signup$/, () => authPage('signup')], [/^\/login$/, () => authPage('login')],
   [/^\/messages$/, inboxPage], [/^\/messages\/([^/]+)$/, threadPage],
   [/^\/account$/, accountPage], [/^\/favorites$/, favoritesPage], [/^\/seller\/([^/]+)$/, sellerPage],
+  [/^\/verify$/, verifyPage],
   [/^\/admin$/, adminInboxPage], [/^\/admin\/([^/]+)$/, adminMessagePage],
 ];
 let leave = null, token = 0;

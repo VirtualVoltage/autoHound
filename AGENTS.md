@@ -21,7 +21,7 @@ Unless the owner says a big change is coming, act as if real people depend on th
 - Text goes in `records/`. Photos, videos and PDFs go in `data/`, using the same layout.
 - IDs look like `L.26.11.04.00000`. Folder names are `ID__title`, and `__` only ever separates the two. Titles use `_` for spaces in folder names.
 - People see titles with spaces and never see IDs in page text. Usernames can have spaces but never `_`, at signup or login. Folder names store their spaces as `_`.
-- Usernames are 6 to 40 characters. Passwords are 6 to 15. Signup needs an email, saved as typed in `account.json` and the index. It skips the username rules, but can't have spaces. One account per email, ignoring capitals. Emails are private: only the owner sees theirs.
+- Usernames are 6 to 40 characters. Passwords are 6 to 15. Signup needs an email, saved as typed in `account.json` and the index. It skips the username rules, but can't have spaces. One account per email, ignoring capitals. Emails are private: only the owner sees theirs. After signup the site emails a 6-digit code from support@autohound.online (`server/verify.js`), and confirming it sets `"email_verified": true` in `account.json`. Codes are hashed, last 15 minutes and allow 5 guesses. Sending uses Resend once the `RESEND_API_KEY` secret exists. Until then signup still works and the site says codes are off.
 - Accounts sort into `A` to `Z` folders, plus `_other`. Other crowded folders sort by date with a generic title.
 - The search index must always be fully rebuildable from `records/` and `data/`.
 - Chats live under the listing. Each person has their own `.jsonl` file, and an attachment is its own line. The template is `attachment, id, text, time`.

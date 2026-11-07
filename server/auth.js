@@ -3,6 +3,7 @@ import { ApiError, fail, hit, json, readJson, readJsonFile, writeJsonFile, sha25
 import { nextId, folderName, letterFolder } from './ids.js';
 import { checkWords } from './wordfilter.js';
 import { ensureSchemaOnce } from './rebuild.js';
+import { sendCode } from './verify.js';
 
 const COOKIE = 'ah_session';
 export const usernameKey = u => u.normalize('NFKC').replace(/[_\s]+/g, ' ').trim().toLowerCase();
@@ -41,7 +42,7 @@ export function cleanEmail(raw) {
 }
 export const publicAccount = a => a && ({ id: a.id, username: a.username, joined: a.joined, photo: a.photo ? `/api/files/${a.photo}` : null });
 
-export async function signup({ db, store, request }) {
+export async function signup({ db, store, request, env }) {
   const b = await readJson(request), username = String(b.username || '').replace(/[\u0000-\u001f\u007f]/g, '').replace(/\s+/g, ' ').trim();
   if (username.includes('_')) fail(400, 'Usernames use spaces, not underscores.');
   const n = countChars(username);
@@ -59,11 +60,14 @@ export async function signup({ db, store, request }) {
     await db.run('INSERT INTO accounts(id,username,username_key,path,data_path,photo,joined,email) VALUES(?,?,?,?,?,NULL,?,?)', id, username, key, path, `data/accounts/${folder}`, joined, email);
   } catch { fail(409, 'That username or email is already taken.'); }
   const salt = randomHex(16);
-  await writeJsonFile(store, `${path}/account.json`, { id, username, email, joined, status: 'active', profile_photo: null });
+  await writeJsonFile(store, `${path}/account.json`, { id, username, email, email_verified: false, joined, status: 'active', profile_photo: null });
   await writeJsonFile(store, `${path}/private.json`, { password: { method: 'browser-pbkdf2-sha256-100000+server-sha256', salt, hash: await sha256Hex(salt + b.proof) } });
   await writeJsonFile(store, `${path}/favorites.json`, []);
   const account = await db.get('SELECT * FROM accounts WHERE id=?', id);
-  return startSession(db, id, request, { account: publicAccount(account) });
+  // The code goes out right away. A sending problem never blocks the signup; the person can ask for a new code.
+  let code = { sent: false };
+  try { code = await sendCode({ db, store, request, env }, account, { quiet: true }); } catch (e) { console.error('Signup code not sent', e?.message || e); }
+  return startSession(db, id, request, { account: publicAccount(account), code });
 }
 export async function login({ db, store, request }) {
   const b = await readJson(request), username = String(b.username || '').trim();

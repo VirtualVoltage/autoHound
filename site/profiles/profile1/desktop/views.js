@@ -61,8 +61,9 @@ function ticker(list) {
   const items = list.slice(0, 8).map(l => `<span class="tk-i">${esc(l.title.toUpperCase())} <span class="money">${money(l.price)}</span> <span class="town">${esc(l.city.toUpperCase())}</span></span>`).join('');
   return items ? `<div class="ticker" aria-hidden="true"><div class="ticker-in">${items}${items}</div></div>` : '';
 }
-export const homePage = ({ q, min, max, sort, sorts, tickerListings, adminInbox }) => `<div class="banner"><img src="${profileAsset('brand-banner.webp')}" alt="Autohound: a dog carrying a wrench in its mouth"></div>${ticker(tickerListings)}
+export const homePage = ({ q, min, max, sort, sorts, tickerListings, adminInbox, account }) => `<div class="banner"><img src="${profileAsset('brand-banner.webp')}" alt="Autohound: a dog carrying a wrench in its mouth"></div>${ticker(tickerListings)}
   <div class="wrap page">
+    ${verifyStrip(account)}
     ${adminStrip(adminInbox)}
     <h1 class="main-title center">${q ? `Results for ${esc(q)}` : 'Popular listings'}</h1>
     <div class="filters">
@@ -118,7 +119,7 @@ export function listingPage({ listing: l, favorite, closed, minBid }) {
         ${l.sell_type === 'post' && l.market_value ? meter(l.price / l.market_value, l.market_value) : ''}
         ${attrs(l)}
         <div class="panel"><a class="seller-card" href="/seller/${esc(l.seller.id)}">${avatar(l.seller.photo, '')}<b>${esc(l.seller.username)}</b></a>
-          ${l.mine || closed ? '' : `<form id="msgForm" novalidate style="display:grid;gap:7px"><label class="field"><span>Message the seller</span><textarea id="msgText" rows="3" maxlength="2000">Is this still available?</textarea></label><p class="err" id="msgErr" hidden></p><button class="btn" type="submit">Send message</button></form>`}
+          ${l.mine || closed ? '' : `<form id="msgForm" novalidate style="display:grid;gap:7px"><label class="field"><span>Message the seller</span><textarea id="msgText" rows="3" maxlength="2000" placeholder="Write a message to the seller"></textarea></label><p class="err" id="msgErr" hidden></p><button class="btn" type="submit">Send message</button></form>`}
         </div>
       </div>
     </div></div>`;
@@ -207,3 +208,17 @@ export const adminMessagePage = ({ message: m, rawUrl }) => `<div class="wrap pa
       <div class="actions"><a class="btn plain" href="${esc(rawUrl)}" target="_blank" rel="noopener" download>Download original email</a></div>
     </div>
     <div class="panel"><p class="mail-body">${esc(m.text || '(This email has no text.)')}</p></div></div>`;
+
+/* ---------- confirming an email ---------- */
+export const verifyStrip = account => account && account.email && !account.email_verified ? `<div class="panel verify-strip">
+    <div class="sec-head"><h2>Confirm your email</h2><span class="muted">${esc(account.email)}</span><a class="btn" href="/verify">Enter code</a></div></div>` : '';
+export const verifyPage = ({ email, ready, sent, next }) => `<div class="wrap page"><form class="panel auth" id="verifyForm" novalidate>
+    <h1 class="main-title">Confirm your email</h1>
+    ${ready ? `<p>${sent ? 'We sent' : 'We\'ll send'} a 6-digit code from support@autohound.online to <b>${esc(email)}</b>. Check your spam folder if it isn't there.</p>`
+      : `<p>Email codes aren't switched on yet, so no code could be sent to <b>${esc(email)}</b>. You can keep using Autohound and confirm later.</p>`}
+    <label class="field"><span>Code</span><input id="code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="123456"></label>
+    <p class="err" id="verifyErr" role="alert" hidden></p>
+    <button class="btn" type="submit">Confirm email</button>
+    <button class="btn plain" type="button" id="resendBtn">Send a new code</button>
+    <a class="btn plain" href="${esc(next)}">Skip for now</a>
+  </form></div>`;

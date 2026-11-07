@@ -9,7 +9,7 @@ import { nodeContext } from './adapters/node.js';
 const here = dirname(fileURLToPath(import.meta.url)), siteDir = resolve(here, '../site');
 const dir = resolve(process.env.AUTOHOUND_DIR || resolve(here, '../storage')), port = +(process.env.PORT || 8080);
 await fs.mkdir(dir, { recursive: true });
-const ctx = nodeContext({ dir, siteDir, env: { ADMIN_KEY: process.env.ADMIN_KEY } });
+const ctx = nodeContext({ dir, siteDir, env: { ADMIN_KEY: process.env.ADMIN_KEY, RESEND_API_KEY: process.env.RESEND_API_KEY, EMAIL_LOG: process.env.EMAIL_LOG } });
 const TYPES = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.webp': 'image/webp', '.jpg': 'image/jpeg', '.png': 'image/png', '.svg': 'image/svg+xml' };
 
 async function staticFile(pathname, res) {
