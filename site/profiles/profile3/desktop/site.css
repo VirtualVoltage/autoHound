@@ -259,14 +259,18 @@ main { min-width: 0; }
 .chat-thread { min-height: 220px; max-height: 420px; }
 .chat-composer { grid-template-columns: minmax(0,1fr) minmax(0,1fr); align-items: stretch; }
 .chat-composer textarea { grid-column: 1 / -1; height: auto; min-height: calc(var(--h) * 4.75); resize: vertical; }
-/* side menu under the header line */
-.layout { display: grid; grid-template-columns: 200px minmax(0,1fr); gap: 20px; }
-.layout:has(.side-nav:empty) { grid-template-columns: minmax(0,1fr); }
-.side-nav { position: sticky; top: 64px; align-self: start; display: grid; gap: 8px; padding-block: 16px; }
+/* side menu: a full-height panel down the left side, under the header line, like an app sidebar */
+:root { --side-w: 236px; --head-h: 57px; }
+.layout:has(.side-nav:not(:empty)) { display: grid; grid-template-columns: var(--side-w) minmax(0,1fr); gap: 0; max-width: none; padding-left: 0; }
+.layout:has(.side-nav:not(:empty)) main { padding-left: 24px; max-width: 1480px; }
+.side-nav { position: sticky; top: var(--head-h); align-self: start; height: calc(100vh - var(--head-h)); display: flex; flex-direction: column; gap: 8px; padding: 16px; background: #060906; border-right: 1px solid var(--neon); box-shadow: 2px 0 14px rgba(20,255,30,.35); overflow-y: auto; }
 .side-nav:empty { display: none; }
-.side-nav .btn { justify-content: flex-start; }
-@media (max-width: 860px) {
-  .layout { grid-template-columns: minmax(0,1fr); gap: 0; }
-  .side-nav { position: static; grid-auto-flow: column; grid-auto-columns: minmax(0,1fr); padding-block: 12px 0; }
+.side-nav .btn { justify-content: flex-start; width: 100%; }
+.side-nav::before { content: "Menu"; padding: 0 4px 6px; color: var(--count); font: 400 12px/1 var(--display); text-transform: uppercase; letter-spacing: .08em; }
+@media (max-width: 760px) {
+  .layout:has(.side-nav:not(:empty)) { grid-template-columns: minmax(0,1fr); padding-left: var(--gutter-l); }
+  .layout:has(.side-nav:not(:empty)) main { padding-left: 0; }
+  .side-nav { position: static; height: auto; flex-direction: row; padding: 12px 0 0; background: none; border: 0; box-shadow: none; }
+  .side-nav::before { display: none; }
   .side-nav .btn { justify-content: center; padding-inline: 6px; }
 }
