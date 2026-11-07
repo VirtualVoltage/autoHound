@@ -1,0 +1,2 @@
+import fs from 'node:fs'; import { parseEmail } from '/home/claude/autohound/server/mail.js';
+for (const f of ['1', '2', '3']) { const b = Buffer.from(fs.readFileSync(`${process.argv[2]}/${f}.eml`).toString('latin1').replace(/(?<!\r)\n/g, '\r\n'), 'latin1'); const m = parseEmail(new Uint8Array(b)); console.log(JSON.stringify({ from: m.from, subject: m.subject, text: m.text, att: m.attachments })); }

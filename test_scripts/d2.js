@@ -1,0 +1,1 @@
+const {chromium}=require('playwright');(async()=>{const b=await chromium.launch();const p=await b.newPage();const e=[];p.on('pageerror',x=>e.push(x.message));await p.goto('file:///home/claude/swapyard/deploy/index.html');await p.waitForTimeout(300);console.log(await p.title(),await p.locator('.window').count(),e);await b.close()})()

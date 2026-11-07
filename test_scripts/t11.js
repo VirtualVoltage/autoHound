@@ -1,0 +1,11 @@
+const {chromium}=require('playwright');const U=process.argv[2],MS=+process.argv[3];
+(async()=>{const b=await chromium.launch();const c=await b.newContext({viewport:{width:1100,height:700}});const p=await c.newPage();const errs=[];p.on('pageerror',e=>errs.push(e.message));p.on('console',m=>m.type()==='error'&&!/503/.test(m.text())&&errs.push(m.text().slice(0,140)));
+await p.goto(U);await p.waitForSelector('.window',{timeout:120000});
+const start=await p.evaluate(()=>{window.__b=[];const l=document.querySelector('.logo');let on=0;new MutationObserver(()=>{const has=l.classList.contains('blink');if(has&&!on)on=performance.now();else if(!has&&on){window.__b.push([Math.round(on),Math.round(performance.now()-on),getComputedStyle(l).animationName]);on=0}}).observe(l,{attributes:true,attributeFilter:['class']});return performance.now()});
+const dim=await p.evaluate(async()=>{const l=document.querySelector('.logo');l.classList.add('blink');const o=getComputedStyle(l).opacity;l.classList.remove('blink');return o});
+await p.waitForTimeout(MS);
+const r=await p.evaluate(()=>window.__b);
+console.log(U,'blinks',r.length,'in',MS/1000,'s; seconds',r.map(x=>+((x[0]-start)/1000).toFixed(1)).join(' '),'; durations ms',r.map(x=>x[1]).join(' '),'; dim opacity',dim,'; css anim',r[0]?.[2]);
+await p.click('.window h3 a');await p.waitForSelector('.post-title');console.log('logo after nav',await p.locator('.logo').count());
+const q=await (await b.newContext({reducedMotion:'reduce'})).newPage();await q.goto(U);await q.waitForSelector('.window');await q.evaluate(()=>{window.__n=0;new MutationObserver(()=>window.__n++).observe(document.querySelector('.logo'),{attributes:true})});await q.waitForTimeout(12000);console.log('reduced motion changes',await q.evaluate(()=>window.__n));
+await b.close();console.log('errors',errs);})().catch(e=>{console.log('FAIL',e.message);process.exit(1)});

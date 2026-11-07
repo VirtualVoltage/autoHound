@@ -1,0 +1,6 @@
+From: spammer@bad.example
+To: whatever@autohound.online
+Subject: <img src=x onerror=alert(1)>
+Content-Type: text/html
+
+<html><head><style>p{}</style><script>alert('x')</script></head><body><p>Click <a href="http://bad">here</a> &amp; win&nbsp;now</p></body></html>

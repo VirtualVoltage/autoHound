@@ -1,0 +1,28 @@
+From: Parts Shop <shop@example.org>
+To: zack@autohound.online
+Subject: =?iso-8859-1?Q?Caf=E9_meet_=26_invoice?=
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="OUTER"
+
+--OUTER
+Content-Type: multipart/alternative; boundary="INNER"
+
+--INNER
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: quoted-printable
+
+Meet at the caf=E9 at 5. Price is $250 =
+for the set.
+--INNER
+Content-Type: text/html; charset=utf-8
+
+<p>Meet at the <b>café</b> at 5.</p>
+--INNER--
+
+--OUTER
+Content-Type: application/pdf; name="invoice.pdf"
+Content-Disposition: attachment; filename="invoice.pdf"
+Content-Transfer-Encoding: base64
+
+JVBERi0xLjQKJcfsj6IKMSAwIG9iago8PC9UeXBlL0NhdGFsb2c+PgplbmRvYmoK
+--OUTER--

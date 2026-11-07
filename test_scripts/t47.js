@@ -1,0 +1,3 @@
+const {chromium,devices}=require('playwright');const [U,O]=process.argv.slice(2);
+(async()=>{const b=await chromium.launch();for(const [n,d] of [['SE',devices['iPhone SE']],['13',devices['iPhone 13']]]){const p=await (await b.newContext(d)).newPage();await p.goto(U+'/');await p.waitForSelector('.window');await p.screenshot({path:`${O}/top-${n}-out.png`,clip:{x:0,y:0,width:d.viewport.width,height:260}});
+await p.goto(U+'/login');await p.waitForSelector('#login');await p.fill('#login','redline riley');await p.fill('#password','boost4life');await p.click('#authForm button[type=submit]');await p.waitForSelector('.window');await p.waitForTimeout(500);await p.screenshot({path:`${O}/top-${n}-in.png`,clip:{x:0,y:0,width:d.viewport.width,height:260}});}await b.close();})();

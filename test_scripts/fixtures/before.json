@@ -1,0 +1,19 @@
+{
+ "a": 6,
+ "l": 26,
+ "live": 25,
+ "c": [
+  {
+   "id": "C.26.11.06.00000",
+   "status": "closed",
+   "backups": 2,
+   "last_id": "M.26.11.06.00007",
+   "path": "records/backups/conversations/26.11.06__conversations/C.26.11.06.00000__A.26.11.06.00000_A.26.09.18.00000/active"
+  }
+ ],
+ "f": 37,
+ "bidp": {
+  "price": 99999,
+  "bids": 1
+ }
+}

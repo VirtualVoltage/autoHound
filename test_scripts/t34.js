@@ -1,0 +1,3 @@
+const {chromium}=require('playwright');const U=process.argv[2];(async()=>{const b=await chromium.launch();const p=await (await b.newContext({viewport:{width:900,height:800}})).newPage();
+await p.goto(U+'/login');await p.waitForSelector('#login');await p.fill('#login','redline riley');await p.fill('#password','boost4life');await p.click('#authForm button[type=submit]');await p.waitForSelector('.window');await p.mouse.wheel(0,1500);await p.waitForTimeout(500);
+console.log(await p.evaluate(()=>({nav:document.getElementById('sideNav').getBoundingClientRect().top|0,head:document.querySelector('.topbar').getBoundingClientRect().bottom|0})));await b.close();})();

@@ -1,0 +1,11 @@
+const {chromium}=require('playwright');
+(async()=>{const b=await chromium.launch();const p=await b.newPage({viewport:{width:1100,height:760}});const errs=[];
+p.on('pageerror',e=>errs.push(e.message));p.on('console',m=>m.type()==='error'&&errs.push(m.text().slice(0,120)));
+const U='http://127.0.0.1:8799';
+await p.goto(U);await p.waitForSelector('.window',{timeout:120000});
+const info=await p.evaluate(()=>({css:[...document.querySelectorAll('link[rel=stylesheet],link[rel=icon]')].map(l=>l.getAttribute('href')),title:document.getElementById('p2title')?.textContent,home:document.getElementById('p2home')?.textContent,banner:!!document.querySelector('.banner'),oldHead:!!document.querySelector('.site-head'),foot:!!document.querySelector('footer'),windows:document.querySelectorAll('.window').length,bg:getComputedStyle(document.body).backgroundColor}));console.log(info);
+await p.screenshot({path:process.argv[2]+'/p2-home.png'});
+await p.fill('#searchInput','coilovers');await p.press('#searchInput','Enter');await p.waitForTimeout(800);console.log('search',await p.evaluate(()=>[location.search,document.querySelectorAll('.window').length]));
+await p.goto(U+'/login');await p.waitForSelector('#authForm');await p.fill('#username','boost brandon');await p.fill('#password','demo-pass');
+await p.goto(U);await p.waitForSelector('.window h3 a');await p.click('.window h3 a');await p.waitForSelector('.post-title');console.log('listing',await p.textContent('.post-title'));
+await b.close();console.log('errors',errs);})().catch(e=>{console.log('FAIL',e.message);process.exit(1)});

@@ -1,0 +1,10 @@
+const {chromium,devices}=require('playwright');const U=process.argv[2],O=process.argv[3];
+(async()=>{const b=await chromium.launch();
+const shot=async(name,opts)=>{const c=await b.newContext(opts);const p=await c.newPage();const errs=[];p.on('pageerror',e=>errs.push(e.message));p.on('console',m=>m.type()==='error'&&errs.push(m.text()));
+await p.goto(U+'/');await p.waitForSelector('.window,.card,main *',{timeout:15000}).catch(()=>{});await p.waitForTimeout(900);
+const info=await p.evaluate(()=>{const n=document.getElementById('sideNav');const r=n&&n.getBoundingClientRect();return {css:[...document.styleSheets].map(s=>s.href),nav:n?{html:n.innerHTML.length,w:r.width,h:r.height,x:r.x,y:r.y,display:getComputedStyle(n).display}:null,width:innerWidth}});
+console.log(name,JSON.stringify(info),errs);await p.screenshot({path:`${O}/${name}.png`});await c.close();};
+await shot('loggedout-1300',{viewport:{width:1300,height:760}});
+await shot('loggedout-900',{viewport:{width:900,height:760}});
+await shot('iphone',{...devices['iPhone 13']});
+await b.close();})();

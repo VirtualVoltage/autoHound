@@ -1,0 +1,9 @@
+const {chromium}=require('playwright');const U='http://127.0.0.1:8799',mode=process.argv[2];
+(async()=>{const b=await chromium.launch();const c=await b.newContext({viewport:{width:1300,height:900}});const p=await c.newPage();const errs=[];p.on('pageerror',e=>errs.push(e.message));
+await p.goto(U+'/login');await p.waitForSelector('#login',{timeout:120000});await p.fill('#login','k turbo kate');await p.fill('#password','spool2fast');await p.click('#authForm button[type=submit]');await p.waitForSelector('#headLinks a[href="/account"]');
+if(mode==='make'){const r=await p.evaluate(async()=>{const d=await (await fetch('/api/listings?limit=100')).json();return d.listings.filter(l=>l.title.startsWith('Bronze 5 spoke')).map(l=>l.id)});
+ await p.goto(U+'/listing/'+r[0]);await p.waitForSelector('#msgForm');await p.fill('#msgText','test chat before cleanup');await p.click('#msgForm button');await p.waitForFunction(()=>/\/messages\/C/.test(location.pathname));console.log('chat made',p.url().split('/').pop(),'on',r[0]);}
+else{await p.goto(U);await p.waitForTimeout(2500);console.log('home windows',await p.locator('.window').count(),'empty msg shown',await p.locator('#emptyMsg:not([hidden])').count());
+ await p.goto(U+'/messages');await p.waitForSelector('.inbox-row');console.log('inbox',(await p.textContent('.inbox-row')).replace(/\s+/g,' ').trim());await p.click('.inbox-row');await p.waitForSelector('#composer');console.log('thread msgs',await p.locator('.bubble').count());
+ const lid=await p.getAttribute('a[href^="/listing/"]','href');await p.goto(U+lid);await p.waitForTimeout(1200);console.log('old listing page',(await p.textContent('#main')).replace(/\s+/g,' ').trim().slice(0,60));}
+await b.close();console.log('errors',errs);})().catch(e=>{console.log('FAIL',e.message);process.exit(1)});

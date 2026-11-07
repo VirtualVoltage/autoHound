@@ -1,0 +1,11 @@
+const {chromium}=require('playwright');const F=process.argv[2],O=process.argv[3];
+(async()=>{const b=await chromium.launch();const p=await (await b.newContext({viewport:{width:560,height:900}})).newPage();const errs=[];p.on('pageerror',e=>errs.push(e.message));p.on('console',m=>m.type()==='error'&&errs.push(m.text().slice(0,150)));
+await p.goto('file://'+F);await p.waitForSelector('.window',{timeout:20000});await p.waitForTimeout(800);
+console.log('windows',await p.locator('.window').count(),'broken imgs',await p.evaluate(()=>[...document.images].filter(i=>i.complete&&!i.naturalWidth).length));
+await p.screenshot({path:O+'/pv-home.png'});
+await p.fill('#searchInput','coilovers');await p.press('#searchInput','Enter');await p.waitForTimeout(600);console.log('search',await p.locator('.window').count());
+await p.click('.window h3 a');await p.waitForSelector('.post-title');await p.waitForTimeout(500);console.log('listing',await p.textContent('.post-title'),'url still file',p.url().startsWith('file://'));await p.screenshot({path:O+'/pv-listing.png',fullPage:true});
+await p.click('.seller-btn');await p.waitForSelector('.profile');console.log('seller',(await p.textContent('.profile h1')));
+await p.click('#headLinks a[href="/sell"]');await p.waitForSelector('#authForm');await p.fill('#username','someone here');await p.fill('#password','secret12');await p.click('#authForm button');await p.waitForTimeout(800);console.log('login',await p.textContent('#authErr'));
+await p.click('#headLinks a[href="/signup"]');await p.waitForSelector('#email');console.log('signup has email field true');
+await b.close();console.log('errors',errs);})().catch(e=>{console.log('FAIL',e.message);process.exit(1)});

@@ -1,0 +1,7 @@
+const {chromium}=require('playwright');const U=process.argv[2];const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+(async()=>{const b=await chromium.launch();const p=await (await b.newContext({viewport:{width:1300,height:900}})).newPage();const errs=[];p.on('pageerror',e=>errs.push(e.message));
+await p.goto(U+'/login');await p.waitForSelector('#login');await p.fill('#login','weekend wrench');await p.fill('#password','wrench2026');await p.click('#authForm button[type=submit]');await p.waitForSelector('#headLinks a[href="/messages"]');
+const lid=await p.evaluate(async()=>(await (await fetch('/api/accounts/A.26.09.12.00000')).json()).listings[0].id);
+await p.goto(U+'/listing/'+lid);await p.waitForSelector('#chatBox');await p.fill('#msgText','profile check '+Date.now());await p.click('#composer button[type=submit]');await p.waitForSelector('#thread .bubble');
+console.log(await p.evaluate(()=>window.AUTOHOUND_PROFILE),'chat box works, edit page',await (async()=>{const mine=await p.evaluate(async()=>{const d=await (await fetch('/api/me')).json();return (await (await fetch('/api/accounts/'+d.account.id)).json()).listings[0].id});await p.goto(U+'/listing/'+mine+'/edit');await p.waitForSelector('#editForm');return 'ok'})(),'my listings',await (async()=>{await p.goto(U+'/my-listings');await p.waitForSelector('.my-card');return p.locator('.my-card').count()})());
+await b.close();console.log('errors',errs);})().catch(e=>{console.log('FAIL',e.message);process.exit(1)});

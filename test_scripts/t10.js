@@ -1,0 +1,21 @@
+const {chromium,devices}=require('playwright');const U=process.argv[2],O=process.argv[3];const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+(async()=>{const b=await chromium.launch();const c=await b.newContext({viewport:{width:1300,height:900}});const p=await c.newPage();const errs=[];p.on('pageerror',e=>errs.push(e.message));
+const shot=async n=>{await sleep(300);await p.screenshot({path:`${O}/v2-${n}.png`});};
+await p.goto(U);await p.waitForSelector('.window');await shot('home');
+await p.click('.window h3 a');await p.waitForSelector('.post-title');await shot('listing');
+await p.goto(U+'/signup');await p.waitForSelector('#username');await shot('signup');
+await p.fill('#username','layout tester'+Date.now()%1000);await p.fill('#password','secret12');await p.click('#authForm button[type=submit]');await p.waitForSelector('#headLinks a[href="/account"]');
+await p.goto(U+'/sell');await p.waitForSelector('#sellForm');await shot('sell');
+await p.goto(U);await p.waitForSelector('.window h3 a');await p.click('.window h3 a');await p.waitForSelector('#msgForm');await p.click('#msgForm button');await p.waitForSelector('#composer');await sleep(200);await shot('thread');
+await p.goto(U+'/messages');await p.waitForSelector('.inbox-row');await shot('inbox');
+await p.goto(U+'/account');await p.waitForSelector('#logoutBtn');await shot('account');
+// every clickable thing that isn't a button look
+const looseLinks=await p.evaluate(()=>[...document.querySelectorAll('a')].filter(a=>!a.matches('.btn,.logo,.inbox-row')&&!a.closest('h3')).map(a=>a.href));console.log('plain links',looseLinks);
+const m=await b.newContext({...devices['iPhone 14'],storageState:await c.storageState()});const q=await m.newPage();
+await q.goto(U);await q.waitForSelector('.window');await sleep(300);await q.screenshot({path:`${O}/v2-m-home.png`});
+await q.click('.window h3 a');await q.waitForSelector('.post-title');await sleep(300);await q.screenshot({path:`${O}/v2-m-listing.png`,fullPage:true});
+await q.goto(U+'/messages');await q.waitForSelector('.inbox-row');await q.click('.inbox-row');await q.waitForSelector('#composer');await sleep(300);await q.screenshot({path:`${O}/v2-m-thread.png`});
+const se=await b.newContext({...devices['iPhone SE'],storageState:await c.storageState()});const r=await se.newPage();await r.goto(U);await r.waitForSelector('.window');await sleep(300);await r.screenshot({path:`${O}/v2-se-home.png`});
+console.log('se overflow',await r.evaluate(()=>[document.documentElement.scrollWidth,document.documentElement.clientWidth]));
+const navH=await r.evaluate(()=>[...document.querySelectorAll('#headLinks .btn')].map(e=>[e.textContent,e.scrollWidth,e.clientWidth]));console.log(navH);
+await b.close();console.log('errors',errs);})().catch(e=>{console.log('FAIL',e.message);process.exit(1)});

@@ -1,0 +1,26 @@
+const {chromium,devices}=require('playwright');const U=process.argv[2],O=process.argv[3];const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+(async()=>{const b=await chromium.launch();const errs=[];
+const ctx=async(opt={viewport:{width:1300,height:900}})=>{const c=await b.newContext(opt);const p=await c.newPage();p.on('pageerror',e=>errs.push(e.message));return p};
+const login=async(p,l,pw)=>{await p.goto(U+'/login');await p.waitForSelector('#login');await p.fill('#login',l);await p.fill('#password',pw);await p.click('#authForm button[type=submit]');await p.waitForSelector('#headLinks a[href="/messages"]');};
+const anon=await ctx();await anon.goto(U);await anon.waitForSelector('.window');console.log('look',await anon.evaluate(()=>window.AUTOHOUND_PROFILE),'| ?profile ignored:',await (async()=>{await anon.goto(U+'/?profile=profile1');await anon.waitForSelector('.window');return anon.evaluate(()=>window.AUTOHOUND_PROFILE)})());
+const kate=await ctx();await login(kate,'k turbo kate','spool2fast');
+const lid=await kate.evaluate(async()=>{const d=await (await fetch('/api/me')).json();const a=await (await fetch('/api/accounts/'+d.account.id)).json();return a.listings.filter(l=>l.sell_type==='post')[1].id});
+await anon.goto(U+'/listing/'+lid);await anon.waitForSelector('#chatBox');await anon.fill('#msgText','hi');await anon.click('#composer button[type=submit]');await anon.waitForFunction(()=>location.pathname==='/login');console.log('logged-out send goes to login');
+const buyer=await ctx();await login(buyer,'dsm dan everson','4g63rocks');
+await buyer.goto(U+'/listing/'+lid);await buyer.waitForSelector('#chatBox');
+console.log('textarea height',await buyer.evaluate(()=>document.getElementById('msgText').getBoundingClientRect().height|0),'thread empty',await buyer.locator('#thread .bubble').count());
+await buyer.fill('#msgText','Is this still around? Could do cash Saturday.');await buyer.click('#composer button[type=submit]');await buyer.waitForSelector('#thread .bubble');console.log('first message on listing page, url',buyer.url().replace(U,''));
+await buyer.setInputFiles('#attachInput',O+'/up_b.jpg');await sleep(1500);await buyer.fill('#msgText','here is my car');await buyer.click('#composer button[type=submit]');await sleep(1200);console.log('buyer bubbles',await buyer.locator('#thread .bubble').count(),'photo',await buyer.evaluate(()=>!!document.querySelector('#thread .bubble img')));
+await buyer.reload();await buyer.waitForSelector('#thread .bubble');await sleep(500);console.log('after reload bubbles',await buyer.locator('#thread .bubble').count());
+await kate.goto(U+'/listing/'+lid);await kate.waitForSelector('#chatTabs');await sleep(800);console.log('seller tabs',(await kate.textContent('#chatTabs')).replace(/\s+/g,' '),'bubbles',await kate.locator('#thread .bubble').count());
+await kate.fill('#msgText','Yep, Saturday works.');await kate.click('#composer button[type=submit]');await sleep(800);
+await sleep(5500);console.log('buyer got reply by polling',(await buyer.textContent('#thread')).includes('Saturday works'));
+await kate.screenshot({path:O+'/p3-chat-seller.png',fullPage:true});
+await buyer.goto(U+'/messages');await buyer.waitForSelector('.inbox-row');const href=await buyer.getAttribute('.inbox-row','href');console.log('inbox link',href.replace(/L\.[\d.]+/,'L…').replace(/C\.[\d.]+/,'C…'));
+const cid=href.split('chat=')[1];await buyer.goto(U+'/messages/'+cid);await buyer.waitForFunction(()=>location.pathname.startsWith('/listing/'));console.log('old chat link redirects to listing');
+// sold listing: chat stays reachable
+await kate.goto(U+'/listing/'+lid);await kate.waitForSelector('#soldBtn');await kate.click('#soldBtn');await sleep(1500);
+await buyer.goto(U+'/messages');await buyer.waitForSelector('.inbox-row');const h2=await buyer.getAttribute('.inbox-row','href');console.log('sold chat link',h2.split('?')[0].replace(/[LC]\.[\d.]+/,'ID'));
+await buyer.goto(U+h2);await buyer.waitForSelector('#thread .bubble');console.log('sold chat bubbles',await buyer.locator('#thread .bubble').count(),'composer',await buyer.locator('#composer').count());
+const ph=await ctx({...devices['iPhone 14']});await login(ph,'dsm dan everson','4g63rocks');const lid2=await ph.evaluate(async()=>{const a=await (await fetch('/api/accounts/A.26.09.18.00000')).json();return a.listings[0].id});await ph.goto(U+'/listing/'+lid2);await ph.waitForSelector('#chatBox');await sleep(400);console.log('phone overflow',await ph.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth));await ph.locator('#chatBox').scrollIntoViewIfNeeded();await ph.screenshot({path:O+'/p3-chat-phone.png'});
+await b.close();console.log('errors',errs);})().catch(e=>{console.log('FAIL',e.message);process.exit(1)});
