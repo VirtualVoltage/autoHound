@@ -16,7 +16,7 @@ Unless the owner says a big change is coming, act as if real people depend on th
 
 ## Rules decided by the owner
 
-- Everything visual lives in `site/profiles/`, including page HTML in `views.js`. Each profile has a `desktop` and a `mobile` folder, usually changed together, with small differences to suit each. `site/js/profile.js` picks the active profile and loads `mobile` on phones. Tablets get `desktop`. Shared logic in `site/js` must not write page HTML. `profile1` is the original look. `profile2` is the active look: the same neon colors with a simple marketplace layout, where every action is a real button and controls share one height. Its buttons sit at the top right on desktop and in a bottom bar on mobile.
+- Everything visual lives in `site/profiles/`, including page HTML in `views.js`. Each profile has a `desktop` and a `mobile` folder, usually changed together, with small differences to suit each. `site/js/profile.js` picks the active profile and loads `mobile` on phones. Tablets get `desktop`. Shared logic in `site/js` must not write page HTML. `profile1` is the original look. `profile3` is the active look: profile2 plus a side menu (Browse market, My listings, Account settings) under the header line on main pages, not on log in, sign up or code pages. `profile2` is the earlier look: neon colors, a simple marketplace layout, every action a real button, buttons at the top right on desktop and in a bottom bar on mobile. Visitors can't switch profiles.
 - `profile1` theme: black and neon green, early 2000s tuner. White text and titles, green main title and prices, yellow towns, gray counts.
 - Text goes in `records/`. Photos, videos and PDFs go in `data/`, using the same layout.
 - IDs look like `L.26.11.04.00000`. Folder names are `ID__title`, and `__` only ever separates the two. Titles use `_` for spaces in folder names.
@@ -32,6 +32,9 @@ Unless the owner says a big change is coming, act as if real people depend on th
 - Public text (usernames, listings, and any future comments) goes through `server/wordfilter.js`, which blocks slurs and profanity. Private chats are never filtered.
 - An account is an admin only while its `account.json` has `"admin": true`. It's toggled by hand, never by the site. Admins see the site inbox in the menu and at the top of the home page.
 - Email sent to any @autohound.online address goes to the site's own inbox. The `autohound-mail` Worker (`workers/mail-intake.js`, deployed by hand) puts it in `mail_queue`, and `server/mail.js` saves it as `records/inbox/<date>__inbox/E.ID__Subject/message.json` plus `message.eml` in the matching `data/` folder. Email is shown as plain text only, never as HTML.
+- Chats for live listings happen in the chat box on the listing page in every profile; sellers pick a buyer there. Sold or removed listings keep their chat page.
+- Features belong to every profile: logic in `server/` and `site/js`, with matching views in each profile. Only layout choices, like profile3's side menu and header buttons, are profile-specific.
+- Owners can edit a live listing's words, price and details, but not photos, type or category. A new title renames its folder, and its chats and photos move with it. Auctions with bids keep their price.
 - Auction pages never show buyers a market value comparison.
 - The home page shows popular listing windows, with only search and price filters.
 

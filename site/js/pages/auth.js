@@ -17,7 +17,7 @@ export async function authPage(mode) {
     err.hidden = true;
     if (signup) {
       const username = $('username').value.trim(), email = $('email').value.trim();
-      if (username.includes('_')) return show('Usernames use spaces, not underscores.');
+      if (username.includes('_')) return show('Underscores are prohibited.');
       if (username.includes('@')) return show('Usernames can\'t have @ in them.');
       if (!email) return show('Add your email address.');
       const u = countChars(username.replace(/\s+/g, ' ')), p = countChars(password);
@@ -34,7 +34,7 @@ export async function authPage(mode) {
     }
     const login = $('login').value.trim();
     if (!login || !password) return show('Enter your email and password.');
-    if (!login.includes('@') && login.includes('_')) return show('Usernames use spaces, not underscores.');
+    if (!login.includes('@') && login.includes('_')) return show('Underscores are prohibited.');
     btn.disabled = true;
     try {
       const { salt } = await api('login/salt', { json: { login } });

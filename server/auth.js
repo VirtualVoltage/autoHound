@@ -67,7 +67,7 @@ export const publicAccount = a => a && ({ id: a.id, username: a.username, joined
 
 export async function signup({ db, store, request, env }) {
   const b = await readJson(request), username = String(b.username || '').replace(/[\u0000-\u001f\u007f]/g, '').replace(/\s+/g, ' ').trim();
-  if (username.includes('_')) fail(400, 'Usernames use spaces, not underscores.');
+  if (username.includes('_')) fail(400, 'Underscores are prohibited.');
   if (username.includes('@')) fail(400, 'Usernames can\'t have @ in them.');
   const n = countChars(username);
   if (n < LIMITS.usernameMin || n > LIMITS.usernameMax) fail(400, `Usernames must be ${LIMITS.usernameMin} to ${LIMITS.usernameMax} characters.`);
@@ -97,7 +97,7 @@ export async function signup({ db, store, request, env }) {
 }
 export async function login(ctx) {
   const { db, store, request } = ctx, b = await readJson(request), login = String(b.login || '').trim();
-  if (!login.includes('@') && login.includes('_')) fail(400, 'Usernames use spaces, not underscores.');
+  if (!login.includes('@') && login.includes('_')) fail(400, 'Underscores are prohibited.');
   checkProof(b.proof);
   if (!await hit(db, 'login:' + await clientKey(request) + ':' + login.toLowerCase(), LIMITS.loginsPer10Min, 600e3)) fail(429, 'Too many tries. Wait a few minutes.');
   const a = await findLogin(db, login);

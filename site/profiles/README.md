@@ -16,13 +16,15 @@ Copy a profile folder to start a new one. Most changes belong in both `desktop` 
 
 | Page | Needed |
 |---|---|
-| Frame | `#main`, `#toast`. Optional: `#headLinks`, `#searchForm`, `#searchInput` |
+| Frame | `#main`, `#toast`. Optional: `#headLinks`, `#searchForm`, `#searchInput`, and `#sideNav` filled by an exported `sideNav({ account, path })` |
+| Edit listing | `#editForm`, `#editErr`, and the `e*` fields that apply |
 | Home | `#windows`. Optional: `#minPrice`, `#maxPrice`, `[data-sort]`, `#emptyMsg`, `#moreBtn` |
 | Log in, sign up | `#authForm`, `#password`, `#authErr`. Sign up: `#username`, `#email`. Log in: `#login`. Login code step: `#codeForm`, `#loginCode`, `#codeErr` |
 | Your account, security | `#loginCodesBtn` with `data-on`, `#securityErr` |
 | Listing | Optional: `#thumbs` with `#mainPhoto`, `#msgForm` with `#msgText` and `#msgErr`, `#bidForm` with `#bidAmt` and `#bidErr`, `#reportBtn`, `#soldBtn`, `#deleteBtn` |
 | Sell | `#sellForm`, `#upGrid`, `#sPhotos`, `#photoErr`, `#sellPreview`, `#sellErr`, `#pubBtn`, and the `s*` form fields. `[data-for]`, `#sCategoryField`, `#sPriceLabel`, `#useEst` are used if present |
 | Chat | `#thread`, `#attachPreview`, `#composer`, `#attachInput`, `#msgText` |
+| Chat on the listing page | `#chatBox` with the chat elements above, `#chatTabs` with `[data-chat]` buttons for sellers, and `export const chatOnListing = true` |
 | Your account | `#logoutBtn`, `#photoInput` |
 | Confirm email | `#verifyForm`, `#code`, `#verifyErr`, `#resendBtn` |
 | Site inbox (admins) | Nothing required. Link rows to `/admin/<id>`, and keep email text as plain text, never HTML |

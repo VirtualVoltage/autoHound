@@ -80,7 +80,7 @@ export const authPage = ({ signup, limits: L, otherLink }) => `<div class="page"
     <label class="field"><span>Email</span><input id="email" type="email" autocomplete="email" autocapitalize="none" spellcheck="false" maxlength="254"></label>`
     : `<label class="field"><span>Email</span><input id="login" type="email" autocomplete="username" autocapitalize="none" spellcheck="false" maxlength="254"></label>`}
     <label class="field"><span>Password</span><input id="password" type="password" autocomplete="${signup ? 'new-password' : 'current-password'}" maxlength="40"></label>
-    ${signup ? `<p class="note">Username: ${L.usernameMin} to ${L.usernameMax} characters, with spaces allowed but no underscores. Password: ${L.passwordMin} to ${L.passwordMax} characters. Your email stays private. Password resets by email are coming soon.</p>` : ''}
+    ${signup ? `<p class="note">Username: ${L.usernameMin} to ${L.usernameMax} characters. Underscores are prohibited. Password: ${L.passwordMin} to ${L.passwordMax} characters. Your email stays private. Password resets by email are coming soon.</p>` : ''}
     ${signup ? '' : '<p class="note">Accounts made before emails were added can use their username here.</p>'}
     <p class="err" id="authErr" role="alert" hidden></p>
     <button class="btn" type="submit">${signup ? 'Sign up' : 'Log in'}</button>
@@ -103,7 +103,7 @@ function attrs(l) {
 }
 export function listingPage({ listing: l, favorite, closed, minBid }) {
   const statusNote = l.status === 'sold' ? '<p class="err">This listing has sold.</p>' : l.status === 'draft' ? '<p class="err">This draft never finished publishing.</p>' : closed ? '<p class="err">This listing is no longer public.</p>' : '';
-  const actions = l.mine ? (closed ? '' : `<button class="btn plain" id="soldBtn">Mark sold</button><button class="btn plain" id="deleteBtn">Delete listing</button>`) : `${favoriteButton(l.id, favorite)}${closed ? '' : '<button class="btn plain" id="reportBtn">Report</button>'}`;
+  const actions = l.mine ? (closed ? '' : `<a class="btn plain" href="/listing/${esc(l.id)}/edit">Edit listing</a><button class="btn plain" id="soldBtn">Mark sold</button><button class="btn plain" id="deleteBtn">Delete listing</button>`) : `${favoriteButton(l.id, favorite)}${closed ? '' : '<button class="btn plain" id="reportBtn">Report</button>'}`;
   return `<div class="page">
     <div class="back-row"><a class="btn plain" href="/">Back to listings</a></div>
     <div class="post">
@@ -120,8 +120,8 @@ export function listingPage({ listing: l, favorite, closed, minBid }) {
         </div>
         ${buyBox(l, minBid)}
         <div class="panel"><a class="btn plain seller-btn" href="/seller/${esc(l.seller.id)}">${avatar(l.seller.photo, '')}<span>${esc(l.seller.username)}</span></a>
-          ${l.mine || closed ? '' : `<form id="msgForm" class="stack" novalidate><label class="field"><span>Message the seller</span><textarea id="msgText" rows="3" maxlength="2000" placeholder="Write a message to the seller"></textarea></label><p class="err" id="msgErr" hidden></p><button class="btn" type="submit">Send message</button></form>`}
         </div>
+        ${chatPanel(l, closed)}
         ${l.sell_type === 'post' && l.market_value ? meter(l.price / l.market_value, l.market_value) : ''}
         ${attrs(l)}
       </div>
@@ -157,7 +157,7 @@ export const sellPage = ({ draft: D, options: o, estimates, max }) => `<div clas
 
 /* ---------- messages ---------- */
 export const inboxPage = list => `<div class="page"><div class="toolbar"><h1 class="main-title">Messages</h1></div>
-    ${list.length ? `<div class="inbox-list">${list.map(c => `<a class="inbox-row ${c.unread ? 'unread' : ''}" href="/messages/${esc(c.id)}">${ph(c.listing.photo ? c.listing.photo + '?size=thumb' : null, true, '')}
+    ${list.length ? `<div class="inbox-list">${list.map(c => `<a class="inbox-row ${c.unread ? 'unread' : ''}" href="${c.listing.status === 'live' ? `/listing/${esc(c.listing.id)}?chat=${esc(c.id)}` : `/messages/${esc(c.id)}`}">${ph(c.listing.photo ? c.listing.photo + '?size=thumb' : null, true, '')}
       <div class="row-text"><b>${esc(c.listing.title)}</b><div class="money">${money(c.listing.price)}</div><div class="muted">${c.role === 'selling' ? 'Buyer' : 'Seller'}: ${esc(c.with.username)}${c.listing.status !== 'live' ? ` · ${c.listing.status === 'sold' ? 'sold' : 'listing removed'}` : ''}</div><div class="last">${c.last_from_me ? 'You: ' : ''}${esc(c.last_text)}</div></div>
       ${c.unread ? '<span class="badge-count">New</span>' : ''}</a>`).join('')}</div>` : `<div class="empty"><b>No messages yet.</b><span class="muted">Find a listing and message the seller. Chats clear after 7 days with no new messages.</span><a class="btn" href="/">Browse listings</a></div>`}</div>`;
 function attachmentHtml(a) {
@@ -244,3 +244,41 @@ export const loginCodePage = ({ emailHint }) => `<div class="page"><form class="
     <p class="err" id="codeErr" role="alert" hidden></p>
     <button class="btn" type="submit">Log in</button>
   </form></div>`;
+
+/* ---------- editing a listing ---------- */
+export const editListingPage = ({ listing: l, options: o, priceLocked }) => `<div class="page"><div class="toolbar"><h1 class="main-title">Edit listing</h1><span class="muted">Photos stay the same.</span></div>
+    <form class="panel edit-form" id="editForm" novalidate>
+      <label class="field"><span>Title</span><input id="eTitle" type="text" maxlength="70" value="${esc(l.title)}"></label>
+      <div class="two"><label class="field"><span>${l.sell_type === 'auction' ? 'Starting price' : 'Price'}</span><input id="ePrice" type="number" min="1" inputmode="numeric" value="${esc(l.price)}" ${priceLocked ? 'disabled' : ''}></label>
+        <label class="field"><span>Condition</span><select id="eCond">${o.conditions.map(c => opt(c, c, l.condition)).join('')}</select></label></div>
+      ${priceLocked ? '<p class="note">The price can\'t change after bids come in.</p>' : ''}
+      ${l.kind === 'cars' ? `<div class="two"><label class="field"><span>Year</span><input id="eYear" type="number" value="${esc(l.car?.year)}"></label><label class="field"><span>Miles</span><input id="eMiles" type="number" min="0" value="${esc(l.car?.miles)}"></label></div>
+        <label class="field"><span>Title status</span><select id="eTitleS">${['Clean', 'Rebuilt', 'Salvage'].map(c => opt(c, c, l.car?.title_status)).join('')}</select></label>`
+      : `<label class="field"><span>Fits</span><input id="eFit" type="text" maxlength="60" value="${esc(l.fits)}"></label>`}
+      <div class="two"><label class="field"><span>City</span><select id="eCity">${o.cities.map(c => opt(c, c, l.city)).join('')}</select></label>
+        <label class="field"><span>Handoff</span><select id="eHandoff">${o.handoffs.map(c => opt(c, c, l.handoff)).join('')}</select></label></div>
+      <label class="field"><span>Description</span><textarea id="eDesc" rows="6" maxlength="1500">${esc(l.description)}</textarea></label>
+      <p class="err" id="editErr" role="alert" hidden></p>
+      <div class="action-row"><a class="btn plain" href="/listing/${esc(l.id)}">Cancel</a><button class="btn" type="submit">Save changes</button></div>
+    </form></div>`;
+export const myListingsPage = ({ listings, favorites }) => `<div class="page"><div class="toolbar"><h1 class="main-title">My listings</h1><a class="btn" href="/sell">Sell something</a></div>
+    ${listings.length ? `<div class="windows">${listings.map(l => `<div class="my-card">${windowCard(l, favorites.has(l.id))}<a class="btn plain" href="/listing/${esc(l.id)}/edit">Edit</a></div>`).join('')}</div>` : '<div class="empty"><b>You have no live listings.</b><a class="btn" href="/sell">Sell something</a></div>'}</div>`;
+/* ---------- chat box on the listing page (all profiles) ---------- */
+// Live listings keep their chats here instead of on a separate page.
+export const chatOnListing = true;
+const composer = (placeholder) => `<form class="composer chat-composer" id="composer" novalidate>
+      <textarea id="msgText" rows="8" maxlength="2000" placeholder="${placeholder}" aria-label="Message"></textarea>
+      <label class="btn plain" for="attachInput" aria-label="Attach a photo, video or PDF">Attach</label><input id="attachInput" class="sr" type="file" accept="image/*,video/mp4,video/webm,application/pdf">
+      <button class="btn" type="submit">Send</button>
+    </form>`;
+export function chatPanel(l, closed) {
+  if (!l.mine && closed && !l.chat) return '';
+  const tabs = l.mine ? (l.chats?.length ? `<div class="chat-tabs" id="chatTabs" role="group" aria-label="Buyers">${l.chats.map(c => `<button class="btn plain" type="button" data-chat="${esc(c.id)}" aria-pressed="false">${esc(c.with.username)}${c.unread ? ' <span class="badge-count">New</span>' : ''}</button>`).join('')}</div>` : '<p class="muted">Messages from buyers show up here.</p>') : '';
+  const talk = !l.mine || l.chats?.length;
+  return `<div class="panel chat-box" id="chatBox">
+    <h2>${l.mine ? 'Messages from buyers' : 'Message the seller'}</h2>
+    ${tabs}
+    ${talk ? `<div class="thread chat-thread" id="thread" aria-live="polite"></div><div class="attach-preview" id="attachPreview"></div>${composer(l.mine ? 'Write a reply' : 'Write a message to the seller')}
+    <p class="note">Meet in a public place, inspect before you pay, and never wire money.</p>` : ''}
+  </div>`;
+}

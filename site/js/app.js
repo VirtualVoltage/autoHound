@@ -6,22 +6,27 @@ import { listingPage } from './pages/listing.js';
 import { sellPage } from './pages/sell.js';
 import { authPage } from './pages/auth.js';
 import { inboxPage, threadPage } from './pages/messages.js';
-import { accountPage, sellerPage, favoritesPage } from './pages/account.js';
+import { accountPage, sellerPage, favoritesPage, myListingsPage } from './pages/account.js';
 import { adminInboxPage, adminMessagePage } from './pages/admin.js';
 import { verifyPage } from './pages/verify.js';
+import { editListingPage } from './pages/edit.js';
 
 const ROUTES = [
-  [/^\/$/, homePage], [/^\/listing\/([^/]+)$/, listingPage], [/^\/sell$/, sellPage],
+  [/^\/$/, homePage], [/^\/listing\/([^/]+)$/, listingPage], [/^\/listing\/([^/]+)\/edit$/, editListingPage], [/^\/sell$/, sellPage],
   [/^\/signup$/, () => authPage('signup')], [/^\/login$/, () => authPage('login')],
   [/^\/messages$/, inboxPage], [/^\/messages\/([^/]+)$/, threadPage],
-  [/^\/account$/, accountPage], [/^\/favorites$/, favoritesPage], [/^\/seller\/([^/]+)$/, sellerPage],
+  [/^\/account$/, accountPage], [/^\/my-listings$/, myListingsPage], [/^\/favorites$/, favoritesPage], [/^\/seller\/([^/]+)$/, sellerPage],
   [/^\/verify$/, verifyPage],
   [/^\/admin$/, adminInboxPage], [/^\/admin\/([^/]+)$/, adminMessagePage],
 ];
 let leave = null, token = 0;
 export function go(path, replace) { history[replace ? 'replaceState' : 'pushState']({}, '', path); route(); }
 export function needLogin() { go('/login?next=' + encodeURIComponent(location.pathname + location.search), true); }
-export function renderHeader() { const h = $('headLinks'); if (h) h.innerHTML = view.headerLinks({ account: session.account, unread: session.unread, adminUnread: session.adminInbox?.unread || 0 }); }
+export function renderHeader() {
+  const h = $('headLinks'); if (h) h.innerHTML = view.headerLinks({ account: session.account, unread: session.unread, adminUnread: session.adminInbox?.unread || 0 });
+  // Profiles with a side menu export sideNav. It returns nothing on pages that shouldn't show it.
+  const s = $('sideNav'); if (s && view.sideNav) s.innerHTML = view.sideNav({ account: session.account, path: location.pathname });
+}
 async function route() {
   if (leave) { try { leave(); } catch {} leave = null; }
   const mine = ++token, path = location.pathname.replace(/(.)\/$/, '$1');

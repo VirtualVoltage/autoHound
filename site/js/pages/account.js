@@ -30,3 +30,9 @@ export async function favoritesPage() {
   const d = await api('favorites');
   $('main').innerHTML = view.favoritesPage({ listings: d.listings, favorites: session.favorites });
 }
+
+export async function myListingsPage() {
+  if (!session.account) return needLogin();
+  const d = await api('accounts/' + session.account.id);
+  $('main').innerHTML = view.myListingsPage({ listings: d.listings, favorites: session.favorites });
+}

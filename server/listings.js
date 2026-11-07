@@ -107,10 +107,23 @@ export async function getListing({ db, store, request }, id, account) {
     out.won = !!account && account.id === r.top_bidder;
     if (mine) { const fee = l.market_value && r.price >= l.market_value * AUCTION.thresholdShare ? r.price * AUCTION.feeRate : 0; out.seller_fee = fee; }
   }
+  // Chats happen in a box on the listing page. Buyers get their chat; sellers get one per buyer.
+  if (account) {
+    const since = Date.now() - LIMITS.conversationIdleMs;
+    if (mine) {
+      const rows = await db.all(`SELECT c.id, c.buyer_id, c.last_text, c.last_from, c.last_id, c.seller_read, b.username FROM conversations c JOIN accounts b ON b.id=c.buyer_id
+        WHERE c.listing_id=? AND c.status IN ('live','closed') AND c.last_activity>=? ORDER BY c.last_activity DESC LIMIT 50`, id, since);
+      out.chats = rows.map(c => ({ id: c.id, with: { id: c.buyer_id, username: c.username }, last_text: c.last_text, unread: !!c.last_id && c.last_from !== account.id && c.last_id !== c.seller_read }));
+    } else {
+      const c = await db.get("SELECT id FROM conversations WHERE listing_id=? AND buyer_id=? AND status IN ('live','closed') AND last_activity>=?", id, account.id, since);
+      out.chat = c ? c.id : null;
+    }
+  }
   return json({ listing: out });
 }
 export async function changeStatus(ctx, id) {
   const { db, store, request } = ctx, { a, r } = await ownListing(db, request, id), b = await readJson(request);
+  if (b.action === 'edit') return editListing(ctx, a, r, b);
   const status = { sold: 'sold', delete: 'deleted' }[b.action];
   if (!status) fail(400, 'Unknown action.');
   const l = await readJsonFile(store, `${r.path}/listing.json`);
@@ -120,6 +133,38 @@ export async function changeStatus(ctx, id) {
   await closeListingConversations(ctx, l);
   await archiveListing(ctx, { ...r, status });
   return json({ ok: true, status });
+}
+// Owners can change the words, price and details of a live listing. Photos, type and category stay.
+// A new title renames the folder (ID__Title), and its chats and photos move with it.
+const EDITABLE = ['title', 'description', 'price', 'condition', 'fits', 'city', 'handoff', 'year', 'miles', 'title_status'];
+async function editListing(ctx, a, r, b) {
+  const { db, store } = ctx;
+  if (r.status !== 'live') fail(400, 'Only live listings can be edited.');
+  const l = await readJsonFile(store, `${r.path}/listing.json`);
+  if (!l) fail(404, 'That listing isn\'t here anymore.');
+  const merged = { ...l, year: l.car?.year, miles: l.car?.miles, title_status: l.car?.title_status };
+  for (const k of EDITABLE) if (b[k] !== undefined) merged[k] = b[k];
+  const f = cleanFields(merged), lockedPrice = l.sell_type === 'auction' && r.bids > 0;
+  if (lockedPrice && f.price !== l.price) fail(400, 'The price can\'t change after bids come in.');
+  const next = { ...l, title: f.title, description: f.description, price: f.price, condition: f.condition, fits: f.fits, city: f.city, handoff: f.handoff, edited: new Date().toISOString() };
+  if (l.kind === 'cars') next.car = f.car;
+  let path = r.path, dataPath = r.data_path;
+  const folder = folderName(r.id, next.title, 'listing');
+  if (folder !== r.path.split('/').pop()) ({ path, dataPath } = await renameListingFolder(ctx, r, folder));
+  await writeJsonFile(store, `${path}/listing.json`, next);
+  await db.run(INSERT_LISTING, ...indexRow(next, a, path, dataPath, { price: lockedPrice ? r.price : next.price, bids: r.bids, top_bidder: r.top_bidder }));
+  return json({ ok: true });
+}
+async function renameListingFolder(ctx, r, folder) {
+  const { db, store } = ctx, path = `${r.path.slice(0, r.path.lastIndexOf('/'))}/${folder}`, dataPath = `${r.data_path.slice(0, r.data_path.lastIndexOf('/'))}/${folder}`;
+  await moveTree(store, r.path, path);
+  await moveTree(store, r.data_path, dataPath);
+  const swap = (p, from, to) => p && (p === from || p.startsWith(from + '/')) ? to + p.slice(from.length) : p;
+  for (const f of await db.all('SELECT id,path FROM files WHERE path >= ? AND path < ?', r.data_path + '/', r.data_path + '0'))
+    await db.run('UPDATE files SET path=? WHERE id=?', swap(f.path, r.data_path, dataPath), f.id);
+  for (const c of await db.all('SELECT id,path,data_path FROM conversations WHERE listing_id=?', r.id))
+    await db.run('UPDATE conversations SET path=?, data_path=? WHERE id=?', swap(c.path, r.path, path), swap(c.data_path, r.data_path, dataPath), c.id);
+  return { path, dataPath };
 }
 // Sold or removed listings move out of the account into backups/listings, sorted by the listing's date.
 // Its chats move first (closeListingConversations), so only the listing and its photos travel here.

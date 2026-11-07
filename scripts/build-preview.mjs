@@ -11,7 +11,7 @@ import { fileURLToPath } from 'node:url';
 const [server, out, profileArg] = process.argv.slice(2);
 if (!server || !out) { console.error('Usage: node scripts/build-preview.mjs <server url> <output.html> [profile]'); process.exit(1); }
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const profile = profileArg || /AUTOHOUND_PROFILE = '([^']+)'/.exec(fs.readFileSync(`${root}/site/js/profile.js`, 'utf8'))[1];
+const profile = profileArg || /DEFAULT_PROFILE = '([^']+)'/.exec(fs.readFileSync(`${root}/site/js/profile.js`, 'utf8'))[1];
 const look = `${root}/site/profiles/${profile}/desktop`;
 const esbuild = await import(process.env.ESBUILD || 'esbuild');
 
