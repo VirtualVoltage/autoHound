@@ -20,24 +20,64 @@ export async function listingPage(id) {
       $('chatTabs')?.addEventListener('click', e => { const b = e.target.closest('[data-chat]'); if (b) open(b.dataset.chat); });
     } else chat = mountChat({ id: l.chat || null, listingId: l.id });
   }
-  // Photos: thumbnails, the arrow buttons on the big photo, and the left and right arrow keys.
+  // Photos: thumbnails, arrow buttons, the arrow keys, dragging with the mouse or swiping with a finger,
+  // and a full screen viewer (the button on desktop, a tap on phones). Escape leaves full screen.
   let at = 0;
+  const n = l.photos.length, viewer = $('photoViewer');
+  const fillViewer = () => { if (!viewer || viewer.hidden) return; $('pvStage').innerHTML = view.viewerPhoto(l.photos[at], l.title); if ($('pvCount')) $('pvCount').textContent = n > 1 ? `${at + 1} / ${n}` : ''; };
   const show = i => {
-    const n = l.photos.length; if (n < 2) return;
+    if (n < 2) return;
     at = (i + n) % n;
     $('mainPhoto').innerHTML = view.ph(l.photos[at], false, l.title);
     document.querySelectorAll('#thumbs [data-i]').forEach(b => b.classList.toggle('on', +b.dataset.i === at));
     if ($('photoCount')) $('photoCount').textContent = `${at + 1} / ${n}`;
+    fillViewer();
   };
+  const openViewer = full => {
+    if (!viewer || !n) return;
+    viewer.hidden = false; document.body.classList.add('viewer-open'); fillViewer(); $('pvExit').focus();
+    if (full && viewer.requestFullscreen) viewer.requestFullscreen().catch(() => {});
+  };
+  const closeViewer = () => {
+    if (!viewer || viewer.hidden) return;
+    viewer.hidden = true; document.body.classList.remove('viewer-open');
+    if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+    $('photoFull')?.focus();
+  };
+  // The browser's own full screen ends with Escape too, so the viewer closes with it.
+  const onFullscreen = () => { if (!document.fullscreenElement) closeViewer(); };
+  document.addEventListener('fullscreenchange', onFullscreen);
+  // Drag with the mouse or swipe with a finger: far enough sideways changes the photo.
+  let swiped = false;
+  const swipe = el => {
+    if (!el) return;
+    let x0 = null, y0 = 0;
+    el.addEventListener('pointerdown', e => { if (e.button > 0 || e.target.closest('button')) return; x0 = e.clientX; y0 = e.clientY; swiped = false; });
+    el.addEventListener('pointerup', e => {
+      if (x0 === null) return;
+      const dx = e.clientX - x0, dy = e.clientY - y0; x0 = null;
+      if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) { swiped = true; show(at + (dx < 0 ? 1 : -1)); }
+    });
+    el.addEventListener('pointercancel', () => { x0 = null; });
+    el.addEventListener('dragstart', e => e.preventDefault());
+  };
+  swipe(document.querySelector('.photo-frame')); swipe(viewer);
+  // On phones a tap on the photo opens full screen. A swipe doesn't count as a tap.
+  $('mainPhoto')?.addEventListener('click', () => { if (swiped) { swiped = false; return; } if (matchMedia('(hover: none)').matches) openViewer(false); });
+  $('photoFull')?.addEventListener('click', () => openViewer(true));
+  $('pvExit')?.addEventListener('click', closeViewer);
+  $('pvPrev')?.addEventListener('click', () => show(at - 1));
+  $('pvNext')?.addEventListener('click', () => show(at + 1));
   $('thumbs')?.addEventListener('click', e => { const b = e.target.closest('[data-i]'); if (b) show(+b.dataset.i); });
   $('photoPrev')?.addEventListener('click', () => show(at - 1));
   $('photoNext')?.addEventListener('click', () => show(at + 1));
   const onKey = e => {
+    if (e.key === 'Escape' && viewer && !viewer.hidden) { e.preventDefault(); closeViewer(); return; }
     if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey || e.target.closest?.('input, textarea, select, [contenteditable]')) return;
     if (e.key === 'ArrowLeft') { e.preventDefault(); show(at - 1); }
     else if (e.key === 'ArrowRight') { e.preventDefault(); show(at + 1); }
   };
-  if (l.photos.length > 1) document.addEventListener('keydown', onKey);
+  document.addEventListener('keydown', onKey);
   $('msgForm')?.addEventListener('submit', async e => {
     e.preventDefault();
     if (!session.account) return needLogin();
@@ -79,5 +119,5 @@ export async function listingPage(id) {
     if (b.dataset.sure) return change('delete', 'Listing deleted', '/account');
     b.dataset.sure = '1'; b.textContent = 'Press again to delete';
   });
-  return () => { chat?.stop(); document.removeEventListener('keydown', onKey); };
+  return () => { chat?.stop(); document.removeEventListener('keydown', onKey); document.removeEventListener('fullscreenchange', onFullscreen); closeViewer(); };
 }

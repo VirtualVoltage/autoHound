@@ -333,3 +333,20 @@ a, button, label, input, select, textarea, summary { touch-action: manipulation;
 .btn.admin .badge-count { border-color: #ff2a2a; color: #ffb3b3; box-shadow: 0 0 5px rgba(255,42,42,.8); }
 .admin-link { color: #ff4040 !important; text-shadow: 0 0 6px rgba(255,42,42,.8); }
 .btn:disabled, .btn[disabled], button:disabled { opacity: .4; cursor: not-allowed; box-shadow: none; }
+
+/* photos: drag or swipe to change, a full screen button on desktop, tap to open full screen on phones */
+.photo-frame { touch-action: pan-y; user-select: none; -webkit-user-select: none; }
+.photo-frame img, .pv-stage img { -webkit-user-drag: none; user-select: none; }
+#mainPhoto { cursor: grab; }
+.photo-full { position: absolute; top: 10px; right: 10px; z-index: 3; display: flex; align-items: center; justify-content: center; width: 38px; height: 38px; padding: 0; background: rgba(0,0,0,.55); border: 1px solid var(--neon); color: #fff; cursor: pointer; }
+.photo-frame .photo-full { opacity: 0; transition: opacity .15s; }
+.photo-frame:hover .photo-full, .photo-frame .photo-full:focus-visible { opacity: 1; }
+@media (hover: none) { .photo-frame .photo-full { display: none; } #mainPhoto { cursor: zoom-in; } }
+.photo-viewer { position: fixed; inset: 0; z-index: 100; background: #000; touch-action: none; user-select: none; -webkit-user-select: none; }
+.photo-viewer[hidden] { display: none; }
+.pv-stage { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
+.pv-stage img { max-width: 100%; max-height: 100%; object-fit: contain; }
+.photo-viewer .photo-arrow { opacity: 1; }
+.photo-viewer .pv-exit { position: fixed; top: calc(12px + env(safe-area-inset-top, 0px)); right: calc(12px + env(safe-area-inset-right, 0px)); opacity: 1; }
+.photo-viewer .photo-count { position: fixed; right: 14px; bottom: calc(14px + env(safe-area-inset-bottom, 0px)); }
+body.viewer-open { overflow: hidden; }

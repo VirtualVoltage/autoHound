@@ -104,7 +104,7 @@ export function listingPage({ listing: l, favorite, closed, minBid, admin }) {
   return `<div class="page">
     <div class="back-row"><a class="btn plain" href="/">Back to listings</a></div>
     <div class="post">
-      <div class="gallery"><div class="photo-frame"><div id="mainPhoto">${ph(l.photos[0], false, l.title)}</div>${l.photos.length > 1 ? `<button type="button" class="photo-arrow prev" id="photoPrev" aria-label="Previous photo">&#8249;</button><button type="button" class="photo-arrow next" id="photoNext" aria-label="Next photo">&#8250;</button><span class="photo-count" id="photoCount">1 / ${l.photos.length}</span>` : ''}</div>${l.photos.length > 1 ? `<div class="thumbs" id="thumbs">${l.photos.map((p, i) => `<button type="button" data-i="${i}" class="${i === 0 ? 'on' : ''}" aria-label="Show photo ${i + 1}">${ph(p + '?size=thumb', true)}</button>`).join('')}</div>` : ''}
+      <div class="gallery"><div class="photo-frame">${photoFullButton()}<div id="mainPhoto">${ph(l.photos[0], false, l.title)}</div>${l.photos.length > 1 ? `<button type="button" class="photo-arrow prev" id="photoPrev" aria-label="Previous photo">&#8249;</button><button type="button" class="photo-arrow next" id="photoNext" aria-label="Next photo">&#8250;</button><span class="photo-count" id="photoCount">1 / ${l.photos.length}</span>` : ''}</div>${photoViewer(l)}${l.photos.length > 1 ? `<div class="thumbs" id="thumbs">${l.photos.map((p, i) => `<button type="button" data-i="${i}" class="${i === 0 ? 'on' : ''}" aria-label="Show photo ${i + 1}">${ph(p + '?size=thumb', true)}</button>`).join('')}</div>` : ''}
         <a class="btn plain seller-btn" href="/seller/${esc(l.seller.id)}">${avatar(l.seller.photo, '')}<span>${esc(l.seller.username)}</span></a>
       </div>
       <div class="side">
@@ -329,3 +329,15 @@ export const adminDeleteBox = () => `<div class="admin-box">
       <div class="action-row"><button type="submit" class="btn danger">Delete this listing</button><button type="button" class="btn plain" id="adminDeleteCancel">Cancel</button></div>
     </form>
   </div>`;
+
+/* ---------- full screen photos ---------- */
+const FULL_ICON = '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" fill="none" stroke="currentColor" stroke-width="2.4"/></svg>';
+const SHRINK_ICON = '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" fill="none" stroke="currentColor" stroke-width="2.4"/></svg>';
+export const photoFullButton = () => `<button type="button" class="photo-full" id="photoFull" aria-label="Show full screen">${FULL_ICON}</button>`;
+export const photoViewer = l => `<div class="photo-viewer" id="photoViewer" role="dialog" aria-modal="true" aria-label="Photos of ${esc(l.title)}" hidden>
+    <div class="pv-stage" id="pvStage"></div>
+    ${l.photos.length > 1 ? '<button type="button" class="photo-arrow prev" id="pvPrev" aria-label="Previous photo">&#8249;</button><button type="button" class="photo-arrow next" id="pvNext" aria-label="Next photo">&#8250;</button>' : ''}
+    <button type="button" class="photo-full pv-exit" id="pvExit" aria-label="Exit full screen">${SHRINK_ICON}</button>
+    <span class="photo-count" id="pvCount"></span>
+  </div>`;
+export const viewerPhoto = (src, alt) => `<img src="${esc(src)}" alt="${esc(alt)}" draggable="false">`;
