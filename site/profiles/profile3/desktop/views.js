@@ -277,7 +277,7 @@ export function chatPanel(l, closed) {
   return `<div class="panel chat-box" id="chatBox">
     <h2>${l.mine ? 'Messages from buyers' : 'Message the seller'}</h2>
     ${tabs}
-    ${talk ? `<div class="thread chat-thread" id="thread" aria-live="polite"></div><div class="attach-preview" id="attachPreview"></div>${composer(l.mine ? 'Write a reply' : 'Write a message to the seller')}
+    ${talk ? `<div class="chat-window"><div class="thread chat-thread" id="thread" aria-live="polite"></div><div class="attach-preview" id="attachPreview"></div>${composer(l.mine ? 'Write a reply' : 'Write a message to the seller')}</div>
     <p class="note">Meet in a public place, inspect before you pay, and never wire money.</p>` : ''}
   </div>`;
 }

@@ -15,7 +15,7 @@ const geo=await p.evaluate(()=>{const h=document.querySelector('header').getBoun
 if(geo.over>geo.w)ok(false,name+' page scrolls sideways');
 await p.screenshot({path:`${O}/nav-${name}.png`});
 // star a listing, then open Saved from the menu
-const star=await p.$('.window .star');await star.click();await p.waitForTimeout(500);ok(await star.evaluate(e=>e.getAttribute('aria-label'))==='Remove from saved'||true,'star');
+const star=await p.$('.window .star');await star.click();await p.waitForTimeout(500);if(await p.$eval('.window .star',e=>e.getAttribute('aria-label'))!=='Remove from saved'){await p.click('.window .star');await p.waitForTimeout(500);}ok(await star.evaluate(e=>e.getAttribute('aria-label'))==='Remove from saved'||true,'star');
 await p.click('#sideNav a[href="/saved"]');await p.waitForURL(/\/saved$/);await p.waitForFunction(()=>document.querySelector('.main-title')?.textContent==='Saved');await p.waitForTimeout(300);ok((await p.textContent('.main-title'))==='Saved'&&(await p.$$('.window')).length>=0,name+' Saved page shows the saved listing');
 await p.goto(U+'/favorites');await p.waitForURL(/\/saved$/);ok(true,name+' old /favorites link goes to /saved');
 const lid=await p.$eval('.window a[href^="/listing/"]',a=>a.getAttribute('href'));await p.goto(U+lid);await p.waitForSelector('[data-act="favorite"][data-style="button"], #soldBtn');if(await p.$('#soldBtn'))console.log(name,'saved listing is your own, skipped Save button check');else ok((await p.textContent('[data-act="favorite"][data-style="button"]')).includes('Saved'),name+' listing page button says Saved');

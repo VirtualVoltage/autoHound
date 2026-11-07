@@ -1,7 +1,7 @@
 const {chromium,devices}=require('playwright');const U=process.argv[2],O=process.argv[3];const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 (async()=>{const b=await chromium.launch();const errs=[];
 const ctx=async(opt={viewport:{width:1300,height:900}})=>{const c=await b.newContext(opt);const p=await c.newPage();p.on('pageerror',e=>errs.push(e.message));return p};
-const login=async(p,l,pw)=>{await p.goto(U+'/login');await p.waitForSelector('#login');await p.fill('#login',l);await p.fill('#password',pw);await p.click('#authForm button[type=submit]');await p.waitForSelector('#headLinks a[href="/messages"]');};
+const login=async(p,l,pw)=>{await p.goto(U+'/login');await p.waitForSelector('#login');await p.fill('#login',l);await p.fill('#password',pw);await p.click('#authForm button[type=submit]');await p.waitForSelector('#sideNav a[href="/messages"]');};
 const anon=await ctx();await anon.goto(U);await anon.waitForSelector('.window');console.log('look',await anon.evaluate(()=>window.AUTOHOUND_PROFILE),'| ?profile ignored:',await (async()=>{await anon.goto(U+'/?profile=profile1');await anon.waitForSelector('.window');return anon.evaluate(()=>window.AUTOHOUND_PROFILE)})());
 const kate=await ctx();await login(kate,'k turbo kate','spool2fast');
 const lid=await kate.evaluate(async()=>{const d=await (await fetch('/api/me')).json();const a=await (await fetch('/api/accounts/'+d.account.id)).json();return a.listings.filter(l=>l.sell_type==='post')[1].id});

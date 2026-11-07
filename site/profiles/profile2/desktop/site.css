@@ -307,3 +307,14 @@ main { min-width: 0; }
 .maplibregl-map .maplibregl-ctrl-attrib { background: rgba(0,0,0,.7) !important; color: #9aa59a; }
 .maplibregl-map .maplibregl-ctrl-attrib a { color: #9aa59a; }
 .map-btn { flex: none; }
+
+/* chat: the messages and the typing box share one frame; no empty box before the first message */
+.chat-window { display: grid; background: var(--sunken, #050705); border: 1px solid var(--line, #2f3f2f); }
+.chat-window:focus-within { border-color: var(--neon); }
+.chat-window .chat-thread { min-height: 0; max-height: 420px; margin: 0; border: 0; background: transparent; }
+.chat-window .chat-thread:empty { display: none; }
+.chat-window .attach-preview { margin: 0; padding: 8px 10px 0; }
+.chat-window .attach-preview:empty { display: none; }
+.chat-window .chat-composer { margin: 0; padding: 8px; border-top: 1px solid var(--line, #2f3f2f); }
+.chat-window .chat-thread:empty ~ .chat-composer { border-top: 0; }
+.chat-window .chat-composer textarea { border: 0; background: transparent; box-shadow: none; outline: none; }
