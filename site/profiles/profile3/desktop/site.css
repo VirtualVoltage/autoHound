@@ -261,6 +261,7 @@ main { min-width: 0; }
 .chat-composer textarea { grid-column: 1 / -1; height: auto; min-height: calc(var(--h) * 4.75); resize: vertical; }
 /* side menu: a full-height panel down the left side, under the header line, like an app sidebar */
 :root { --side-w: 236px; --head-h: 57px; }
+@media (max-width: 1040px) { :root { --head-h: 105px; } }
 .layout:has(.side-nav:not(:empty)) { display: grid; grid-template-columns: var(--side-w) minmax(0,1fr); gap: 0; max-width: none; padding-left: 0; }
 .layout:has(.side-nav:not(:empty)) main { padding-left: 24px; max-width: 1480px; }
 .side-nav { position: sticky; top: var(--head-h); align-self: start; height: calc(100vh - var(--head-h)); display: flex; flex-direction: column; gap: 8px; padding: 16px; background: #060906; border-right: 1px solid var(--neon); box-shadow: 2px 0 14px rgba(20,255,30,.35); overflow-y: auto; }
