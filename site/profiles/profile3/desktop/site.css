@@ -93,7 +93,9 @@ main { min-width: 0; }
 .more:has(#moreBtn[hidden]) { display: none; }
 
 /* listing windows: every card lines up, row by row */
-.windows { display: grid; grid-template-columns: repeat(auto-fill, minmax(208px, 1fr)); gap: var(--gap); }
+/* Cards grow to fill a row up to a width that scales with the window; past that the grid sits on the true center of the space between the
+   side menu and the window's right edge, so leftover room splits evenly on both sides. */
+.windows { --card-max: clamp(250px, 14vw, 320px); display: grid; grid-template-columns: repeat(auto-fit, minmax(208px, var(--card-max))); justify-content: center; gap: var(--gap); }
 .window { position: relative; display: flex; flex-direction: column; min-width: 0; background: var(--panel); border: 1px solid var(--line); }
 .window:hover { border-color: var(--neon); box-shadow: var(--box-glow); }
 .ph { display: block; position: relative; overflow: hidden; background: var(--sunken); }
@@ -421,7 +423,10 @@ body.viewer-open { overflow: hidden; }
 .logo .avatar { width: 1.65em; height: 1.65em; }
 /* side menu and page share the same edge spacing, so the logo lines up with the menu buttons */
 .side-nav { padding: var(--edge); }
-.layout:has(.side-nav:not(:empty)) main { padding-left: calc(var(--edge) * 1.5); }
+.layout:has(.side-nav:not(:empty)) { padding-right: 0; }
+.layout:has(.side-nav:not(:empty)) main { padding-inline: calc(var(--edge) * 1.5); }
+/* pages of listing windows use the full width up to the right edge, so their grid can center in it */
+.layout:has(.side-nav:not(:empty)) main:has(.windows) { max-width: none; }
 /* narrower windows: search drops to its own full-width row; on the narrowest, everything stacks */
 @media (max-width: 1040px) {
   .topbar-in { grid-template-columns: minmax(0, 1fr) auto; }
