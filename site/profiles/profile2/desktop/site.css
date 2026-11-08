@@ -327,7 +327,7 @@ main { min-width: 0; }
 
 /* chat: one fixed-size frame. Messages fill it and scroll inside it, newest at the bottom;
    the typing line sits at the bottom above Attach and Send, with no divider. */
-.chat-window { height: 460px; grid-template-rows: minmax(0,1fr) auto auto; }
+.chat-window { height: 322px; grid-template-rows: minmax(0,1fr) auto auto; }
 .chat-window .chat-thread, .chat-window .chat-thread:empty { display: flex; min-height: 0; max-height: none; height: auto; overflow-y: auto; overscroll-behavior: contain; }
 .chat-window .chat-thread > :first-child { margin-top: auto; }
 .chat-window .chat-composer, .chat-window .chat-thread:empty ~ .chat-composer { border-top: 0; padding-top: 0; }

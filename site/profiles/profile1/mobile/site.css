@@ -321,7 +321,7 @@ a, button, label, input, select, textarea, summary { touch-action: manipulation;
 
 /* chat: one fixed-size frame. Messages fill it and scroll inside it, newest at the bottom;
    the typing line sits at the bottom above Attach and Send, with no divider. */
-.chat-window { height: min(460px, 62vh); grid-template-rows: minmax(0,1fr) auto auto; }
+.chat-window { height: min(322px, 43vh); grid-template-rows: minmax(0,1fr) auto auto; }
 .chat-window .chat-thread, .chat-window .chat-thread:empty { display: flex; min-height: 0; max-height: none; height: auto; overflow-y: auto; overscroll-behavior: contain; }
 .chat-window .chat-thread > :first-child { margin-top: auto; }
 .chat-window .chat-composer, .chat-window .chat-thread:empty ~ .chat-composer { border-top: 0; padding-top: 0; }
