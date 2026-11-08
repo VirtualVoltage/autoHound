@@ -12,8 +12,8 @@ export const setupScreen = () => `<div class="setup"><h1 class="main-title">Gett
 /* ---------- frame around every page ---------- */
 export const shell = () => `
 <header class="topbar"><div class="topbar-in">
-  <a class="logo" href="/" aria-label="Autohound home"><img class="avatar" src="${profileAsset('brand-profile.webp')}" alt="" width="36" height="36"><b class="chrome">auto</b><span>hound</span><i class="demo-tag">demo</i></a>
-  <a class="btn plain map-btn" href="/map">Map</a>
+  <div class="head-left"><a class="logo" href="/" aria-label="Autohound home"><img class="avatar" src="${profileAsset('brand-profile.webp')}" alt="" width="36" height="36"><b class="chrome">auto</b><span>hound</span><i class="demo-tag">demo</i></a>
+  <a class="btn plain map-btn" href="/map">Map</a></div>
   <form class="search" id="searchForm" role="search">
     <input id="searchInput" type="search" placeholder="Search coilovers, 3000GT, Lynden..." aria-label="Search listings">
     <button class="btn" type="submit">Search</button>

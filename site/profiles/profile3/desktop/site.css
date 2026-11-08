@@ -398,3 +398,41 @@ body.viewer-open { overflow: hidden; }
    and the search bar stays a comfortable width in the middle */
 .topbar-in { max-width: none; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
 .topbar-in .search { justify-self: center; width: 100%; max-width: 720px; }
+
+/* ---------- layout rule ----------
+   Things are placed by anchors (the window's left edge, its true center, its right edge, the vertical
+   middle) and sized relative to the window with a minimum and maximum, not by fixed distances. */
+:root {
+  --edge: clamp(12px, 1.1vw, 24px);        /* space from the window's edges; the header and side menu share it */
+  --side-w: clamp(200px, 14vw, 280px);     /* side menu width */
+  --search-w: clamp(280px, 38vw, 760px);   /* search bar width */
+}
+/* header: logo and Map anchored left, search on the window's center, account buttons anchored right, all vertically centered */
+.topbar-in { max-width: none; grid-template-columns: minmax(max-content, 1fr) minmax(0, var(--search-w)) minmax(max-content, 1fr); align-items: center; column-gap: var(--edge);
+  padding-left: max(var(--edge), env(safe-area-inset-left, 0px)); padding-right: max(var(--edge), env(safe-area-inset-right, 0px)); }
+.head-left { grid-column: 1; justify-self: start; display: flex; align-items: center; gap: var(--edge); }
+.topbar-in .search { grid-column: 2; justify-self: center; width: 100%; max-width: none; }
+.topbar-in #headLinks { grid-column: 3; justify-self: end; }
+.logo { font-size: clamp(18px, 1.3vw, 26px); }
+.logo .avatar { width: 1.65em; height: 1.65em; }
+/* side menu and page share the same edge spacing, so the logo lines up with the menu buttons */
+.side-nav { padding: var(--edge); }
+.layout:has(.side-nav:not(:empty)) main { padding-left: calc(var(--edge) * 1.5); }
+/* narrower windows: search drops to its own full-width row; on the narrowest, everything stacks */
+@media (max-width: 1040px) {
+  .topbar-in { grid-template-columns: minmax(0, 1fr) auto; }
+  .topbar-in .search { grid-column: 1 / -1; grid-row: 2; }
+  .topbar-in #headLinks { grid-column: 2; grid-row: 1; }
+}
+@media (max-width: 700px) {
+  .topbar-in { grid-template-columns: minmax(0, 1fr); }
+  .topbar-in #headLinks { grid-column: 1; grid-row: 2; justify-self: start; }
+  .topbar-in .search { grid-row: 3; }
+}
+@media (max-width: 760px) {
+  .layout:has(.side-nav:not(:empty)), .layout { padding-left: max(var(--edge), env(safe-area-inset-left, 0px)); padding-right: max(var(--edge), env(safe-area-inset-right, 0px)); }
+}
+@media (max-width: 760px) {
+  .side-nav { padding: var(--edge) 0 0; }
+  .layout:has(.side-nav:not(:empty)) main { padding-left: 0; }
+}

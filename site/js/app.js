@@ -23,7 +23,12 @@ const ROUTES = [
 let leave = null, token = 0;
 export function go(path, replace) { history[replace ? 'replaceState' : 'pushState']({}, '', path); route(); }
 export function needLogin() { go('/login?next=' + encodeURIComponent(location.pathname + location.search), true); }
+// --head-h always matches the header's real height, so things anchored under it (like the side menu) line up at any window size.
+const headerSize = new ResizeObserver(([e]) => document.documentElement.style.setProperty('--head-h', `${Math.round(e.target.getBoundingClientRect().height)}px`));
+let watchedHeader = null;
+function watchHeader() { const h = document.querySelector('.topbar'); if (h && h !== watchedHeader) { headerSize.disconnect(); headerSize.observe(h); watchedHeader = h; } }
 export function renderHeader() {
+  watchHeader();
   const h = $('headLinks'); if (h) h.innerHTML = view.headerLinks({ account: session.account, unread: session.unread, adminUnread: session.adminInbox?.unread || 0 });
   // Profiles with a side menu export sideNav. It returns nothing on pages that shouldn't show it.
   const nav = { account: session.account, path: location.pathname, unread: session.unread, adminUnread: session.adminInbox?.unread || 0 };
