@@ -393,3 +393,8 @@ body.viewer-open { overflow: hidden; }
 .map-head { display: grid; gap: 6px; }
 .map-head .muted { margin: 0; }
 .map-page .map-box { height: auto; min-height: 0; border: 0; box-shadow: none; }
+
+/* header spans the full width: the logo lines up with the side menu, Log out sits at the right edge,
+   and the search bar stays a comfortable width in the middle */
+.topbar-in { max-width: none; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.topbar-in .search { justify-self: center; width: 100%; max-width: 720px; }
