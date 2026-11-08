@@ -425,7 +425,10 @@ body.viewer-open { overflow: hidden; }
 .side-nav { padding: var(--edge); }
 .layout:has(.side-nav:not(:empty)) { padding-right: 0; }
 .layout:has(.side-nav:not(:empty)) main { padding-inline: calc(var(--edge) * 1.5); }
-/* pages of listing windows use the full width up to the right edge, so their grid can center in it */
+/* every page sits on the true center of the space right of the side menu, and its width scales with the
+   window (a fixed cap left ultrawide screens with the page stuck to the left). Pages of listing windows use
+   the full width up to the right edge, so their grid can center in it. */
+.layout:has(.side-nav:not(:empty)) main { --page-w: clamp(1100px, 78vw, 2000px); width: 100%; max-width: calc(var(--page-w) + var(--edge) * 3); justify-self: center; }
 .layout:has(.side-nav:not(:empty)) main:has(.windows) { max-width: none; }
 /* narrower windows: search drops to its own full-width row; on the narrowest, everything stacks */
 @media (max-width: 1040px) {
