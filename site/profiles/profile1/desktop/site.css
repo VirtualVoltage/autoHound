@@ -323,6 +323,10 @@ a, button, label, input, select, textarea, summary { touch-action: manipulation;
 .chat-window .chat-thread > :first-child { margin-top: auto; }
 .chat-window .chat-composer, .chat-window .chat-thread:empty ~ .chat-composer { border-top: 0; padding-top: 0; }
 .chat-window .chat-composer textarea { min-height: 0; height: 64px; max-height: 140px; resize: none; background: rgba(255,255,255,.04); }
+/* Wheel past the end of the chat frame: its contents pull a little and spring back (site/js/spring.js sets --pull). */
+.chat-window { overflow: hidden; }
+.chat-window > * { transform: translateY(var(--pull, 0px)); transition: transform .5s cubic-bezier(.3, 1.55, .5, 1); }
+.chat-window.pulling > * { transition: transform .07s ease-out; }
 
 /* admin buttons: neon red with the same line pattern as the green ones */
 .btn.admin, .btn.danger { background-color: #1a0506; background-image: repeating-linear-gradient(0deg, rgba(255,60,60,.3) 0 1px, transparent 1px 3px); border-color: #ff2a2a; color: #fff; text-shadow: 0 0 6px #ff2a2a; box-shadow: 0 0 4px #ff2a2a, 0 0 12px rgba(255,42,42,.55), inset 0 0 8px rgba(255,42,42,.18); }

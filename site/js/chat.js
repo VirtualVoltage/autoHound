@@ -2,6 +2,7 @@ import { $, toast, shrink } from './util.js';
 import { view } from './theme.js';
 import { api, upload, session } from './api.js';
 import { needLogin } from './app.js';
+import { springWheel } from './spring.js';
 
 // One chat box: #thread, #attachPreview, #composer, #attachInput, #msgText.
 // Used on the listing page and on the chat page. With no chat yet, the first message starts one for listingId.
@@ -11,6 +12,7 @@ export function mountChat({ id = null, listingId = null, onStart } = {}) {
   // The chat opens at the newest message. It stays pinned there unless you scroll up to read, and photos
   // that finish loading later keep it pinned too.
   let pinned = true;
+  springWheel(thread.closest('.chat-window'));
   const toBottom = () => { thread.scrollTop = thread.scrollHeight; };
   thread.addEventListener('scroll', () => { pinned = thread.scrollHeight - thread.scrollTop - thread.clientHeight < 60; });
   thread.addEventListener('load', () => { if (pinned) toBottom(); }, true);

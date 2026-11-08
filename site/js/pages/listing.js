@@ -62,6 +62,22 @@ export async function listingPage(id) {
     el.addEventListener('dragstart', e => e.preventDefault());
   };
   swipe(document.querySelector('.photo-frame')); swipe(viewer);
+  // The mouse wheel or a trackpad swipe over the photo changes it: down or right for the next one.
+  // One photo per turn of the wheel: a trackpad's long glide only counts once, until it goes quiet.
+  const wheel = el => {
+    if (!el || n < 2) return;
+    let acc = 0, locked = false, last = 0, quiet = null;
+    el.addEventListener('wheel', e => {
+      if (e.ctrlKey) return;
+      e.preventDefault();
+      const d = (Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY) * (e.deltaMode ? 40 : 1);
+      clearTimeout(quiet); quiet = setTimeout(() => { locked = false; acc = 0; }, 180);
+      if (locked && performance.now() - last < 650) return;
+      acc += d;
+      if (Math.abs(acc) >= 40) { show(at + (acc > 0 ? 1 : -1)); locked = true; acc = 0; last = performance.now(); }
+    }, { passive: false });
+  };
+  wheel(document.querySelector('.photo-frame')); wheel(viewer);
   // On phones a tap on the photo opens full screen. A swipe doesn't count as a tap.
   $('mainPhoto')?.addEventListener('click', () => { if (swiped) { swiped = false; return; } if (matchMedia('(hover: none)').matches) openViewer(false); });
   $('photoFull')?.addEventListener('click', () => openViewer(true));
