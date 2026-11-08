@@ -387,3 +387,9 @@ input:focus-visible, select:focus-visible, textarea:focus-visible { outline: non
 .photo-viewer .pv-exit { position: fixed; top: calc(12px + env(safe-area-inset-top, 0px)); right: calc(12px + env(safe-area-inset-right, 0px)); opacity: 1; }
 .photo-viewer .photo-count { position: fixed; right: 14px; bottom: calc(14px + env(safe-area-inset-bottom, 0px)); }
 body.viewer-open { overflow: hidden; }
+
+/* map page: heading, info and the key on top; the map fills the rest of the window with no frame */
+.page.map-page { gap: 10px; padding-bottom: 0; }
+.map-head { display: grid; gap: 6px; }
+.map-head .muted { margin: 0; }
+.map-page .map-box { height: auto; min-height: 0; border: 0; box-shadow: none; }

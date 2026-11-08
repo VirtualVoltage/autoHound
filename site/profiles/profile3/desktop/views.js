@@ -300,10 +300,13 @@ export function sideNav({ account, path, unread = 0, adminUnread = 0 }) {
 /* ---------- map ---------- */
 export { mapStyle } from './mapstyle.js';
 export const mapPage = () => `<div class="page map-page">
-    <div class="toolbar"><h1 class="main-title">Map</h1><span class="muted">Sellers and businesses near you. Tap a pin to see what's there.</span></div>
+    <div class="map-head">
+      <h1 class="main-title">Map</h1>
+      <p class="muted">Sellers and businesses near you. Tap a pin to see what's there.</p>
+      <div class="map-legend"><span><i class="map-pin listing"></i>Seller's pin</span><span><i class="map-pin town"></i>Listings in a town</span><span><i class="map-pin business"></i>Business</span></div>
+    </div>
     <p class="err" id="mapErr" role="alert" hidden></p>
     <div class="map-box" id="mapBox" role="region" aria-label="Map of listings and businesses"></div>
-    <div class="map-legend"><span><i class="map-pin listing"></i>Seller's pin</span><span><i class="map-pin town"></i>Listings in a town</span><span><i class="map-pin business"></i>Business</span></div>
   </div>`;
 export function mapPin({ type, count = 1, label = '' }) {
   return `<button type="button" class="map-pin ${type}" aria-label="${esc(label)}">${count > 1 ? `<b>${count}</b>` : ''}</button>`;

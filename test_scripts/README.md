@@ -28,6 +28,7 @@ Older scripts were written for earlier versions of the site, so some no longer m
 | `t32.js`, `t40.js`, `t48.js` | Other profiles, using a copy of the site with `DEFAULT_PROFILE` changed, on port 8792. |
 | `t8.js` | Phone layout audit. Needs a fresh store. |
 | `t53.js`, `t31.js` | Listing chat box: one frame for messages and typing; buyer, seller tabs, photos, replies, sold chats. |
+| `t56.js` | Map page fills the window under its heading: edge to edge, no frame, no scrolling, desktop, narrow window and phones. |
 | `t55.js` | Listing photos: mouse drag, finger swipe, full screen viewer, Escape and the exit button, desktop and phone. |
 | `t54.js` | Admin delete: red button for admins only, wrong password refused, listing moved to backups with `removed_by_admin`. Run as `t54.js <url> <store folder>` after `fresh-store.sh`. |
 | `t51.js` | profile3 phones: square magnifying-glass button and the waffle slide-out menu. |
