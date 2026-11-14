@@ -1,13 +1,22 @@
 # Autohound: public pages are open to search engines. Private and account pages are not.
 User-agent: *
 Allow: /
+# The pages build themselves from these public API reads, so search engines need them to see listings.
+# Everything else under /api/ is private (and needs a login anyway).
+Allow: /api/listings
+Allow: /api/files/
+Allow: /api/accounts/
+Allow: /api/map$
+Allow: /api/options$
+Allow: /api/me$
 Disallow: /api/
 Disallow: /account
 Disallow: /my-listings
 Disallow: /messages
 Disallow: /saved
 Disallow: /favorites
-Disallow: /sell
+Disallow: /sell$
+Disallow: /sell?
 Disallow: /listing/*/edit
 Disallow: /login
 Disallow: /signup

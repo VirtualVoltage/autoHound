@@ -34,6 +34,7 @@ Older scripts were written for earlier versions of the site, so some no longer m
 | `t54.js` | Admin delete: red button for admins only, wrong password refused, listing moved to backups with `removed_by_admin`. Run as `t54.js <url> <store folder>` after `fresh-store.sh`. |
 | `t51.js` | profile3 phones: square magnifying-glass button and the waffle slide-out menu. |
 | `t58.js` | `robots.txt` and `sitemap.xml`: content types, only public pages, no private data, sold and removed listings drop out. Run as `t58.js <url> [store folder]`, on node after `fresh-store.sh` or on wrangler. |
+| `t59.js` | Loads listing, seller and home pages with every request `robots.txt` disallows blocked, like Google, and checks they still show their content; also checks private addresses stay disallowed. |
 | `t49.js`, `t50.js` | Map page, Map button, DEMO tag, example businesses, and the pickup pin on the sell and edit forms (`t50.js` for other profiles). Map tiles can't load in the test box, so these check pins and saving. |
 
 ## Other files
