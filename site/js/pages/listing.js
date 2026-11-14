@@ -24,11 +24,18 @@ export async function listingPage(id) {
   // and a full screen viewer (the button on desktop, a tap on phones). Escape leaves full screen.
   let at = 0;
   const n = l.photos.length, viewer = $('photoViewer');
-  const fillViewer = () => { if (!viewer || viewer.hidden) return; $('pvStage').innerHTML = view.viewerPhoto(l.photos[at], l.title); if ($('pvCount')) $('pvCount').textContent = n > 1 ? `${at + 1} / ${n}` : ''; };
+  // Big photos show their thumbnail first; the full photo fades in over it once loaded. The next photo
+  // loads in the background so flipping forward is quick.
+  const reveal = root => root?.querySelectorAll('.ph-full').forEach(i => { const on = () => i.classList.add('in'); if (i.complete && i.naturalWidth) on(); else i.addEventListener('load', on, { once: true }); });
+  const preload = () => { if (n > 1) new Image().src = l.photos[(at + 1) % n]; };
+  reveal($('mainPhoto'));
+  const first = $('mainPhoto')?.querySelector('.ph-full');
+  if (first?.complete) preload(); else first?.addEventListener('load', preload, { once: true });
+  const fillViewer = () => { if (!viewer || viewer.hidden) return; $('pvStage').innerHTML = view.viewerPhoto(l.photos[at], l.title); reveal($('pvStage')); if ($('pvCount')) $('pvCount').textContent = n > 1 ? `${at + 1} / ${n}` : ''; };
   const show = i => {
     if (n < 2) return;
     at = (i + n) % n;
-    $('mainPhoto').innerHTML = view.ph(l.photos[at], false, l.title);
+    $('mainPhoto').innerHTML = view.bigPhoto(l.photos[at], l.title); reveal($('mainPhoto')); preload();
     document.querySelectorAll('#thumbs [data-i]').forEach(b => b.classList.toggle('on', +b.dataset.i === at));
     if ($('photoCount')) $('photoCount').textContent = `${at + 1} / ${n}`;
     fillViewer();

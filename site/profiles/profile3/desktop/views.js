@@ -5,6 +5,10 @@ import './logo.js';
 
 export const ph = (src, cover, alt = '') => src ? `<span class="ph ${cover ? 'cover' : ''}"><img src="${esc(src)}" alt="${esc(alt)}" loading="lazy"></span>` : missingPhoto();
 export const missingPhoto = () => `<span class="ph missing">Photo unavailable</span>`;
+// Big photos (listing page and full screen): the small thumbnail, stretched to the same size, shows first,
+// and the full photo fades in over it once it has loaded (site/js/pages/listing.js adds "in").
+const bigLayers = (src, alt) => `<img class="ph-thumb" src="${esc(src)}?size=thumb" alt="" aria-hidden="true" draggable="false"><img class="ph-full" src="${esc(src)}" alt="${esc(alt)}" draggable="false">`;
+export const bigPhoto = (src, alt = '') => src ? `<span class="ph big">${bigLayers(src, alt)}</span>` : missingPhoto();
 export const avatar = (src, alt = '') => `<img class="avatar" src="${esc(src || profileAsset('brand-profile.webp'))}" alt="${esc(alt)}">`;
 export const notFound = (msg = 'That page isn\'t here.') => `<div class="page"><div class="empty"><b>${esc(msg)}</b><a class="btn" href="/">Browse listings</a></div></div>`;
 export const setupScreen = () => `<div class="setup"><h1 class="main-title">Getting Autohound ready</h1><div class="bar"><i id="setupBar" style="width:0"></i></div></div>`;
@@ -101,7 +105,7 @@ export function listingPage({ listing: l, favorite, closed, minBid, admin }) {
   return `<div class="page">
     <div class="back-row"><a class="btn plain" href="/">Back</a></div>
     <div class="post">
-      <div class="gallery"><div class="photo-frame">${photoFullButton()}<div id="mainPhoto">${ph(l.photos[0], false, l.title)}</div>${l.photos.length > 1 ? `<button type="button" class="photo-arrow prev" id="photoPrev" aria-label="Previous photo">&#8249;</button><button type="button" class="photo-arrow next" id="photoNext" aria-label="Next photo">&#8250;</button><span class="photo-count" id="photoCount">1 / ${l.photos.length}</span>` : ''}</div>${photoViewer(l)}${l.photos.length > 1 ? `<div class="thumbs" id="thumbs">${l.photos.map((p, i) => `<button type="button" data-i="${i}" class="${i === 0 ? 'on' : ''}" aria-label="Show photo ${i + 1}">${ph(p + '?size=thumb', true)}</button>`).join('')}</div>` : ''}
+      <div class="gallery"><div class="photo-frame">${photoFullButton()}<div id="mainPhoto">${bigPhoto(l.photos[0], l.title)}</div>${l.photos.length > 1 ? `<button type="button" class="photo-arrow prev" id="photoPrev" aria-label="Previous photo">&#8249;</button><button type="button" class="photo-arrow next" id="photoNext" aria-label="Next photo">&#8250;</button><span class="photo-count" id="photoCount">1 / ${l.photos.length}</span>` : ''}</div>${photoViewer(l)}${l.photos.length > 1 ? `<div class="thumbs" id="thumbs">${l.photos.map((p, i) => `<button type="button" data-i="${i}" class="${i === 0 ? 'on' : ''}" aria-label="Show photo ${i + 1}">${ph(p + '?size=thumb', true)}</button>`).join('')}</div>` : ''}
         <a class="btn plain seller-btn" href="/seller/${esc(l.seller.id)}">${avatar(l.seller.photo, '')}<span>${esc(l.seller.username)}</span></a>
         ${attrs(l)}
       </div>
@@ -339,4 +343,4 @@ export const photoViewer = l => `<div class="photo-viewer" id="photoViewer" role
     <button type="button" class="photo-full pv-exit" id="pvExit" aria-label="Exit full screen">${SHRINK_ICON}</button>
     <span class="photo-count" id="pvCount"></span>
   </div>`;
-export const viewerPhoto = (src, alt) => `<img src="${esc(src)}" alt="${esc(alt)}" draggable="false">`;
+export const viewerPhoto = (src, alt) => `<span class="pv-photo">${bigLayers(src, alt)}</span>`;
