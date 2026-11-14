@@ -77,6 +77,10 @@ Set `PORT`, `AUTOHOUND_DIR` and `ADMIN_KEY` to change the defaults. To move off 
 
 Output folder is `site`. Bindings: `DB` (D1 index) and optionally `FILES` (R2). Without `FILES`, the same paths are kept in a D1 table called `vfs`, and attachments are limited to 1.5 MB. `POST /api/admin/rebuild` stays off until an `ADMIN_KEY` is set.
 
+## Search engines
+
+`site/robots.txt` lets search engines read public pages and keeps them out of `/api/` and account, chat and sign-in pages. `/sitemap.xml` is built live from the search index (`server/sitemap.js`): home, the map, every live listing and the seller pages of accounts with live listings, all on `https://autohound.online`. It's served by `server/node-server.js` locally and `functions/sitemap.xml.js` on Cloudflare.
+
 ## Preview
 
 `node scripts/build-preview.mjs <local server url> <out.html>` builds a single page of the site with sample listings, for viewing in the Claude app's side panel. It needs esbuild.

@@ -33,6 +33,7 @@ Older scripts were written for earlier versions of the site, so some no longer m
 | `t57.js` | Mouse wheel: the chat frame's springy pull past the end (page doesn't scroll), and the wheel changing listing photos, in the page and full screen. |
 | `t54.js` | Admin delete: red button for admins only, wrong password refused, listing moved to backups with `removed_by_admin`. Run as `t54.js <url> <store folder>` after `fresh-store.sh`. |
 | `t51.js` | profile3 phones: square magnifying-glass button and the waffle slide-out menu. |
+| `t58.js` | `robots.txt` and `sitemap.xml`: content types, only public pages, no private data, sold and removed listings drop out. Run as `t58.js <url> [store folder]`, on node after `fresh-store.sh` or on wrangler. |
 | `t49.js`, `t50.js` | Map page, Map button, DEMO tag, example businesses, and the pickup pin on the sell and edit forms (`t50.js` for other profiles). Map tiles can't load in the test box, so these check pins and saving. |
 
 ## Other files

@@ -1,0 +1,17 @@
+# Autohound: public pages are open to search engines. Private and account pages are not.
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /account
+Disallow: /my-listings
+Disallow: /messages
+Disallow: /saved
+Disallow: /favorites
+Disallow: /sell
+Disallow: /listing/*/edit
+Disallow: /login
+Disallow: /signup
+Disallow: /verify
+Disallow: /admin
+
+Sitemap: https://autohound.online/sitemap.xml
