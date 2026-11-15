@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { handle } from './api.js';
 import { nodeContext } from './adapters/node.js';
 import { sitemapResponse } from './sitemap.js';
+import { pageResponse } from './pagemeta.js';
 
 const here = dirname(fileURLToPath(import.meta.url)), siteDir = resolve(here, '../site');
 const dir = resolve(process.env.AUTOHOUND_DIR || resolve(here, '../storage')), port = +(process.env.PORT || 8080);
@@ -29,6 +30,7 @@ createServer(async (req, res) => {
   try {
     const url = new URL(req.url, `http://${req.headers.host}`);
     if (url.pathname === '/sitemap.xml') return await send(res, await sitemapResponse(ctx));
+    if (/^\/(listing|seller)\/[^/]+\/?$/.test(url.pathname)) return await send(res, await pageResponse(ctx, url.pathname, await fs.readFile(join(siteDir, 'index.html'), 'utf8'), url.search));
     if (!url.pathname.startsWith('/api/')) return await staticFile(url.pathname, res);
     const chunks = []; for await (const c of req) chunks.push(c);
     const body = req.method === 'GET' || req.method === 'HEAD' ? undefined : Buffer.concat(chunks);

@@ -34,3 +34,23 @@ export function letterFolder(username) {
   return /^[A-Z]$/.test(c) ? c : '_other';
 }
 export const idOf = name => parseName(name).id;
+
+// Public page addresses use the title, not the ID: /listing/all-terrain-tire-285-70r17-12kd, /seller/boost_brandon.
+// The short code at the end of a listing's address is its ID's date and count in a compact form, so two listings
+// with the same title never clash, a renamed listing keeps working, and nothing extra has to be stored.
+export const slug = text => String(text ?? '').normalize('NFKD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/&/g, ' and ').replace(/['’]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 70).replace(/-+$/, '');
+const DAYS = 40000; // more than any YY.MM.DD can reach (99 * 372 + 11 * 31 + 30)
+export function listingCode(id) {
+  const m = /^L\.(\d\d)\.(\d\d)\.(\d\d)\.(\d{5,})$/.exec(id || '');
+  return m ? (+m[4] * DAYS + +m[1] * 372 + (+m[2] - 1) * 31 + (+m[3] - 1)).toString(36) : null;
+}
+export function listingIdFromCode(code) {
+  if (!/^[0-9a-z]{1,11}$/.test(code || '')) return null;
+  const n = parseInt(code, 36), day = n % DAYS, id = `L.${pad(Math.floor(day / 372), 2)}.${pad(Math.floor(day % 372 / 31) + 1, 2)}.${pad(day % 31 + 1, 2)}.${pad(Math.floor(n / DAYS), 5)}`;
+  return listingCode(id) === code ? id : null;
+}
+export const listingPath = l => { const s = slug(l.title), c = listingCode(l.id); return `/listing/${s ? s + '-' : ''}${c}`; };
+// What comes after /listing/ in an address: the title and code, or (older links) the ID itself.
+export const listingIdFromKey = key => isId(key, 'L') ? key : listingIdFromCode(String(key ?? '').split('-').pop());
+// Usernames never contain _, so it stands in for their spaces, the same as in folder names.
+export const sellerPath = username => `/seller/${encodeURIComponent(String(username).trim().replace(/\s+/g, '_'))}`;

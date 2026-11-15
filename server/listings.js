@@ -1,7 +1,7 @@
 import { LIMITS, CITIES, PART_CATEGORIES, CAR_CATEGORIES, CONDITIONS, HANDOFFS, BID_TEMPLATE, AUCTION, TOWN_SPOTS, MAP_AREA, EXAMPLE_BUSINESSES } from './config.js';
 import { ApiError, fail, hit, json, readJson, readImage, readJsonFile, writeJsonFile, appendLine, moveTree } from './http.js';
-import { nextId, folderName, isId, cleanWords, dayFolder } from './ids.js';
-import { requireAccount, publicAccount } from './auth.js';
+import { nextId, folderName, isId, cleanWords, dayFolder, listingPath, listingIdFromKey, sellerPath } from './ids.js';
+import { requireAccount, publicAccount, usernameKey } from './auth.js';
 import { saveImage } from './files.js';
 import { closeListingConversations } from './conversations.js';
 import { checkWords } from './wordfilter.js';
@@ -44,7 +44,7 @@ function cleanFields(b) {
   return l;
 }
 export function cardOf(r, sellerName) {
-  return { id: r.id, title: r.title, kind: r.kind, category: r.category, city: r.city, price: r.price, description: r.description, photo: r.photo ? `/api/files/${r.photo}` : null, sell_type: r.sell_type, auction_ends: r.auction_ends, bids: r.bids, status: r.status, created: r.created, seller: { id: r.account_id, username: sellerName ?? r.username } };
+  return { id: r.id, url: listingPath(r), title: r.title, kind: r.kind, category: r.category, city: r.city, price: r.price, description: r.description, photo: r.photo ? `/api/files/${r.photo}` : null, sell_type: r.sell_type, auction_ends: r.auction_ends, bids: r.bids, status: r.status, created: r.created, seller: { id: r.account_id, username: sellerName ?? r.username, url: sellerPath(sellerName ?? r.username) } };
 }
 export async function browse({ db, url }) {
   const q = url.searchParams, words = (q.get('q') || '').toLowerCase().split(/\s+/).filter(Boolean).slice(0, 8);
@@ -65,7 +65,7 @@ export async function mapData({ db }) {
   const listings = rows.map(r => {
     const exact = r.spot_lat !== null && r.spot_lng !== null, town = TOWN_SPOTS[r.city];
     if (!exact && !town) return null;
-    return { id: r.id, title: r.title, kind: r.kind, city: r.city, price: r.price, photo: r.photo ? `/api/files/${r.photo}?size=thumb` : null, sell_type: r.sell_type, auction_ends: r.auction_ends,
+    return { id: r.id, url: listingPath(r), title: r.title, kind: r.kind, city: r.city, price: r.price, photo: r.photo ? `/api/files/${r.photo}?size=thumb` : null, sell_type: r.sell_type, auction_ends: r.auction_ends,
       lat: exact ? r.spot_lat : town[0], lng: exact ? r.spot_lng : town[1], exact };
   }).filter(Boolean);
   return json({ listings, towns: TOWN_SPOTS, businesses: EXAMPLE_BUSINESSES, area: MAP_AREA });
@@ -113,7 +113,8 @@ export async function publish({ db, store, request }, id) {
   await db.run(INSERT_LISTING, ...indexRow(l, a, r.path, r.data_path));
   return json({ id });
 }
-export async function getListing({ db, store, request }, id, account) {
+export async function getListing({ db, store, request }, key, account) {
+  const id = listingIdFromKey(key); // the address's title and code, or the ID
   const r = await db.get('SELECT l.*, a.username, a.photo seller_photo FROM listings l JOIN accounts a ON a.id=l.account_id WHERE l.id=?', id);
   const mine = account?.id === r?.account_id;
   if (!r || ((r.status === 'hidden' || r.status === 'deleted' || r.status === 'draft') && !mine)) fail(404, 'That listing isn\'t here anymore.');
@@ -131,7 +132,7 @@ export async function getListing({ db, store, request }, id, account) {
     if (mine) {
       const rows = await db.all(`SELECT c.id, c.buyer_id, c.last_text, c.last_from, c.last_id, c.seller_read, b.username FROM conversations c JOIN accounts b ON b.id=c.buyer_id
         WHERE c.listing_id=? AND c.status IN ('live','closed') AND c.last_activity>=? ORDER BY c.last_activity DESC LIMIT 50`, id, since);
-      out.chats = rows.map(c => ({ id: c.id, with: { id: c.buyer_id, username: c.username }, last_text: c.last_text, unread: !!c.last_id && c.last_from !== account.id && c.last_id !== c.seller_read }));
+      out.chats = rows.map(c => ({ id: c.id, with: { id: c.buyer_id, username: c.username, url: sellerPath(c.username) }, last_text: c.last_text, unread: !!c.last_id && c.last_from !== account.id && c.last_id !== c.seller_read }));
     } else {
       const c = await db.get("SELECT id FROM conversations WHERE listing_id=? AND buyer_id=? AND status IN ('live','closed') AND last_activity>=?", id, account.id, since);
       out.chat = c ? c.id : null;
@@ -232,8 +233,10 @@ export async function report({ db, store, request }, id) {
   }
   return json({ ok: true });
 }
-export async function sellerPage({ db }, id) {
-  const a = await db.get('SELECT * FROM accounts WHERE id=?', id);
+export async function sellerPage({ db }, key) {
+  // The address has the username (with _ for spaces). Older links have the account's ID.
+  const a = isId(key, 'A') ? await db.get('SELECT * FROM accounts WHERE id=?', key) : await db.get('SELECT * FROM accounts WHERE username_key=?', usernameKey(String(key)));
+  const id = a?.id;
   if (!a) fail(404, 'That account isn\'t here.');
   const rows = await db.all("SELECT * FROM listings WHERE account_id=? AND status='live' ORDER BY created DESC LIMIT 100", id);
   return json({ account: publicAccount(a), listings: rows.map(r => cardOf(r, a.username)) });

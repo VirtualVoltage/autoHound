@@ -16,13 +16,14 @@ const locs = x => [...x.matchAll(/<loc>([^<]+)<\/loc>/g)].map(m => m[1]);
   let urls = locs(s.text);
   ok(urls.every(u => u.startsWith('https://autohound.online/')), 'every address uses https://autohound.online');
   ok(urls.includes('https://autohound.online/') && urls.includes('https://autohound.online/map'), 'home and map listed');
-  ok(urls.every(u => /^https:\/\/autohound\.online\/(|map|listing\/L\.[\d.]+|seller\/A\.[\d.]+)$/.test(u)), 'only home, map, listing and seller pages');
+  ok(urls.every(u => /^https:\/\/autohound\.online\/(|map|listing\/[a-z0-9-]+|seller\/[^\/]+)$/.test(u)), 'only home, map, listing and seller pages');
+  ok(!/[ALPFCME]\.\d\d\.\d\d\.\d\d\.\d{5}/.test(s.text), 'addresses use titles and usernames, no IDs');
   ok(!/@|C\.\d|conversation|private|email/i.test(s.text), 'no emails, chats or private paths');
   const live = (await (await p.request.get(U + '/api/listings?limit=100')).json()).listings || [];
-  const listed = urls.filter(u => u.includes('/listing/')).map(u => u.split('/').pop());
-  ok(live.length > 0 && live.every(l => listed.includes(l.id)), `all ${live.length} browsable live listings are in the sitemap (${listed.length} listed)`);
-  const sellers = urls.filter(u => u.includes('/seller/')).map(u => u.split('/').pop());
-  ok(new Set(live.map(l => l.seller.id)).size === sellers.length && live.every(l => sellers.includes(l.seller.id)), `seller pages = accounts with live listings (${sellers.length})`);
+  const listed = urls.filter(u => u.includes('/listing/')).map(u => new URL(u).pathname);
+  ok(live.length > 0 && live.every(l => listed.includes(l.url)), `all ${live.length} browsable live listings are in the sitemap (${listed.length} listed)`);
+  const sellers = urls.filter(u => u.includes('/seller/')).map(u => new URL(u).pathname);
+  ok(new Set(live.map(l => l.seller.id)).size === sellers.length && live.every(l => sellers.includes(l.seller.url)), `seller pages = accounts with live listings (${sellers.length})`);
   ok(/<lastmod>\d{4}-\d\d-\d\d<\/lastmod>/.test(s.text), 'listings carry lastmod dates');
 
   // Sell one listing and remove another as redline riley, then check they leave the sitemap.
@@ -35,10 +36,10 @@ const locs = x => [...x.matchAll(/<loc>([^<]+)<\/loc>/g)].map(m => m[1]);
   for (const [l, action] of [[sold, 'sold'], [removed, 'delete']])
     ok((await p.evaluate(([id, action]) => fetch('/api/listings/' + id, { method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action }) }).then(r => r.status), [l.id, action])) === 200, `marked ${l.id} ${action}`);
   s = await get('/sitemap.xml'); urls = locs(s.text);
-  ok(!urls.some(u => u.endsWith(sold.id) || u.endsWith(removed.id)), 'sold and removed listings left the sitemap');
+  ok(!urls.some(u => u.endsWith(sold.url) || u.endsWith(removed.url)), 'sold and removed listings left the sitemap');
   ok(urls.filter(u => u.includes('/listing/')).length === listed.length - 2, 'every other listing is still there');
   const left = mine.length - 2;
-  ok(urls.includes(`https://autohound.online/seller/${me.account.id}`) === left > 0, `seller page kept only while they still have live listings (${left} left)`);
+  ok(urls.includes(`https://autohound.online${me.account.url}`) === left > 0, `seller page kept only while they still have live listings (${left} left)`);
   if (store) require('fs').writeFileSync(store + '/../out/t58-sitemap.xml', s.text);
   await b.close(); console.log(bad ? `${bad} FAILED` : 'all passed'); process.exit(bad ? 1 : 0);
 })();

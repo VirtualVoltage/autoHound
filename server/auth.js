@@ -1,6 +1,6 @@
 import { LIMITS } from './config.js';
 import { ApiError, fail, hit, json, readJson, readJsonFile, writeJsonFile, sha256Hex, clientKey } from './http.js';
-import { nextId, folderName, letterFolder } from './ids.js';
+import { nextId, folderName, letterFolder, sellerPath } from './ids.js';
 import { checkWords } from './wordfilter.js';
 import { ensureSchemaOnce } from './rebuild.js';
 import { sendCode, sendLoginCode, checkLoginCode, loginCodesOn } from './verify.js';
@@ -70,7 +70,7 @@ export function cleanEmail(raw) {
   if (email.length > 254 || !/^[^@]+@[^@]+\.[^@.]{2,}$/.test(email) || /^\.|\.\.|\.@|@\.|@-/.test(email)) fail(400, 'That email address doesn\'t look right.');
   return email;
 }
-export const publicAccount = a => a && ({ id: a.id, username: a.username, joined: a.joined, photo: a.photo ? `/api/files/${a.photo}` : null });
+export const publicAccount = a => a && ({ id: a.id, url: sellerPath(a.username), username: a.username, joined: a.joined, photo: a.photo ? `/api/files/${a.photo}` : null });
 
 export async function signup({ db, store, request, env }) {
   const b = await readJson(request), username = String(b.username || '').replace(/[\u0000-\u001f\u007f]/g, '').replace(/\s+/g, ' ').trim();

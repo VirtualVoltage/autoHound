@@ -1,5 +1,6 @@
 import { TextHelpers } from './storage-common.js';
 import { LIMITS } from '../config.js';
+import { pageResponse } from '../pagemeta.js';
 
 // R2: real object storage. Paths are the same as folders on a normal disk.
 export class R2Store extends TextHelpers {
@@ -45,4 +46,11 @@ export function cloudflareContext(context) {
     store: env.FILES ? new R2Store(env.FILES) : new D1Store(env.DB),
     assets: { read: async p => { const r = await env.ASSETS.fetch(new URL(p, context.request.url)); if (!r.ok) throw new Error('Missing asset ' + p); return new Uint8Array(await r.arrayBuffer()); } },
   };
+}
+// Listing and seller pages: index.html with that page's title and details filled in for search engines (server/pagemeta.js).
+export async function cloudflarePage(context) {
+  const url = new URL(context.request.url);
+  const index = await context.env.ASSETS.fetch(new URL('/', url));
+  if (!index.ok) return context.next();
+  return pageResponse(cloudflareContext(context), url.pathname, await index.text(), url.search);
 }

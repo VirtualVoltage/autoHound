@@ -15,7 +15,7 @@ export async function threadPage(id) {
   let d;
   try { d = await api('conversations/' + encodeURIComponent(id)); } catch (e) { if (e.restart) throw e; $('main').innerHTML = view.notFound(e.message); return; }
   // Profiles that keep chats in the box on the listing page open live listings there.
-  if (view.chatOnListing && d.listing.status === 'live') { go(`/listing/${d.listing.id}?chat=${encodeURIComponent(d.id)}`, true); return; }
+  if (view.chatOnListing && d.listing.status === 'live') { go(`${d.listing.url}?chat=${encodeURIComponent(d.id)}`, true); return; }
   const days = Math.max(1, Math.ceil((d.expires - Date.now()) / 864e5));
   pageTitle(d.listing.title);
   $('main').innerHTML = view.threadPage(d, days);

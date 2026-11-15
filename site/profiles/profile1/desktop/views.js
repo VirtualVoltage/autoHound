@@ -43,7 +43,7 @@ export function windowCard(l, favorite) {
   const flag = live ? '<span class="flag">AUCTION</span>' : l.kind === 'cars' ? `<span class="flag dark">${esc(l.category.toUpperCase())}</span>` : '';
   const photo = l.photo ? (l.photo.startsWith('blob:') ? l.photo : l.photo + '?size=thumb') : null;
   return `<article class="window">${l.preview ? '' : star(l.id, favorite)}${flag}${ph(photo, l.kind === 'cars', l.title)}
-    <div class="window-body"><div class="money">${money(l.price)}</div><h3><a href="/listing/${esc(l.id)}">${esc(l.title)}</a></h3><p class="desc">${esc(l.description)}</p>
+    <div class="window-body"><div class="money">${money(l.price)}</div><h3><a href="${esc(l.url)}">${esc(l.title)}</a></h3><p class="desc">${esc(l.description)}</p>
     ${live ? `<div class="muted" data-end="${l.auction_ends}">${timeLeft(l.auction_ends - Date.now())}</div>` : ''}
     <div class="town">${townLine(l.city)}</div></div></article>`;
 }
@@ -121,7 +121,7 @@ export function listingPage({ listing: l, favorite, closed, minBid, admin }) {
       <div class="side">
         ${buyBox(l, minBid)}
         ${l.sell_type === 'post' && l.market_value ? meter(l.price / l.market_value, l.market_value) : ''}
-        <div class="panel"><a class="seller-card" href="/seller/${esc(l.seller.id)}">${avatar(l.seller.photo, '')}<b>${esc(l.seller.username)}</b></a>
+        <div class="panel"><a class="seller-card" href="${esc(l.seller.url)}">${avatar(l.seller.photo, '')}<b>${esc(l.seller.username)}</b></a>
         </div>
         ${admin && !closed ? adminDeleteBox() : ''}
         ${chatPanel(l, closed)}
@@ -159,7 +159,7 @@ export const sellPage = ({ draft: D, options: o, estimates, max }) => `<div clas
 
 /* ---------- messages ---------- */
 export const inboxPage = list => `<div class="wrap page"><h1 class="main-title" style="margin-bottom:12px">Messages</h1>
-    ${list.length ? list.map(c => `<a class="inbox-row ${c.unread ? 'unread' : ''}" href="${c.listing.status === 'live' ? `/listing/${esc(c.listing.id)}?chat=${esc(c.id)}` : `/messages/${esc(c.id)}`}">${ph(c.listing.photo ? c.listing.photo + '?size=thumb' : null, true, '')}
+    ${list.length ? list.map(c => `<a class="inbox-row ${c.unread ? 'unread' : ''}" href="${c.listing.status === 'live' ? `${esc(c.listing.url)}?chat=${esc(c.id)}` : `/messages/${esc(c.id)}`}">${ph(c.listing.photo ? c.listing.photo + '?size=thumb' : null, true, '')}
       <div style="min-width:0"><b>${esc(c.listing.title)}</b> <span class="money">${money(c.listing.price)}</span><div class="muted">${c.role === 'selling' ? 'Buyer' : 'Seller'}: ${esc(c.with.username)}${c.listing.status !== 'live' ? ` · ${c.listing.status === 'sold' ? 'sold' : 'listing removed'}` : ''}</div><div class="last">${c.last_from_me ? 'You: ' : ''}${esc(c.last_text)}</div></div>
       ${c.unread ? '<span class="badge-count">New</span>' : ''}</a>`).join('') : `<div class="empty"><b>No messages.</b><span>Chats clear after 7 days without a message.</span><a class="btn" href="/">Browse listings</a></div>`}</div>`;
 function attachmentHtml(a) {
@@ -173,8 +173,8 @@ export const pendingPhoto = url => ph(url, true, 'Photo to send');
 export const pendingFile = name => `<span class="chip">${esc(name)}</span>`;
 export const threadPage = (d, days) => `<div class="wrap page">
     <div class="crumb"><a href="/messages">Messages</a></div>
-    <div class="thread-head">${ph(d.listing.photo ? d.listing.photo + '?size=thumb' : null, true, '')}<div style="min-width:0"><a href="/listing/${esc(d.listing.id)}"><b>${esc(d.listing.title)}</b></a> <span class="money">${money(d.listing.price)}</span>
-      <div class="seller-card" style="margin-top:3px"><a href="/seller/${esc(d.with.id)}">${esc(d.with.username)}</a><span class="muted">· chat clears after ${days} days without a message</span></div></div></div>
+    <div class="thread-head">${ph(d.listing.photo ? d.listing.photo + '?size=thumb' : null, true, '')}<div style="min-width:0"><a href="${esc(d.listing.url)}"><b>${esc(d.listing.title)}</b></a> <span class="money">${money(d.listing.price)}</span>
+      <div class="seller-card" style="margin-top:3px"><a href="${esc(d.with.url)}">${esc(d.with.username)}</a><span class="muted">· chat clears after ${days} days without a message</span></div></div></div>
     <div class="thread" id="thread">${d.messages.map(m => bubble(m, d.me)).join('')}</div>
     <div class="attach-preview" id="attachPreview"></div>
     <form class="composer" id="composer" novalidate>
@@ -262,7 +262,7 @@ export const editListingPage = ({ listing: l, options: o, priceLocked }) => `<di
       ${spotPicker(l.spot)}
       <label class="field"><span>Description</span><textarea id="eDesc" rows="6" maxlength="1500">${esc(l.description)}</textarea></label>
       <p class="err" id="editErr" role="alert" hidden></p>
-      <div class="actions"><a class="btn plain" href="/listing/${esc(l.id)}">Cancel</a><button class="btn" type="submit">Save</button></div>
+      <div class="actions"><a class="btn plain" href="${esc(l.url)}">Cancel</a><button class="btn" type="submit">Save</button></div>
     </form></div>`;
 export const myListingsPage = ({ listings, favorites }) => `<div class="wrap page"><div class="sec-head"><h1 class="main-title">My listings</h1><a class="btn" href="/sell">Sell</a></div>
     ${listings.length ? `<div class="windows">${listings.map(l => `<div class="my-card">${windowCard(l, favorites.has(l.id))}<a class="btn plain" href="/listing/${esc(l.id)}/edit">Edit</a></div>`).join('')}</div>` : '<div class="empty"><b>No listings.</b><a class="btn" href="/sell">Sell</a></div>'}</div>`;
@@ -300,7 +300,7 @@ export function mapPin({ type, count = 1, label = '' }) {
   return `<button type="button" class="map-pin ${type}" aria-label="${esc(label)}">${count > 1 ? `<b>${count}</b>` : ''}</button>`;
 }
 export function mapPopup({ heading, sub, listings = [] }) {
-  const items = listings.map(l => `<a class="pop-item" href="/listing/${esc(l.id)}">${ph(l.photo, true, l.title)}<span><b class="money">${money(l.price)}</b>${esc(l.title)}</span></a>`).join('');
+  const items = listings.map(l => `<a class="pop-item" href="${esc(l.url)}">${ph(l.photo, true, l.title)}<span><b class="money">${money(l.price)}</b>${esc(l.title)}</span></a>`).join('');
   return `<div class="map-pop"><div class="pop-head"><b>${esc(heading)}</b>${sub ? `<span>${esc(sub)}</span>` : ''}</div>${items ? `<div class="pop-list">${items}</div>` : ''}</div>`;
 }
 export const spotPicker = spot => `<div class="field spot-field"><span>Pickup pin (optional)</span>

@@ -1,6 +1,6 @@
 import { LIMITS, MESSAGE_TEMPLATE } from './config.js';
 import { fail, hit, json, readJson, readAttachment, readJsonFile, writeJsonFile, readLines, appendLine, moveTree } from './http.js';
-import { nextId, isId, dayFolder } from './ids.js';
+import { nextId, isId, dayFolder, listingPath, sellerPath } from './ids.js';
 import { requireAccount } from './auth.js';
 import { saveImage } from './files.js';
 
@@ -100,7 +100,7 @@ export async function inbox(ctx) {
     WHERE (c.seller_id=? OR c.buyer_id=?) AND c.status IN ('live','closed') AND c.last_activity>=? ORDER BY c.last_activity DESC LIMIT 200`, a.id, a.id, Date.now() - LIMITS.conversationIdleMs);
   return json({ conversations: rows.map(c => {
     const seller = c.seller_id === a.id, read = seller ? c.seller_read : c.buyer_read, photo = seller ? c.buyer_photo : c.seller_photo;
-    return { id: c.id, listing: { id: c.listing_id, title: c.listing_title, price: c.listing_price, status: c.listing_status, photo: c.listing_photo ? `/api/files/${c.listing_photo}` : null }, with: { id: seller ? c.buyer_id : c.seller_id, username: seller ? c.buyer_name : c.seller_name, photo: photo ? `/api/files/${photo}` : null }, role: seller ? 'selling' : 'buying', last_text: c.last_text, last_from_me: c.last_from === a.id, last_activity: c.last_activity, unread: !!c.last_id && c.last_from !== a.id && read !== c.last_id };
+    return { id: c.id, listing: { id: c.listing_id, url: listingPath({ id: c.listing_id, title: c.listing_title }), title: c.listing_title, price: c.listing_price, status: c.listing_status, photo: c.listing_photo ? `/api/files/${c.listing_photo}` : null }, with: { id: seller ? c.buyer_id : c.seller_id, url: sellerPath(seller ? c.buyer_name : c.seller_name), username: seller ? c.buyer_name : c.seller_name, photo: photo ? `/api/files/${photo}` : null }, role: seller ? 'selling' : 'buying', last_text: c.last_text, last_from_me: c.last_from === a.id, last_activity: c.last_activity, unread: !!c.last_id && c.last_from !== a.id && read !== c.last_id };
   }) });
 }
 export async function unreadCount(ctx, a) {
@@ -126,7 +126,7 @@ export async function openConversation(ctx, id) {
   }
   const l = await ctx.db.get('SELECT id,title,price,photo,status FROM listings WHERE id=?', c.listing_id);
   const other = await ctx.db.get('SELECT id,username,photo FROM accounts WHERE id=?', isSeller ? c.buyer_id : c.seller_id);
-  return json({ id: c.id, me: a.id, listing: { id: l.id, title: l.title, price: l.price, status: l.status, photo: l.photo ? `/api/files/${l.photo}` : null }, with: { id: other.id, username: other.username, photo: other.photo ? `/api/files/${other.photo}` : null }, expires: c.last_activity + LIMITS.conversationIdleMs, messages });
+  return json({ id: c.id, me: a.id, listing: { id: l.id, url: listingPath(l), title: l.title, price: l.price, status: l.status, photo: l.photo ? `/api/files/${l.photo}` : null }, with: { id: other.id, url: sellerPath(other.username), username: other.username, photo: other.photo ? `/api/files/${other.photo}` : null }, expires: c.last_activity + LIMITS.conversationIdleMs, messages });
 }
 export async function sendMessage(ctx, id) {
   const { a, c } = await participant(ctx, id), b = await readJson(ctx.request), text = cleanText(b.text);

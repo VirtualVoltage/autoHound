@@ -34,6 +34,7 @@ export async function sellerPage(id) {
   let d;
   try { d = await api('accounts/' + encodeURIComponent(id)); } catch (e) { if (e.restart) throw e; $('main').innerHTML = view.notFound(e.message); return; }
   pageTitle(d.account.username);
+  if (d.account.url && location.pathname !== d.account.url) history.replaceState(history.state, '', d.account.url + location.search);
   $('main').innerHTML = view.sellerPage({ account: d.account, listings: d.listings, favorites: session.favorites });
 }
 export async function favoritesPage() {

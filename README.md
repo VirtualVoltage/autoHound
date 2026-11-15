@@ -79,7 +79,11 @@ Output folder is `site`. Bindings: `DB` (D1 index) and optionally `FILES` (R2). 
 
 ## Search engines
 
-`site/robots.txt` lets search engines read public pages and keeps them out of `/api/` and account, chat and sign-in pages. `/sitemap.xml` is built live from the search index (`server/sitemap.js`): home, the map, every live listing and the seller pages of accounts with live listings, all on `https://autohound.online`. It's served by `server/node-server.js` locally and `functions/sitemap.xml.js` on Cloudflare.
+`site/robots.txt` lets search engines read public pages and keeps them out of `/api/` and account, chat and sign-in pages. `/sitemap.xml` is built live from the search index (`server/sitemap.js`): home, the map, every live listing and the seller pages of accounts with live listings, by their name addresses, all on `https://autohound.online`. It's served by `server/node-server.js` locally and `functions/sitemap.xml.js` on Cloudflare.
+
+Public pages are addressed by name, not ID: `/listing/all-terrain-tire-285-70r17-7p9` and `/seller/boost_brandon` (`listingPath`, `sellerPath` in `server/ids.js`). The short code ending a listing's address is its ID's date and count in base 36, so nothing extra is stored and the index stays rebuildable. Addresses with the ID, or with an old title, redirect (301) to the current one, and the API accepts either form when reading a listing or seller.
+
+Listing and seller pages are sent with their own title, description, link preview tags, product details and a plain text copy already in the HTML (`server/pagemeta.js`), because the pages themselves are built in the browser. `server/node-server.js` does it locally, `functions/listing/[id].js` and `functions/seller/[id].js` on Cloudflare. Sold listings are marked `noindex`; missing, hidden and removed ones answer 404. All other pages get the plain `site/index.html`.
 
 ## Preview
 

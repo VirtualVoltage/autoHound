@@ -68,7 +68,9 @@ export async function handle(request, base) {
       }
     }
     const args = r.hit.slice(1).map(decodeURIComponent);
-    for (const a of args) if (!isId(a)) fail(404, 'Not found.');
+    // Everything is addressed by ID, except reading a listing or a seller page: those also take the title or username from the page's address.
+    const byName = request.method === 'GET' && /^(listings|accounts)\/[^/]{1,200}$/.test(route);
+    for (const a of args) if (!isId(a) && !byName) fail(404, 'Not found.');
     return await r.fn(ctx, ...args);
   } catch (e) {
     if (e instanceof ApiError) return json({ error: e.message }, e.status);

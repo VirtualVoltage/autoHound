@@ -20,7 +20,7 @@ const ROUTES = [
   [/^\/verify$/, verifyPage],
   [/^\/admin$/, adminInboxPage], [/^\/admin\/([^/]+)$/, adminMessagePage],
 ];
-let leave = null, token = 0;
+let leave = null, token = 0, opened = false;
 export function go(path, replace) { history[replace ? 'replaceState' : 'pushState']({}, '', path); route(); }
 export function needLogin() { go('/login?next=' + encodeURIComponent(location.pathname + location.search), true); }
 // --head-h always matches the header's real height, so things anchored under it (like the side menu) line up at any window size.
@@ -59,6 +59,9 @@ async function route() {
   const m = ROUTES.map(([re, fn]) => ({ fn, hit: path.match(re) })).find(x => x.hit);
   const q = path === '/' && new URLSearchParams(location.search).get('q');
   pageTitle(q ? q : NAMES.find(([re]) => re.test(path))?.[1]);
+  // The first page arrives with its own search engine details from the server (server/pagemeta.js). They don't belong to later pages.
+  if (opened) document.head.querySelectorAll('[data-page]').forEach(n => n.remove());
+  opened = true;
   scrollTo(0, 0);
   renderHeader();
   if (!m) { $('main').innerHTML = view.notFound(); return; }
