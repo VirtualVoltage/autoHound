@@ -1,7 +1,7 @@
 import { $, toast, shrink } from '../util.js';
 import { view } from '../theme.js';
 import { api, upload, session } from '../api.js';
-import { go, needLogin, renderHeader, logOut } from '../app.js';
+import { go, needLogin, renderHeader, logOut, pageTitle } from '../app.js';
 
 export async function accountPage() {
   if (!session.account) return needLogin();
@@ -33,6 +33,7 @@ export async function accountPage() {
 export async function sellerPage(id) {
   let d;
   try { d = await api('accounts/' + encodeURIComponent(id)); } catch (e) { if (e.restart) throw e; $('main').innerHTML = view.notFound(e.message); return; }
+  pageTitle(d.account.username);
   $('main').innerHTML = view.sellerPage({ account: d.account, listings: d.listings, favorites: session.favorites });
 }
 export async function favoritesPage() {

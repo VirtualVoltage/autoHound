@@ -1,13 +1,14 @@
 import { $, money, toast } from '../util.js';
 import { view } from '../theme.js';
 import { api, session, passwordProof } from '../api.js';
-import { go, needLogin } from '../app.js';
+import { go, needLogin, pageTitle } from '../app.js';
 import { mountChat } from '../chat.js';
 
 export async function listingPage(id) {
   let data;
   try { data = await api('listings/' + encodeURIComponent(id)); } catch (e) { if (e.restart) throw e; $('main').innerHTML = view.notFound(e.message); return; }
   const l = data.listing, closed = l.status !== 'live', minBid = l.price + Math.max(5, Math.round(l.price * .025 / 5) * 5);
+  pageTitle(l.title);
   $('main').innerHTML = view.listingPage({ listing: l, favorite: session.favorites.has(l.id), closed, minBid, admin: !!session.account?.admin });
   // Profiles with a chat box on the listing page (#chatBox): buyers chat here, sellers pick a buyer.
   let chat = null;

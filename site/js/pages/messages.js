@@ -2,7 +2,7 @@ import { $ } from '../util.js';
 import { view } from '../theme.js';
 import { api, session } from '../api.js';
 import { mountChat } from '../chat.js';
-import { go, needLogin, renderHeader } from '../app.js';
+import { go, needLogin, renderHeader, pageTitle } from '../app.js';
 
 export async function inboxPage() {
   if (!session.account) return needLogin();
@@ -17,6 +17,7 @@ export async function threadPage(id) {
   // Profiles that keep chats in the box on the listing page open live listings there.
   if (view.chatOnListing && d.listing.status === 'live') { go(`/listing/${d.listing.id}?chat=${encodeURIComponent(d.id)}`, true); return; }
   const days = Math.max(1, Math.ceil((d.expires - Date.now()) / 864e5));
+  pageTitle(d.listing.title);
   $('main').innerHTML = view.threadPage(d, days);
   const chat = mountChat({ id: d.id });
   return chat.stop;

@@ -45,6 +45,11 @@ function setMenu(open) {
   if (open) d.querySelector('a, button')?.focus();
 }
 addEventListener('keydown', e => { if (e.key === 'Escape' && document.body.classList.contains('menu-open')) setMenu(false); });
+// Each page gets its own tab title, so browser tabs, history and address bar suggestions show a name
+// instead of the page's address. Listing, seller, chat and email pages name themselves once they load.
+const NAMES = [[/^\/map$/, 'Map'], [/^\/sell$/, 'Sell'], [/^\/messages/, 'Messages'], [/^\/account$/, 'Account settings'], [/^\/my-listings$/, 'My listings'],
+  [/^\/saved$/, 'Saved'], [/^\/login$/, 'Log in'], [/^\/signup$/, 'Sign up'], [/^\/verify$/, 'Confirm email'], [/^\/admin/, 'Site inbox'], [/\/edit$/, 'Edit']];
+export function pageTitle(name) { document.title = name ? `${name} - Autohound` : 'Autohound'; }
 async function route() {
   setMenu(false);
   if (leave) { try { leave(); } catch {} leave = null; }
@@ -52,6 +57,8 @@ async function route() {
   // Email confirmation is required: until then only the confirm page, account settings (to fix the email) and log in pages open.
   if (session.account?.must_verify && !/^\/(verify|account|login|signup)$/.test(path)) { history.replaceState({}, '', '/verify?next=' + encodeURIComponent(path + location.search)); return route(); }
   const m = ROUTES.map(([re, fn]) => ({ fn, hit: path.match(re) })).find(x => x.hit);
+  const q = path === '/' && new URLSearchParams(location.search).get('q');
+  pageTitle(q ? q : NAMES.find(([re]) => re.test(path))?.[1]);
   scrollTo(0, 0);
   renderHeader();
   if (!m) { $('main').innerHTML = view.notFound(); return; }

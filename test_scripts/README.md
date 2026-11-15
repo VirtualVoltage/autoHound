@@ -30,6 +30,7 @@ Older scripts were written for earlier versions of the site, so some no longer m
 | `t53.js`, `t31.js` | Listing chat box: one frame for messages and typing; buyer, seller tabs, photos, replies, sold chats. |
 | `t56.js` | Map page fills the window under its heading: edge to edge, no frame, no scrolling, desktop, narrow window and phones. |
 | `t55.js` | Listing photos: mouse drag, finger swipe, full screen viewer, Escape and the exit button, desktop and phone. |
+| `t59.js` | Tab titles: listing pages use the listing's title (no IDs), other pages their name, updated while clicking around and with the back button. |
 | `t60.js` | Big listing photos start as their thumbnail stretched to fill the area, then the full photo fades in; also next photo and full screen, desktop and phone. |
 | `t57.js` | Mouse wheel: the chat frame's springy pull past the end (page doesn't scroll), and the wheel changing listing photos, in the page and full screen. |
 | `t54.js` | Admin delete: red button for admins only, wrong password refused, listing moved to backups with `removed_by_admin`. Run as `t54.js <url> <store folder>` after `fresh-store.sh`. |
