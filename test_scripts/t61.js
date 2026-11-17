@@ -1,5 +1,5 @@
 // Crawler-friendly public pages: listing and seller pages are addressed by title and username (no IDs), and arrive with
-// their own title, description, preview tags, product details and a plain text copy before any page code runs.
+// their own title, description, preview tags and product details, with the page itself already HTML.
 // Older ID addresses are sent on to the new ones. Sold listings are noindex, missing ones answer 404.
 // Usage: node test_scripts/t61.js <url>   (node after fresh-store.sh, or wrangler)
 const { chromium } = require('playwright');
@@ -7,6 +7,8 @@ const U = process.argv[2] || 'http://127.0.0.1:8791';
 let bad = 0; const ok = (c, m) => { console.log((c ? 'ok   ' : 'FAIL ') + m); if (!c) bad++; };
 const ID = /[ALPFCME]\.\d\d\.\d\d\.\d\d\.\d{5,}/;
 const pick = (html, re) => (html.match(re) || [])[1];
+// The text people see: no tags, attributes, scripts or styles.
+const visible = html => html.replace(/<(script|style)\b[\s\S]*?<\/\1>/g, ' ').replace(/<[^>]+>/g, ' ');
 const unesc = s => s?.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'");
 (async () => {
   const b = await chromium.launch(), ctx = await b.newContext({ viewport: { width: 1300, height: 900 } }), p = await ctx.newPage();
@@ -25,9 +27,10 @@ const unesc = s => s?.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;
     let d = null; try { d = JSON.parse(pick(html, /<script type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/)); } catch {}
     ok(d && d.name === l.title && d.offers.price === l.price && d.offers.priceCurrency === 'USD' && d.offers.availability.endsWith('InStock') && d.image?.length > 0 && d.url.endsWith(l.url), 'product details (name, price, in stock, photos)');
     ok(l.kind !== 'cars' || (d && d['@type'].includes('Car') && d.mileageFromOdometer?.value >= 0), 'cars carry year and miles');
-    const plain = pick(html, /<noscript>([\s\S]*?)<\/noscript>/) || '';
-    ok(plain.includes(`<h1>`) && unesc(plain).includes(l.title) && unesc(plain).includes(l.description) && plain.includes(l.seller.url) && !/noindex/.test(html), 'plain text copy for bots that run no code, page indexable');
-    ok(!ID.test(html.replace(/\/api\/files\/P\.[\d.]+/g, '')), 'no IDs anywhere in the page except photo file addresses');
+    // The page itself is HTML (server/pages.js), so bots that run no code read the listing as people see it.
+    const body = unesc(visible(pick(html, /<div id="app"[^>]*>([\s\S]*)<\/div>\s*<script type="application\/json"/) || ''));
+    ok(body.includes(l.title) && body.includes(l.description) && body.includes('$' + l.price.toLocaleString('en-US')) && html.includes(`href="${l.seller.url}"`) && !/noindex/.test(html), 'the listing is in the HTML for bots that run no code, page indexable');
+    ok(!ID.test(visible(html)), 'no IDs in the page\'s visible text');
     ok(!/email|private|password/i.test(html.replace(l.description, '')), 'nothing private in the page');
     // Older addresses
     for (const old of [`/listing/${l.id}`, `/listing/some-old-title-${l.url.split('-').pop()}`, l.url + '/']) { const r = await raw(old); ok(r.status === 301 && r.to === l.url, `${old} is sent on to the title address`); }
@@ -52,7 +55,7 @@ const unesc = s => s?.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;
   // Seller page
   const s = await raw(l.seller.url), st = unesc(pick(s.html, /<title>([^<]*)<\/title>/));
   ok(s.status === 200 && st === `${l.seller.username} - Autohound`, `${l.seller.url} -> title: ${st}`);
-  ok(s.html.includes(`<a href="${l.url}">`) && pick(s.html, /<link rel="canonical" href="([^"]*)"/) === 'https://autohound.online' + l.seller.url && !ID.test(s.html.replace(/\/api\/files\/P\.[\d.]+/g, '')), 'seller page links its listings, no IDs');
+  ok(s.html.includes(`<a href="${l.url}">`) && pick(s.html, /<link rel="canonical" href="([^"]*)"/) === 'https://autohound.online' + l.seller.url && !ID.test(visible(s.html)), 'seller page links its listings, no IDs in its text');
   for (const old of [`/seller/${l.seller.id}`, `/seller/${encodeURIComponent(l.seller.username.toUpperCase())}`]) { const r = await raw(old); ok(r.status === 301 && r.to === l.seller.url, `${old} is sent on to ${l.seller.url}`); }
   await p.goto(U + '/seller/' + l.seller.id); await p.waitForFunction(t => document.body.innerText.toLowerCase().includes(t), l.seller.username.toLowerCase());
   ok(new URL(p.url()).pathname === l.seller.url && !(await links()).some(h => ID.test(h)), 'seller page in a browser: username address, no IDs in links');
@@ -61,10 +64,13 @@ const unesc = s => s?.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;
     const r = await raw(path);
     ok(r.status === 404 && /name="robots" content="noindex"/.test(r.html) && r.html.includes('<title>Autohound</title>') && r.html.includes('js/app.js'), `${path} answers 404, noindex, and still loads the site`);
   }
-  for (const path of ['/', '/map', `/listing/${l.id}/edit`, '/login']) {
+  // Every other page is built as HTML too (server/pages.js): public ones carry their canonical address, private ones are noindex.
+  for (const [path, title, canonical] of [['/', 'Autohound', true], ['/map', 'Map - Autohound', true], ['/login', 'Log in - Autohound', false], ['/signup', 'Sign up - Autohound', false]]) {
     const r = await raw(path);
-    ok(r.status === 200 && r.html.includes('<title>Autohound</title>') && !r.html.includes('data-page'), `${path} is served as before`);
+    ok(r.status === 200 && r.html.includes(`<title>${title}</title>`) && (canonical ? r.html.includes(`<link rel="canonical" href="https://autohound.online${path}"`) && !/noindex/.test(r.html) : /name="robots" content="noindex"/.test(r.html)) && r.html.includes('js/app.js'), `${path} arrives as HTML titled "${title}", ${canonical ? 'canonical' : 'noindex'}`);
   }
+  const edit = await raw(`/listing/${l.id}/edit`);
+  ok(edit.status === 302 && edit.to.startsWith('/login?next='), 'private pages send visitors to log in');
   // Sitemap
   const sm = await (await ctx.request.get(U + '/sitemap.xml')).text();
   ok(live.every(x => sm.includes(`<loc>https://autohound.online${x.url}</loc>`)) && sm.includes(`<loc>https://autohound.online${l.seller.url}</loc>`) && !ID.test(sm), 'sitemap lists the title addresses, no IDs');

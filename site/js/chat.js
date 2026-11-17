@@ -9,6 +9,8 @@ import { springWheel } from './spring.js';
 export function mountChat({ id = null, listingId = null, onStart } = {}) {
   let convId = id, me = session.account?.id, poll = null;
   const pending = [], seen = new Set(), thread = $('thread'), box = $('msgText');
+  // Messages the server already put in the page don't get added twice.
+  thread.querySelectorAll('[data-mid]').forEach(n => seen.add(n.dataset.mid));
   // The chat opens at the newest message. It stays pinned there unless you scroll up to read, and photos
   // that finish loading later keep it pinned too.
   let pinned = true;
@@ -59,6 +61,8 @@ export function mountChat({ id = null, listingId = null, onStart } = {}) {
     btn.disabled = false; box.focus();
   });
   box?.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); $('composer').requestSubmit(); } });
+  // The chat opens at the newest message, including messages the server already put in the page.
+  toBottom();
   const ready = load().then(startPolling).catch(er => toast(er.message));
   return { ready, stop: () => clearInterval(poll) };
 }

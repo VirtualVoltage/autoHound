@@ -31,13 +31,15 @@ Older scripts were written for earlier versions of the site, so some no longer m
 | `t56.js` | Map page fills the window under its heading: edge to edge, no frame, no scrolling, desktop, narrow window and phones. |
 | `t55.js` | Listing photos: mouse drag, finger swipe, full screen viewer, Escape and the exit button, desktop and phone. |
 | `t62.js` | Tab titles: listing pages use the listing's title (no IDs), other pages their name, updated while clicking around and with the back button. |
-| `t61.js` | Crawler-friendly pages: listing and seller addresses use the title and username (no IDs), old ID addresses redirect, each page arrives with its own title, description, preview tags, product details and plain text copy, the sitemap matches, sold is `noindex`, missing is 404. Run as `t61.js <url>`, on node after `fresh-store.sh` or on wrangler. |
+| `t61.js` | Crawler-friendly pages: listing and seller addresses use the title and username (no IDs), old ID addresses redirect, each page arrives with its own title, description, preview tags and product details, with the listing itself in the HTML, the sitemap matches, sold is `noindex`, missing is 404. Run as `t61.js <url>`, on node after `fresh-store.sh` or on wrangler. |
 | `t60.js` | Big listing photos start as their thumbnail stretched to fill the area, then the full photo fades in; also next photo and full screen, desktop and phone. |
 | `t57.js` | Mouse wheel: the chat frame's springy pull past the end (page doesn't scroll), and the wheel changing listing photos, in the page and full screen. |
 | `t54.js` | Admin delete: red button for admins only, wrong password refused, listing moved to backups with `removed_by_admin`. Run as `t54.js <url> <store folder>` after `fresh-store.sh`. |
 | `t51.js` | profile3 phones: square magnifying-glass button and the waffle slide-out menu. |
 | `t58.js` | `robots.txt` and `sitemap.xml`: content types, only public pages, no private data, sold and removed listings drop out. Run as `t58.js <url> [store folder]`, on node after `fresh-store.sh` or on wrangler. |
 | `t59.js` | Loads listing, seller and home pages with every request `robots.txt` disallows blocked, like Google, and checks they still show their content; also checks private addresses stay disallowed. |
+| `t63.js` | HTML first: with JavaScript off, browses, searches, filters, sorts, flips photos, saves, signs up, logs in and out, chats with a photo, bids, sells with photos, edits, marks sold, deletes, changes the profile picture and uses admin delete, all as plain links and forms; the phone menu opens; with JavaScript on the server's page is kept. Run as `t63.js <url>` on node after `fresh-store.sh`, or `t63.js <url> noadmin` on wrangler. |
+| `t64.js` | HTML first, email steps with JavaScript off: confirming an email (required while email can be sent), the wait before another code, turning on two-step login and logging in with the login code. Start the server with `EMAIL_LOG=1` and run `t64.js <url> <server log>` (on wrangler: `--binding EMAIL_LOG=1`, log is wrangler's output). |
 | `t49.js`, `t50.js` | Map page, Map button, DEMO tag, example businesses, and the pickup pin on the sell and edit forms (`t50.js` for other profiles). Map tiles can't load in the test box, so these check pins and saving. |
 
 ## Other files

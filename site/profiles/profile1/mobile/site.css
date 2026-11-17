@@ -131,8 +131,8 @@ textarea { resize: vertical; }
 .post { display: grid; grid-template-columns: minmax(0,1.25fr) minmax(0,1fr); gap: 20px; align-items: start; }
 .gallery .ph { aspect-ratio: 4/3; border: 1px solid var(--line); }
 .thumbs { display: grid; grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); gap: 6px; margin-top: 6px; }
-.thumbs button { padding: 0; background: none; border: 1px solid var(--line); cursor: pointer; }
-.thumbs button:hover { border-color: var(--neon); }
+.thumbs button, .thumbs a { padding: 0; background: none; border: 1px solid var(--line); cursor: pointer; }
+.thumbs button:hover, .thumbs a:hover { border-color: var(--neon); }
 .thumbs .ph { aspect-ratio: 1/1; border: 0; }
 .side { display: grid; gap: 11px; min-width: 0; }
 .attrs { display: grid; gap: 3px; font-size: 14px; }
@@ -267,7 +267,7 @@ a, button, label, input, select, textarea, summary { touch-action: manipulation;
 .photo-arrow:hover { background: rgba(10,40,12,.85); }
 .photo-count { position: absolute; right: 10px; bottom: 10px; z-index: 2; padding: 2px 8px; background: rgba(0,0,0,.65); color: #fff; font-size: 12px; font-weight: 700; }
 @media (hover: none) { .photo-arrow { opacity: .85; width: 40px; height: 56px; margin-top: -28px; font-size: 32px; } }
-.thumbs button.on { border-color: var(--neon); box-shadow: 0 0 10px rgba(42,255,50,.6); }
+.thumbs button.on, .thumbs a.on { border-color: var(--neon); box-shadow: 0 0 10px rgba(42,255,50,.6); }
 .post-desc { display: grid; gap: 6px; margin: 4px 0 10px; }
 
 /* map page, pins and the pickup spot picker */
@@ -365,4 +365,15 @@ body.viewer-open { overflow: hidden; }
 .ph.big img, .pv-photo img { position: absolute; inset: 0; width: 100%; height: 100%; max-width: none; max-height: none; object-fit: contain; }
 .pv-photo { position: absolute; inset: 0; }
 .ph-full { opacity: 0; transition: opacity .2s ease-out; }
-.ph-full.in { opacity: 1; }
+.ph-full.in, .no-js .ph-full { opacity: 1; }
+
+/* Pages arrive as finished HTML and work without JavaScript (AGENTS.md). Forms that only wrap a button take no
+   space of their own, controls that need JavaScript hide until it runs, and the no-JavaScript extras hide once it does. */
+.inline-form { display: contents; }
+.no-js .js-only { display: none !important; }
+/* Without JavaScript nothing lists the files picked, so the browser's own file box shows them. */
+.no-js input[type=file].sr { position: static !important; width: auto !important; height: auto !important; margin: 6px 0 0 !important; clip: auto !important; clip-path: none !important; overflow: visible !important; opacity: 1 !important; pointer-events: auto !important; }
+html:not(.no-js) .nojs-only { display: none !important; }
+.thumbs a { display: block; }
+.map-list { display: grid; gap: 14px; padding: 12px 0; }
+.map-list ul { margin: 6px 0 0; padding-left: 18px; }

@@ -1,14 +1,15 @@
 import { $, countChars } from '../util.js';
 import { view } from '../theme.js';
 import { api, passwordProof, newClientSalt, refreshSession, session, getOptions } from '../api.js';
-import { go, renderHeader } from '../app.js';
+import { go, renderHeader, paint } from '../app.js';
+import { safeNext as cleanNext } from '../shared.js';
 
 // Sign up asks for a username, email and password. Log in uses the email (older accounts without one can use their username).
 export async function authPage(mode) {
-  const next = new URLSearchParams(location.search).get('next') || '/', safeNext = next.startsWith('/') && !next.startsWith('//') ? next : '/';
+  const safeNext = cleanNext(new URLSearchParams(location.search).get('next'));
   if (session.account) { go(safeNext, true); return; }
   const signup = mode === 'signup', L = (await getOptions()).limits;
-  $('main').innerHTML = view.authPage({ signup, limits: L, otherLink: `/${signup ? 'login' : 'signup'}${location.search}` });
+  paint(view.authPage({ signup, limits: L, otherLink: `/${signup ? 'login' : 'signup'}${location.search}`, action: `/${mode}${location.search}` }));
   (signup ? $('username') : $('login')).focus();
   const finish = async () => { await refreshSession(); renderHeader(); go(safeNext, true); };
   $('authForm').addEventListener('submit', async e => {
@@ -41,7 +42,7 @@ export async function authPage(mode) {
       const r = await api('login', { json: { login, proof: await passwordProof(salt, password) } });
       if (!r.code_required) return finish();
       // Two-step login is on for this account: ask for the emailed code.
-      $('main').innerHTML = view.loginCodePage({ emailHint: r.email_hint });
+      paint(view.loginCodePage({ emailHint: r.email_hint }));
       $('loginCode').focus();
       $('codeForm').addEventListener('submit', async ev => {
         ev.preventDefault();

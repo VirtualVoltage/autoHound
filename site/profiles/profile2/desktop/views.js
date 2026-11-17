@@ -1,6 +1,6 @@
 // Page layouts for this profile. Each function only returns HTML. The element IDs and data-* attributes
 // listed in site/profiles/README.md must stay, because the shared logic attaches to them.
-import { esc, money, townLine, timeLeft, shortDate, clock, profileAsset } from '../../../js/util.js';
+import { esc, money, townLine, timeLeft, shortDate, clock, profileAsset, pagePath } from '../../../js/util.js';
 import './logo.js';
 
 export const ph = (src, cover, alt = '') => src ? `<span class="ph ${cover ? 'cover' : ''}"><img src="${esc(src)}" alt="${esc(alt)}" loading="lazy"></span>` : missingPhoto();
@@ -18,8 +18,8 @@ export const shell = () => `
 <header class="topbar"><div class="topbar-in">
   <a class="logo" href="/" aria-label="Autohound home"><img class="avatar" src="${profileAsset('brand-profile.webp')}" alt="" width="36" height="36"><b class="chrome">auto</b><span>hound</span></a>
   <a class="btn plain map-btn" href="/map">Map</a>
-  <form class="search" id="searchForm" role="search">
-    <input id="searchInput" type="search" placeholder="Search coilovers, 3000GT, Lynden..." aria-label="Search listings">
+  <form class="search" id="searchForm" role="search" action="/" method="get">
+    <input id="searchInput" name="q" type="search" placeholder="Search coilovers, 3000GT, Lynden..." aria-label="Search listings">
     <button class="btn" type="submit">Search</button>
   </form>
   <nav class="head-nav" id="headLinks" aria-label="Main"></nav>
@@ -27,7 +27,7 @@ export const shell = () => `
 <div class="layout"><main id="main"></main></div>
 <div id="toast" class="toast" role="status" hidden></div>`;
 const navButton = (href, label) => {
-  const here = href === '/' ? location.pathname === '/' : location.pathname.startsWith(href);
+  const here = href === '/' ? pagePath() === '/' : pagePath().startsWith(href);
   return `<a class="btn plain ${here ? 'here' : ''}" ${here ? 'aria-current="page"' : ''} href="${href}">${label}</a>`;
 };
 export function headerLinks({ account, unread, adminUnread = 0 }) {
@@ -39,8 +39,10 @@ export function headerLinks({ account, unread, adminUnread = 0 }) {
 }
 
 /* ---------- listing window ---------- */
-export const star = (id, on) => `<button class="star ${on ? 'on' : ''}" data-act="favorite" data-style="star" data-id="${esc(id)}" aria-pressed="${on}" aria-label="${on ? 'Remove from saved' : 'Save this listing'}">${on ? '★' : '☆'}</button>`;
-export const favoriteButton = (id, on) => `<button class="btn plain" data-act="favorite" data-style="button" data-id="${esc(id)}">${on ? '★ Saved' : '☆ Save'}</button>`;
+// Saving works without JavaScript too: the button posts to /saved and the page comes back.
+const saveForm = (id, button) => `<form class="inline-form" method="post" action="/saved"><input type="hidden" name="id" value="${esc(id)}">${button}</form>`;
+export const star = (id, on) => saveForm(id, `<button class="star ${on ? 'on' : ''}" data-act="favorite" data-style="star" data-id="${esc(id)}" aria-pressed="${on}" aria-label="${on ? 'Remove from saved' : 'Save this listing'}">${on ? '★' : '☆'}</button>`);
+export const favoriteButton = (id, on) => saveForm(id, `<button class="btn plain" data-act="favorite" data-style="button" data-id="${esc(id)}">${on ? '★ Saved' : '☆ Save'}</button>`);
 export function windowCard(l, favorite) {
   const live = l.sell_type === 'auction' && l.auction_ends > Date.now();
   const flag = live ? '<span class="flag">AUCTION</span>' : l.kind === 'cars' ? `<span class="flag dark">${esc(l.category.toUpperCase())}</span>` : '';
@@ -63,26 +65,26 @@ export function meter(ratio, value) {
 const grid = (list, empty, favorites) => list.length ? `<div class="windows">${list.map(l => windowCard(l, favorites.has(l.id))).join('')}</div>` : `<div class="empty"><b>${empty}</b></div>`;
 
 /* ---------- home ---------- */
-export const homePage = ({ q, min, max, sort, sorts, adminInbox, account }) => `<div class="page">
+export const homePage = ({ q, min, max, sort, sorts, listings, favorites, moreHref, adminInbox, account }) => `<div class="page">
     ${verifyStrip(account)}
     ${adminStrip(adminInbox)}
     <div class="toolbar">
       <h1 class="main-title">${q ? `Results for ${esc(q)}` : 'Popular'}</h1>
-      <div class="price-range"><span>Price</span><input id="minPrice" type="number" min="0" inputmode="numeric" placeholder="Min" aria-label="Minimum price" value="${esc(min)}"><input id="maxPrice" type="number" min="0" inputmode="numeric" placeholder="Max" aria-label="Maximum price" value="${esc(max)}"></div>
-      <div class="sorts" role="group" aria-label="Sort listings">${sorts.map(([k, t]) => `<button class="btn plain ${sort === k ? 'on' : ''}" data-sort="${k}" aria-pressed="${sort === k}">${t}</button>`).join('')}</div>
+      <form class="price-range" action="/" method="get"><span>Price</span><input id="minPrice" name="min" type="number" min="0" inputmode="numeric" placeholder="Min" aria-label="Minimum price" value="${esc(min)}"><input id="maxPrice" name="max" type="number" min="0" inputmode="numeric" placeholder="Max" aria-label="Maximum price" value="${esc(max)}">${q ? `<input type="hidden" name="q" value="${esc(q)}">` : ''}${sort && sort !== 'popular' ? `<input type="hidden" name="sort" value="${esc(sort)}">` : ''}<noscript><button class="btn plain" type="submit">Go</button></noscript></form>
+      <form class="sorts" role="group" aria-label="Sort listings" action="/" method="get">${q ? `<input type="hidden" name="q" value="${esc(q)}">` : ''}${min !== '' && min != null ? `<input type="hidden" name="min" value="${esc(min)}">` : ''}${max !== '' && max != null ? `<input type="hidden" name="max" value="${esc(max)}">` : ''}${sorts.map(([k, t]) => `<button class="btn plain ${sort === k ? 'on' : ''}" type="submit" name="sort" value="${k}" data-sort="${k}" aria-pressed="${sort === k}">${t}</button>`).join('')}</form>
     </div>
-    <div id="windows" class="windows"></div>
-    <div id="emptyMsg" class="empty" hidden><b>Nothing matches that.</b><span class="muted">Try a different search or price.</span></div>
-    <div class="more"><button id="moreBtn" class="btn plain" hidden>Show more</button></div>
+    <div id="windows" class="windows">${(listings || []).map(l => windowCard(l, !!favorites?.has(l.id))).join('')}</div>
+    <div id="emptyMsg" class="empty" ${listings && !listings.length ? '' : 'hidden'}><b>Nothing matches that.</b><span class="muted">Try a different search or price.</span></div>
+    <div class="more"><a id="moreBtn" class="btn plain" href="${esc(moreHref || '/')}" ${moreHref ? '' : 'hidden'}>Show more</a></div>
   </div>`;
 
 /* ---------- sign up and log in ---------- */
-export const authPage = ({ signup, limits: L, otherLink }) => `<div class="page"><form class="panel auth" id="authForm" novalidate>
+export const authPage = ({ signup, limits: L, otherLink, action }) => `<div class="page"><form class="panel auth" id="authForm" method="post" action="${esc(action || (signup ? '/signup' : '/login'))}" novalidate>
     <h1 class="main-title">${signup ? 'Sign up' : 'Log in'}</h1>
-    ${signup ? `<label class="field"><span>Username</span><input id="username" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" maxlength="80"></label>
-    <label class="field"><span>Email</span><input id="email" type="email" autocomplete="email" autocapitalize="none" spellcheck="false" maxlength="254"></label>`
-    : `<label class="field"><span>Email or username</span><input id="login" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" maxlength="254"></label>`}
-    <label class="field"><span>Password</span><input id="password" type="password" autocomplete="${signup ? 'new-password' : 'current-password'}" maxlength="40"></label>
+    ${signup ? `<label class="field"><span>Username</span><input id="username" name="username" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" maxlength="80"></label>
+    <label class="field"><span>Email</span><input id="email" name="email" type="email" autocomplete="email" autocapitalize="none" spellcheck="false" maxlength="254"></label>`
+    : `<label class="field"><span>Email or username</span><input id="login" name="login" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" maxlength="254"></label>`}
+    <label class="field"><span>Password</span><input id="password" name="password" type="password" autocomplete="${signup ? 'new-password' : 'current-password'}" maxlength="40"></label>
     ${signup ? `<p class="note">Username: ${L.usernameMin} to ${L.usernameMax} characters. No underscores. Password: ${L.passwordMin} to ${L.passwordMax} characters.</p>` : ''}
     <p class="err" id="authErr" role="alert" hidden></p>
     <button class="btn" type="submit">${signup ? 'Sign up' : 'Log in'}</button>
@@ -95,19 +97,19 @@ function buyBox(l, minBid) {
   if (l.ended) return `<div class="panel"><div class="lab">${l.won ? 'You won this auction' : 'Auction closed'}</div><div class="lab">Final price</div><div class="big-price">${money(l.price)}</div>
     ${l.mine ? `<div class="result"><div><span>Autohound fee</span><b>${money(l.seller_fee || 0)}</b></div><div class="total"><span>You receive</span><b>${money(l.price - (l.seller_fee || 0))}</b></div></div>` : ''}</div>`;
   return `<div class="panel"><div class="lab">Current bid · ${l.bids} bids · <span data-end="${l.auction_ends}">${timeLeft(l.auction_ends - Date.now())}</span></div><div class="big-price">${money(l.price)}</div>
-    ${l.mine ? '' : `<form id="bidForm" class="stack" novalidate><label class="field"><span>Bid (${money(minBid)} minimum)</span><input id="bidAmt" type="number" inputmode="numeric" min="${minBid}" value="${minBid}"></label><p class="err" id="bidErr" hidden></p><button class="btn full" type="submit">Place bid</button></form>`}</div>`;
+    ${l.mine ? '' : `<form id="bidForm" method="post" action="${esc(l.url)}/bid" class="stack" novalidate><label class="field"><span>Bid (${money(minBid)} minimum)</span><input id="bidAmt" name="amount" type="number" inputmode="numeric" min="${minBid}" value="${minBid}"></label><p class="err" id="bidErr" hidden></p><button class="btn full" type="submit">Place bid</button></form>`}</div>`;
 }
 function attrs(l) {
   const rows = [['Condition', l.condition], ...(l.kind === 'cars' ? [['Year', l.car.year], ['Odometer', l.car.miles.toLocaleString('en-US')], ['Title status', l.car.title_status], ['Tier', l.category]] : [['Fits', l.fits], ['Category', l.category]]), ['Handoff', l.handoff]];
   return `<div class="panel attrs">${rows.map(([a, b]) => `<div class="attr"><span class="muted">${a}</span><b>${esc(b)}</b></div>`).join('')}</div>`;
 }
-export function listingPage({ listing: l, favorite, closed, minBid, admin }) {
+export function listingPage({ listing: l, favorite, closed, minBid, admin, at = 0, chat = {}, confirmDelete = false, adminOpen = false }) {
   const statusNote = l.status === 'sold' ? '<p class="err">This listing has sold.</p>' : l.status === 'draft' ? '<p class="err">This draft never finished publishing.</p>' : closed ? '<p class="err">This listing is no longer public.</p>' : '';
-  const actions = l.mine ? (closed ? '' : `<a class="btn plain" href="/listing/${esc(l.id)}/edit">Edit</a><button class="btn plain" id="soldBtn">Mark sold</button><button class="btn plain" id="deleteBtn">Delete</button>`) : `${favoriteButton(l.id, favorite)}${closed ? '' : '<button class="btn plain" id="reportBtn" disabled title="Coming soon">Report</button>'}`;
+  const actions = l.mine ? (closed ? '' : `<a class="btn plain" href="/listing/${esc(l.id)}/edit">Edit</a><form class="inline-form" method="post" action="${esc(l.url)}/sold"><button class="btn plain" id="soldBtn">Mark sold</button></form><form class="inline-form" method="post" action="${esc(l.url)}/delete">${confirmDelete ? '<input type="hidden" name="sure" value="1">' : ''}<button class="btn plain" id="deleteBtn" ${confirmDelete ? 'data-sure="1"' : ''}>${confirmDelete ? 'Press again to delete' : 'Delete'}</button></form>`) : `${favoriteButton(l.id, favorite)}${closed ? '' : '<button class="btn plain" id="reportBtn" disabled title="Coming soon">Report</button>'}`;
   return `<div class="page">
     <div class="back-row"><a class="btn plain" href="/">Back</a></div>
     <div class="post">
-      <div class="gallery"><div class="photo-frame">${photoFullButton()}<div id="mainPhoto">${bigPhoto(l.photos[0], l.title)}</div>${l.photos.length > 1 ? `<button type="button" class="photo-arrow prev" id="photoPrev" aria-label="Previous photo">&#8249;</button><button type="button" class="photo-arrow next" id="photoNext" aria-label="Next photo">&#8250;</button><span class="photo-count" id="photoCount">1 / ${l.photos.length}</span>` : ''}</div>${photoViewer(l)}${l.photos.length > 1 ? `<div class="thumbs" id="thumbs">${l.photos.map((p, i) => `<button type="button" data-i="${i}" class="${i === 0 ? 'on' : ''}" aria-label="Show photo ${i + 1}">${ph(p + '?size=thumb', true)}</button>`).join('')}</div>` : ''}
+      <div class="gallery"><div class="photo-frame">${photoFullButton()}<div id="mainPhoto">${bigPhoto(l.photos[at], l.title)}</div>${l.photos.length > 1 ? `<a class="photo-arrow prev" id="photoPrev" href="?photo=${(at + l.photos.length - 1) % l.photos.length}" aria-label="Previous photo">&#8249;</a><a class="photo-arrow next" id="photoNext" href="?photo=${(at + 1) % l.photos.length}" aria-label="Next photo">&#8250;</a><span class="photo-count" id="photoCount">${at + 1} / ${l.photos.length}</span>` : ''}</div>${photoViewer(l)}${l.photos.length > 1 ? `<div class="thumbs" id="thumbs">${l.photos.map((p, i) => `<a href="?photo=${i}" data-i="${i}" class="${i === at ? 'on' : ''}" aria-label="Show photo ${i + 1}">${ph(p + '?size=thumb', true)}</a>`).join('')}</div>` : ''}
         <div class="panel"><p class="body-text">${esc(l.description)}</p><p class="count">Posted ${shortDate(l.created)}</p></div>
         ${attrs(l)}
       </div>
@@ -122,8 +124,8 @@ export function listingPage({ listing: l, favorite, closed, minBid, admin }) {
         ${buyBox(l, minBid)}
         <div class="panel"><a class="btn plain seller-btn" href="${esc(l.seller.url)}">${avatar(l.seller.photo, '')}<span>${esc(l.seller.username)}</span></a>
         </div>
-        ${admin && !closed ? adminDeleteBox() : ''}
-        ${chatPanel(l, closed)}
+        ${admin && !closed ? adminDeleteBox(l, adminOpen) : ''}
+        ${chatPanel(l, closed, chat)}
         ${l.sell_type === 'post' && l.market_value ? meter(l.price / l.market_value, l.market_value) : ''}
       </div>
     </div></div>`;
@@ -136,26 +138,26 @@ export function sellPreview({ card, value, price }) {
   const guide = value ? `<div class="lab">Estimated market value</div><div class="big-price">${money(value * .9)} to ${money(value * 1.1)}</div>${price ? meter(price / value, value) : ''}<button class="btn plain" type="button" id="useEst" data-v="${value}">Use ${money(value)}</button>` : '';
   return `<div class="lab">Preview</div><div class="preview-win">${windowCard(card, false)}</div>${guide}`;
 }
-export const sellPage = ({ draft: D, options: o, estimates, max }) => `<div class="page"><div class="toolbar"><h1 class="main-title">Sell</h1><span class="muted">Public. No personal info, illegal or stolen items.</span></div>
-    <div class="sell-grid"><form class="panel" id="sellForm" novalidate>
-      <div class="field"><span>Photos</span><div class="up-grid" id="upGrid">${sellPhotoGrid(D.photos, max)}</div><input id="sPhotos" class="sr" type="file" accept="image/*" multiple><p class="err" id="photoErr" hidden></p></div>
-      <div class="two"><label class="field"><span>Type</span><select id="sKind">${opt('parts', 'A part', D.kind)}${opt('cars', 'A car or truck', D.kind)}</select></label>
-        <label class="field" data-for="parts"><span>Part type</span><select id="sPart">${opt('other', 'Something else', D.part)}${estimates.map((e, i) => opt(i, e[0], D.part)).join('')}</select></label>
-        <label class="field" data-for="cars"><span>Car tier</span><select id="sTier">${o.car_categories.map(c => opt(c, c, D.tier)).join('')}</select></label></div>
-      <label class="field" id="sCategoryField"><span>Category</span><select id="sCategory">${o.part_categories.map(c => opt(c, c, D.category)).join('')}</select></label>
-      <label class="field"><span>Title</span><input id="sTitle" type="text" maxlength="70" placeholder="Blue coilovers, about 10k miles" value="${esc(D.title)}"></label>
-      <div class="two" data-for="cars"><label class="field"><span>Year</span><input id="sYear" type="number" placeholder="1995" value="${esc(D.year)}"></label><label class="field"><span>Miles</span><input id="sMiles" type="number" min="0" placeholder="120000" value="${esc(D.miles)}"></label></div>
-      <div class="two"><label class="field"><span>Condition</span><select id="sCond">${o.conditions.map(c => opt(c, c, D.condition)).join('')}</select></label>
-        <label class="field" data-for="parts"><span>Fits</span><input id="sFit" type="text" maxlength="60" placeholder="1G and 2G DSM" value="${esc(D.fits)}"></label>
-        <label class="field" data-for="cars"><span>Title status</span><select id="sTitleS">${['Clean', 'Rebuilt', 'Salvage'].map(c => opt(c, c, D.title_status)).join('')}</select></label></div>
-      <div class="two"><label class="field"><span>Sale type</span><select id="sMode">${opt('post', 'Fixed price', D.sell_type)}${opt('auction', 'Auction, 3 days', D.sell_type)}</select></label>
-        <label class="field"><span id="sPriceLabel">Price</span><input id="sPrice" type="number" min="1" inputmode="numeric" placeholder="450" value="${esc(D.price)}"></label></div>
-      <div class="two"><label class="field"><span>City</span><select id="sCity">${o.cities.map(c => opt(c, c, D.city)).join('')}</select></label>
-        <label class="field"><span>Handoff</span><select id="sHandoff">${o.handoffs.map(c => opt(c, c, D.handoff)).join('')}</select></label></div>
+export const sellPage = ({ draft: D, options: o, estimates, max, preview = '' }) => `<div class="page"><div class="toolbar"><h1 class="main-title">Sell</h1><span class="muted">Public. No personal info, illegal or stolen items.</span></div>
+    <div class="sell-grid"><form class="panel" id="sellForm" method="post" action="/sell" enctype="multipart/form-data" novalidate>
+      <div class="field"><span>Photos</span><div class="up-grid" id="upGrid">${sellPhotoGrid(D.photos, max)}</div><input id="sPhotos" name="photos" class="sr" type="file" accept="image/*" multiple><p class="err" id="photoErr" hidden></p></div>
+      <div class="two"><label class="field"><span>Type</span><select id="sKind" name="kind">${opt('parts', 'A part', D.kind)}${opt('cars', 'A car or truck', D.kind)}</select></label>
+        <label class="field" data-for="parts"><span>Part type</span><select id="sPart" name="part">${opt('other', 'Something else', D.part)}${estimates.map((e, i) => opt(i, e[0], D.part)).join('')}</select></label>
+        <label class="field" data-for="cars"><span>Car tier</span><select id="sTier" name="tier">${o.car_categories.map(c => opt(c, c, D.tier)).join('')}</select></label></div>
+      <label class="field" id="sCategoryField"><span>Category</span><select id="sCategory" name="category">${o.part_categories.map(c => opt(c, c, D.category)).join('')}</select></label>
+      <label class="field"><span>Title</span><input id="sTitle" name="title" type="text" maxlength="70" placeholder="Blue coilovers, about 10k miles" value="${esc(D.title)}"></label>
+      <div class="two" data-for="cars"><label class="field"><span>Year</span><input id="sYear" name="year" type="number" placeholder="1995" value="${esc(D.year)}"></label><label class="field"><span>Miles</span><input id="sMiles" name="miles" type="number" min="0" placeholder="120000" value="${esc(D.miles)}"></label></div>
+      <div class="two"><label class="field"><span>Condition</span><select id="sCond" name="condition">${o.conditions.map(c => opt(c, c, D.condition)).join('')}</select></label>
+        <label class="field" data-for="parts"><span>Fits</span><input id="sFit" name="fits" type="text" maxlength="60" placeholder="1G and 2G DSM" value="${esc(D.fits)}"></label>
+        <label class="field" data-for="cars"><span>Title status</span><select id="sTitleS" name="title_status">${['Clean', 'Rebuilt', 'Salvage'].map(c => opt(c, c, D.title_status)).join('')}</select></label></div>
+      <div class="two"><label class="field"><span>Sale type</span><select id="sMode" name="sell_type">${opt('post', 'Fixed price', D.sell_type)}${opt('auction', 'Auction, 3 days', D.sell_type)}</select></label>
+        <label class="field"><span id="sPriceLabel">Price</span><input id="sPrice" name="price" type="number" min="1" inputmode="numeric" placeholder="450" value="${esc(D.price)}"></label></div>
+      <div class="two"><label class="field"><span>City</span><select id="sCity" name="city">${o.cities.map(c => opt(c, c, D.city)).join('')}</select></label>
+        <label class="field"><span>Handoff</span><select id="sHandoff" name="handoff">${o.handoffs.map(c => opt(c, c, D.handoff)).join('')}</select></label></div>
       ${spotPicker(D.spot)}
-      <label class="field"><span>Description</span><textarea id="sDesc" rows="5" maxlength="1500" placeholder="What is it, what did it come off of, and is anything wrong with it?">${esc(D.description)}</textarea></label>
+      <label class="field"><span>Description</span><textarea id="sDesc" name="description" rows="5" maxlength="1500" placeholder="What is it, what did it come off of, and is anything wrong with it?">${esc(D.description)}</textarea></label>
       <p class="err" id="sellErr" role="alert" hidden></p><button class="btn" type="submit" id="pubBtn">Publish</button>
-    </form><div class="panel" id="sellPreview"></div></div></div>`;
+    </form><div class="panel" id="sellPreview">${preview}</div></div></div>`;
 
 /* ---------- messages ---------- */
 export const inboxPage = list => `<div class="page"><div class="toolbar"><h1 class="main-title">Messages</h1></div>
@@ -178,16 +180,16 @@ export const threadPage = (d, days) => `<div class="page">
       <div class="action-row"><a class="btn plain" href="${esc(d.listing.url)}">Listing</a><a class="btn plain" href="${esc(d.with.url)}"><span class="ellipsis">${esc(d.with.username)}</span></a></div></div>
     <div class="thread" id="thread">${d.messages.map(m => bubble(m, d.me)).join('')}</div>
     <div class="attach-preview" id="attachPreview"></div>
-    <form class="composer" id="composer" novalidate>
-      <label class="btn plain" for="attachInput" aria-label="Attach a photo, video or PDF">Attach</label><input id="attachInput" class="sr" type="file" accept="image/*,video/mp4,video/webm,application/pdf">
-      <textarea id="msgText" rows="1" maxlength="2000" placeholder="Message" aria-label="Message"></textarea>
+    <form class="composer" id="composer" method="post" action="/messages/${esc(d.id)}" enctype="multipart/form-data" novalidate>
+      <label class="btn plain" for="attachInput" aria-label="Attach a photo, video or PDF">Attach</label><input id="attachInput" name="file" class="sr" type="file" accept="image/*,video/mp4,video/webm,application/pdf">
+      <textarea id="msgText" name="text" rows="1" maxlength="2000" placeholder="Message" aria-label="Message"></textarea>
       <button class="btn" type="submit">Send</button>
     </form><p class="note safety">Meet in a public place, inspect before you pay, and never wire money.</p></div>`;
 
 /* ---------- profile pages ---------- */
 export const accountPage = ({ account: a, photo, listings, favorites, security }) => `<div class="page">
     <div class="panel profile">${avatar(photo, 'Your profile picture')}<div class="row-text"><h1 class="main-title">${esc(a.username)}</h1><span class="count">Joined ${shortDate(a.joined)}</span>${a.email ? `<span class="muted">${esc(a.email)}</span>` : ''}</div>
-      <div class="action-row"><label class="btn plain" for="photoInput">Change picture</label><input id="photoInput" class="sr" type="file" accept="image/*"><button class="btn plain" id="logoutBtn">Log out</button></div></div>
+      <div class="action-row"><form class="inline-form" method="post" action="/account/photo" enctype="multipart/form-data"><label class="btn plain" for="photoInput">Change picture</label><input id="photoInput" name="photo" class="sr" type="file" accept="image/*"><noscript><button class="btn plain" type="submit">Upload</button></noscript></form><form class="inline-form" method="post" action="/logout"><button class="btn plain" id="logoutBtn">Log out</button></form></div></div>
     ${securityPanel(security)}
     <div class="toolbar"><h2>Listings</h2></div>${grid(listings, 'No listings.', favorites)}</div>`;
 export const sellerPage = ({ account: a, listings, favorites }) => `<div class="page"><div class="panel profile">${avatar(a.photo, '')}<div class="row-text"><h1 class="main-title">${esc(a.username)}</h1><span class="count">Joined ${shortDate(a.joined)} · ${listings.length} live listings</span></div></div>${grid(listings, 'No live listings.', favorites)}</div>`;
@@ -219,14 +221,14 @@ export const adminMessagePage = ({ message: m, rawUrl }) => `<div class="page">
 /* ---------- confirming an email ---------- */
 export const verifyStrip = account => account && account.email && !account.email_verified ? `<div class="panel verify-strip">
     <div class="toolbar"><h2>Confirm your email</h2><span class="muted">${esc(account.email)}</span><a class="btn" href="/verify">Enter code</a></div></div>` : '';
-export const verifyPage = ({ email, ready, sent, next }) => `<div class="page"><form class="panel auth" id="verifyForm" novalidate>
+export const verifyPage = ({ email, ready, sent, next }) => `<div class="page"><form class="panel auth" id="verifyForm" method="post" action="/verify?next=${encodeURIComponent(next)}" novalidate>
     <h1 class="main-title">Confirm your email</h1>
     ${ready ? `<p>${sent ? 'Code sent' : 'A code will be sent'} to <b>${esc(email)}</b>. Check spam if it's missing.</p>`
       : `<p>Email codes are off, so no code was sent to <b>${esc(email)}</b>. You can confirm later.</p>`}
-    <label class="field"><span>Code</span><input id="code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="123456"></label>
+    <label class="field"><span>Code</span><input id="code" name="code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="123456"></label>
     <p class="err" id="verifyErr" role="alert" hidden></p>
     <button class="btn" type="submit">Confirm</button>
-    <button class="btn plain" type="button" id="resendBtn">Resend code</button>
+    <button class="btn plain" type="submit" formaction="/verify/resend?next=${encodeURIComponent(next)}" id="resendBtn">Resend code</button>
     ${ready ? '<a class="btn plain" href="/account">Change email</a>' : `<a class="btn plain" href="${esc(next)}">Continue</a>`}
   </form></div>`;
 
@@ -234,34 +236,34 @@ export const verifyPage = ({ email, ready, sent, next }) => `<div class="page"><
 export const securityPanel = s => !s ? '' : `<div class="panel security">
     <div class="toolbar"><h2>Security</h2></div>
     <div class="attr"><span class="muted">Email</span><b>${s.email ? `${esc(s.email)} · ${s.verified ? 'confirmed' : 'not confirmed'}` : 'None'}</b></div>
-    ${s.email && s.verified ? '' : `<form class="email-add" id="emailForm" novalidate><label class="field"><span>${s.email ? 'Change email' : 'Add email'}</span><input id="newEmail" type="email" autocomplete="email" autocapitalize="none" spellcheck="false" maxlength="254" value="${esc(s.email || '')}"></label><button class="btn" type="submit">Save email</button></form>`}
+    ${s.email && s.verified ? '' : `<form class="email-add" id="emailForm" method="post" action="/account/email" novalidate><label class="field"><span>${s.email ? 'Change email' : 'Add email'}</span><input id="newEmail" name="email" type="email" autocomplete="email" autocapitalize="none" spellcheck="false" maxlength="254" value="${esc(s.email || '')}"></label><button class="btn" type="submit">Save email</button></form>`}
     <div class="attr"><span class="muted">Login code</span><b>${s.login_codes ? 'On' : 'Off'}</b></div>
     <p class="note">Asks for a 6-digit email code at login.${s.verified ? '' : ' Needs a confirmed email.'}</p>
     <p class="err" id="securityErr" role="alert" hidden></p>
-    <div class="action-row">${s.email && !s.verified ? '<a class="btn plain" href="/verify?next=/account">Confirm email</a>' : ''}<button class="btn plain" id="loginCodesBtn" data-on="${s.login_codes ? 1 : 0}" ${!s.login_codes && !s.verified ? 'disabled' : ''}>${s.login_codes ? 'Turn off' : 'Turn on'}</button></div>
+    <div class="action-row">${s.email && !s.verified ? '<a class="btn plain" href="/verify?next=/account">Confirm email</a>' : ''}<form class="inline-form" method="post" action="/account/login-codes"><input type="hidden" name="on" value="${s.login_codes ? 0 : 1}"><button class="btn plain" id="loginCodesBtn" data-on="${s.login_codes ? 1 : 0}" ${!s.login_codes && !s.verified ? 'disabled' : ''}>${s.login_codes ? 'Turn off' : 'Turn on'}</button></form></div>
   </div>`;
-export const loginCodePage = ({ emailHint }) => `<div class="page"><form class="panel auth" id="codeForm" novalidate>
+export const loginCodePage = ({ emailHint, ticket, action }) => `<div class="page"><form class="panel auth" id="codeForm" method="post" action="${esc(action || '/login/code')}" novalidate><input type="hidden" name="ticket" value="${esc(ticket || '')}">
     <h1 class="main-title">Login code</h1>
     <p>Sent to <b>${esc(emailHint)}</b>. Expires in 10 minutes.</p>
-    <label class="field"><span>Code</span><input id="loginCode" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="123456"></label>
+    <label class="field"><span>Code</span><input id="loginCode" name="code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="123456"></label>
     <p class="err" id="codeErr" role="alert" hidden></p>
     <button class="btn" type="submit">Log in</button>
   </form></div>`;
 
 /* ---------- editing a listing ---------- */
 export const editListingPage = ({ listing: l, options: o, priceLocked }) => `<div class="page"><div class="toolbar"><h1 class="main-title">Edit</h1><span class="muted">Photos can't be changed.</span></div>
-    <form class="panel edit-form" id="editForm" novalidate>
-      <label class="field"><span>Title</span><input id="eTitle" type="text" maxlength="70" value="${esc(l.title)}"></label>
-      <div class="two"><label class="field"><span>${l.sell_type === 'auction' ? 'Starting price' : 'Price'}</span><input id="ePrice" type="number" min="1" inputmode="numeric" value="${esc(l.price)}" ${priceLocked ? 'disabled' : ''}></label>
-        <label class="field"><span>Condition</span><select id="eCond">${o.conditions.map(c => opt(c, c, l.condition)).join('')}</select></label></div>
+    <form class="panel edit-form" id="editForm" method="post" action="${esc(l.url)}/edit" novalidate>
+      <label class="field"><span>Title</span><input id="eTitle" name="title" type="text" maxlength="70" value="${esc(l.title)}"></label>
+      <div class="two"><label class="field"><span>${l.sell_type === 'auction' ? 'Starting price' : 'Price'}</span><input id="ePrice" name="price" type="number" min="1" inputmode="numeric" value="${esc(l.price)}" ${priceLocked ? 'disabled' : ''}></label>
+        <label class="field"><span>Condition</span><select id="eCond" name="condition">${o.conditions.map(c => opt(c, c, l.condition)).join('')}</select></label></div>
       ${priceLocked ? '<p class="note">Price is locked after the first bid.</p>' : ''}
-      ${l.kind === 'cars' ? `<div class="two"><label class="field"><span>Year</span><input id="eYear" type="number" value="${esc(l.car?.year)}"></label><label class="field"><span>Miles</span><input id="eMiles" type="number" min="0" value="${esc(l.car?.miles)}"></label></div>
-        <label class="field"><span>Title status</span><select id="eTitleS">${['Clean', 'Rebuilt', 'Salvage'].map(c => opt(c, c, l.car?.title_status)).join('')}</select></label>`
-      : `<label class="field"><span>Fits</span><input id="eFit" type="text" maxlength="60" value="${esc(l.fits)}"></label>`}
-      <div class="two"><label class="field"><span>City</span><select id="eCity">${o.cities.map(c => opt(c, c, l.city)).join('')}</select></label>
-        <label class="field"><span>Handoff</span><select id="eHandoff">${o.handoffs.map(c => opt(c, c, l.handoff)).join('')}</select></label></div>
+      ${l.kind === 'cars' ? `<div class="two"><label class="field"><span>Year</span><input id="eYear" name="year" type="number" value="${esc(l.car?.year)}"></label><label class="field"><span>Miles</span><input id="eMiles" name="miles" type="number" min="0" value="${esc(l.car?.miles)}"></label></div>
+        <label class="field"><span>Title status</span><select id="eTitleS" name="title_status">${['Clean', 'Rebuilt', 'Salvage'].map(c => opt(c, c, l.car?.title_status)).join('')}</select></label>`
+      : `<label class="field"><span>Fits</span><input id="eFit" name="fits" type="text" maxlength="60" value="${esc(l.fits)}"></label>`}
+      <div class="two"><label class="field"><span>City</span><select id="eCity" name="city">${o.cities.map(c => opt(c, c, l.city)).join('')}</select></label>
+        <label class="field"><span>Handoff</span><select id="eHandoff" name="handoff">${o.handoffs.map(c => opt(c, c, l.handoff)).join('')}</select></label></div>
       ${spotPicker(l.spot)}
-      <label class="field"><span>Description</span><textarea id="eDesc" rows="6" maxlength="1500">${esc(l.description)}</textarea></label>
+      <label class="field"><span>Description</span><textarea id="eDesc" name="description" rows="6" maxlength="1500">${esc(l.description)}</textarea></label>
       <p class="err" id="editErr" role="alert" hidden></p>
       <div class="action-row"><a class="btn plain" href="${esc(l.url)}">Cancel</a><button class="btn" type="submit">Save</button></div>
     </form></div>`;
@@ -270,33 +272,40 @@ export const myListingsPage = ({ listings, favorites }) => `<div class="page"><d
 /* ---------- chat box on the listing page (all profiles) ---------- */
 // Live listings keep their chats here instead of on a separate page.
 export const chatOnListing = true;
-const composer = (placeholder) => `<form class="composer chat-composer" id="composer" novalidate>
-      <textarea id="msgText" rows="2" maxlength="2000" placeholder="${placeholder}" aria-label="Message"></textarea>
-      <label class="btn plain" for="attachInput" aria-label="Attach a photo, video or PDF">Attach</label><input id="attachInput" class="sr" type="file" accept="image/*,video/mp4,video/webm,application/pdf">
+const composer = (placeholder, action) => `<form class="composer chat-composer" id="composer" method="post" action="${esc(action || '')}" enctype="multipart/form-data" novalidate>
+      <textarea id="msgText" name="text" rows="2" maxlength="2000" placeholder="${placeholder}" aria-label="Message"></textarea>
+      <label class="btn plain" for="attachInput" aria-label="Attach a photo, video or PDF">Attach</label><input id="attachInput" name="file" class="sr" type="file" accept="image/*,video/mp4,video/webm,application/pdf">
       <button class="btn" type="submit">Send</button>
     </form>`;
-export function chatPanel(l, closed) {
+export function chatPanel(l, closed, chat = {}) {
   if (!l.mine && closed && !l.chat) return '';
-  const tabs = l.mine ? (l.chats?.length ? `<div class="chat-tabs" id="chatTabs" role="group" aria-label="Buyers">${l.chats.map(c => `<button class="btn plain" type="button" data-chat="${esc(c.id)}" aria-pressed="false">${esc(c.with.username)}${c.unread ? ' <span class="badge-count">New</span>' : ''}</button>`).join('')}</div>` : '<p class="muted">No messages yet.</p>') : '';
+  const tabs = l.mine ? (l.chats?.length ? `<div class="chat-tabs" id="chatTabs" role="group" aria-label="Buyers">${l.chats.map(c => `<a class="btn plain ${chat.active === c.id ? 'on' : ''}" href="${esc(l.url)}?chat=${esc(c.id)}" data-chat="${esc(c.id)}" aria-pressed="${chat.active === c.id}">${esc(c.with.username)}${c.unread ? ' <span class="badge-count">New</span>' : ''}</a>`).join('')}</div>` : '<p class="muted">No messages yet.</p>') : '';
   const talk = !l.mine || l.chats?.length;
   return `<div class="panel chat-box" id="chatBox">
     ${tabs}
-    ${talk ? `<div class="chat-window"><div class="thread chat-thread" id="thread" aria-live="polite"></div><div class="attach-preview" id="attachPreview"></div>${composer('Message')}</div>
+    ${talk ? `<div class="chat-window"><div class="thread chat-thread" id="thread" aria-live="polite">${(chat.messages || []).map(m => bubble(m, chat.me)).join('')}</div><div class="attach-preview" id="attachPreview"></div>${composer('Message', chat.action)}</div>
     <p class="note">Meet in a public place, inspect before you pay, and never wire money.</p>` : ''}
   </div>`;
 }
 
 /* ---------- map ---------- */
 export { mapStyle } from './mapstyle.js';
-export const mapPage = () => `<div class="page map-page">
+export const mapPage = (data = null) => `<div class="page map-page">
     <div class="map-head">
       <h1 class="main-title">Map</h1>
       <p class="muted">Tap a pin to see its listings.</p>
       <div class="map-legend"><span><i class="map-pin listing"></i>Seller's pin</span><span><i class="map-pin town"></i>Listings in a town</span><span><i class="map-pin business"></i>Business</span></div>
     </div>
     <p class="err" id="mapErr" role="alert" hidden></p>
-    <div class="map-box" id="mapBox" role="region" aria-label="Map of listings and businesses"></div>
+    <div class="map-box" id="mapBox" role="region" aria-label="Map of listings and businesses"></div>${data ? mapList(data) : ''}
   </div>`;
+// Without JavaScript the map can't draw, so the same places are listed as links.
+const mapList = ({ listings = [], businesses = [] }) => {
+  const towns = {};
+  for (const l of listings) (towns[l.city] ||= []).push(l);
+  return `<div class="map-list nojs-only">${Object.entries(towns).map(([city, list]) => `<section><h2>${esc(city)}</h2><ul>${list.map(l => `<li><a href="${esc(l.url)}">${esc(l.title)}</a> <span class="money">${money(l.price)}</span></li>`).join('')}</ul></section>`).join('')}
+    ${businesses.length ? `<section><h2>Businesses</h2><ul>${businesses.map(b => `<li>${esc(b.name)}, ${esc(b.city)}</li>`).join('')}</ul></section>` : ''}</div>`;
+};
 export function mapPin({ type, count = 1, label = '' }) {
   return `<button type="button" class="map-pin ${type}" aria-label="${esc(label)}">${count > 1 ? `<b>${count}</b>` : ''}</button>`;
 }
@@ -304,7 +313,7 @@ export function mapPopup({ heading, sub, listings = [] }) {
   const items = listings.map(l => `<a class="pop-item" href="${esc(l.url)}">${ph(l.photo, true, l.title)}<span><b class="money">${money(l.price)}</b>${esc(l.title)}</span></a>`).join('');
   return `<div class="map-pop"><div class="pop-head"><b>${esc(heading)}</b>${sub ? `<span>${esc(sub)}</span>` : ''}</div>${items ? `<div class="pop-list">${items}</div>` : ''}</div>`;
 }
-export const spotPicker = spot => `<div class="field spot-field"><span>Pickup pin (optional)</span>
+export const spotPicker = spot => `<div class="field spot-field js-only"><span>Pickup pin (optional)</span>
     <p class="note">Tap to drop, drag to move. Public. Without a pin, the listing shows at its town.</p>
     <div class="spot-box" id="spotBox"></div>
     <div class="action-row"><button type="button" class="btn plain" id="spotClear" ${spot ? '' : 'hidden'}>Remove pin</button></div>
@@ -312,20 +321,20 @@ export const spotPicker = spot => `<div class="field spot-field"><span>Pickup pi
 
 /* ---------- admin ---------- */
 // Admins see this on every live listing. Deleting needs the admin's own password.
-export const adminDeleteBox = () => `<div class="panel admin-box">
-    <button type="button" class="btn danger" id="adminDeleteBtn">Admin delete</button>
-    <form class="admin-delete-form" id="adminDeleteForm" novalidate hidden>
+export const adminDeleteBox = (l, open) => `<div class="panel admin-box">
+    <a class="btn danger" id="adminDeleteBtn" href="${esc(l.url)}?admin-delete=1#adminDeleteForm" ${open ? 'hidden' : ''}>Admin delete</a>
+    <form class="admin-delete-form" id="adminDeleteForm" method="post" action="${esc(l.url)}/admin-delete" novalidate ${open ? '' : 'hidden'}>
       <p class="note">Removes the listing for everyone and closes its chats.</p>
-      <label class="field"><span>Password</span><input id="adminPw" type="password" autocomplete="current-password" maxlength="40"></label>
+      <label class="field"><span>Password</span><input id="adminPw" name="password" type="password" autocomplete="current-password" maxlength="40"></label>
       <p class="err" id="adminDeleteErr" role="alert" hidden></p>
-      <div class="action-row"><button type="submit" class="btn danger">Delete</button><button type="button" class="btn plain" id="adminDeleteCancel">Cancel</button></div>
+      <div class="action-row"><button type="submit" class="btn danger">Delete</button><a class="btn plain" id="adminDeleteCancel" href="${esc(l.url)}">Cancel</a></div>
     </form>
   </div>`;
 
 /* ---------- full screen photos ---------- */
 const FULL_ICON = '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" fill="none" stroke="currentColor" stroke-width="2.4"/></svg>';
 const SHRINK_ICON = '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" fill="none" stroke="currentColor" stroke-width="2.4"/></svg>';
-export const photoFullButton = () => `<button type="button" class="photo-full" id="photoFull" aria-label="Show full screen">${FULL_ICON}</button>`;
+export const photoFullButton = () => `<button type="button" class="photo-full js-only" id="photoFull" aria-label="Show full screen">${FULL_ICON}</button>`;
 export const photoViewer = l => `<div class="photo-viewer" id="photoViewer" role="dialog" aria-modal="true" aria-label="Photos of ${esc(l.title)}" hidden>
     <div class="pv-stage" id="pvStage"></div>
     ${l.photos.length > 1 ? '<button type="button" class="photo-arrow prev" id="pvPrev" aria-label="Previous photo">&#8249;</button><button type="button" class="photo-arrow next" id="pvNext" aria-label="Next photo">&#8250;</button>' : ''}

@@ -1,6 +1,5 @@
-// What search engines and link previews read on listing and seller pages.
-// The site builds its pages in the browser, so without this every page would reach a bot as the same blank "Autohound" page.
-// This fills in the page's own title, description, preview photo and product details before index.html is sent.
+// What search engines and link previews read on listing and seller pages, on top of the page itself
+// (server/pages.js builds every page as HTML): the page's own title, description, preview photo and product details.
 // Titles and addresses come from the listing's title and the seller's username, never from an ID or folder name.
 // Older addresses that used the ID are sent on to the new one. Only public details are used.
 import { SITE_ORIGIN } from './sitemap.js';
@@ -10,7 +9,6 @@ import { usernameKey } from './auth.js';
 
 const SITE = 'Autohound';
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const money = n => '$' + Math.round(n).toLocaleString('en-US');
 const oneLine = s => String(s ?? '').replace(/\s+/g, ' ').trim();
 const clip = (s, max) => { s = oneLine(s); if ([...s].length <= max) return s; const cut = [...s].slice(0, max - 1).join(''); return (cut.replace(/\s+\S*$/, '') || cut) + '…'; };
 const same = (a, b) => { try { return decodeURIComponent(a) === decodeURIComponent(b); } catch { return false; } };
@@ -42,9 +40,7 @@ async function listingMeta({ db, store }, key, path) {
       areaServed: { '@type': 'City', name: `${r.city}, WA` }, seller: { '@type': 'Person', name: r.username },
     },
   };
-  // Plain text for bots that don't run the page's code. Browsers that do never show it.
-  const plain = `<h1>${esc(oneLine(r.title))}</h1><p>${esc(money(r.price))}${auction ? ' (auction)' : ''}, ${esc(r.city)}, WA</p><p>${esc(r.description)}</p>${photos[0] ? `<img src="${esc(photos[0])}" alt="${esc(oneLine(r.title))}">` : ''}<p>Sold by <a href="${esc(sellerPath(r.username))}">${esc(r.username)}</a> on <a href="/">${SITE}</a></p>`;
-  return { title, description, url, image: photos[0], type: 'product', data, plain };
+  return { title, description, url, image: photos[0], type: 'product', data };
 }
 
 async function sellerMeta({ db }, key, path) {
@@ -56,12 +52,11 @@ async function sellerMeta({ db }, key, path) {
   const title = a.username;
   if (!rows.length) return { title, noindex: true };
   const description = clip(`${rows.length} listing${rows.length === 1 ? '' : 's'} from ${a.username} on ${SITE}: ${rows.map(r => oneLine(r.title)).join(', ')}`, 160);
-  const plain = `<h1>${esc(a.username)}</h1><ul>${rows.map(r => `<li><a href="${esc(listingPath(r))}">${esc(oneLine(r.title))}</a> ${esc(money(r.price))}, ${esc(r.city)}</li>`).join('')}</ul>`;
-  return { title, description, url: SITE_ORIGIN + sellerPath(a.username), image: rows.find(r => r.photo) ? `${SITE_ORIGIN}/api/files/${rows.find(r => r.photo).photo}` : null, type: 'profile', plain };
+  return { title, description, url: SITE_ORIGIN + sellerPath(a.username), image: rows.find(r => r.photo) ? `${SITE_ORIGIN}/api/files/${rows.find(r => r.photo).photo}` : null, type: 'profile' };
 }
 
 // Every tag added here carries data-page, so the browser can drop them when someone moves to another page (site/js/app.js).
-function fill(html, m) {
+export function fillMeta(html, m) {
   const tags = [];
   const meta = (attr, name, content) => { if (content) tags.push(`<meta ${attr}="${name}" content="${esc(content)}" data-page>`); };
   if (m.noindex || m.status === 404) meta('name', 'robots', 'noindex');
@@ -75,18 +70,15 @@ function fill(html, m) {
   if (m.title) html = html.replace(/<title>[^<]*<\/title>/, () => `<title>${esc(m.title)} - ${SITE}</title>`);
   if (m.description) html = html.replace(/(<meta name="description" content=")[^"]*(")/, (_, a, b) => a + esc(m.description) + b);
   if (tags.length) html = html.replace('</head>', () => tags.join('\n') + '\n</head>');
-  if (m.plain) html = html.replace('<div id="app"></div>', s => `${s}\n<noscript>${m.plain}</noscript>`);
   return html;
 }
 
-// index.html for /listing/<id> and /seller/<id>, with that page's details filled in.
-// If anything goes wrong the plain index.html is sent, so the page itself always opens.
-export async function pageResponse(ctx, pathname, indexHtml, search = '') {
-  let m = {};
+// Search engine details for /listing/<address> and /seller/<username>: { title, description, url, ... },
+// { redirect } for an older address, or { status: 404 }. Anything else gets {}. Used by server/pages.js.
+export async function pageMeta(ctx, pathname) {
   try {
     const hit = pathname.match(/^\/(listing|seller)\/([^/]+)\/?$/);
-    if (hit) m = await (hit[1] === 'listing' ? listingMeta : sellerMeta)(ctx, decodeURIComponent(hit[2]), pathname);
-  } catch (e) { console.error('pagemeta', e); m = {}; }
-  if (m.redirect) return new Response(null, { status: 301, headers: { location: m.redirect + search, 'cache-control': 'no-cache' } });
-  return new Response(fill(indexHtml, m), { status: m.status || 200, headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-cache' } });
+    if (hit) return await (hit[1] === 'listing' ? listingMeta : sellerMeta)(ctx, decodeURIComponent(hit[2]), pathname);
+  } catch (e) { console.error('pagemeta', e); }
+  return {};
 }

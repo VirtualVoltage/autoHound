@@ -21,4 +21,5 @@ function planWindow() {
   randomMoments(3 + Math.floor(Math.random() * 2)).forEach(t => setTimeout(blink, t));
   setTimeout(planWindow, WINDOW_MS);
 }
-if (!matchMedia('(prefers-reduced-motion: reduce)').matches) planWindow();
+// Only in the browser: the server also loads these files to build pages.
+if (typeof window !== 'undefined' && !matchMedia('(prefers-reduced-motion: reduce)').matches) planWindow();

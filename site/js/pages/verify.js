@@ -1,7 +1,7 @@
 import { $, toast } from '../util.js';
 import { view } from '../theme.js';
 import { api, session, refreshSession } from '../api.js';
-import { go, needLogin, renderHeader } from '../app.js';
+import { go, needLogin, renderHeader, paint } from '../app.js';
 
 // Confirms the account's email with the 6-digit code sent from support@autohound.online.
 export async function verifyPage() {
@@ -10,7 +10,7 @@ export async function verifyPage() {
   const s = await api('me/email');
   if (s.verified || !s.email) { go(safeNext, true); return; }
   const sent = new URLSearchParams(location.search).get('sent') === '1';
-  $('main').innerHTML = view.verifyPage({ email: s.email, ready: s.ready, sent, next: safeNext });
+  paint(view.verifyPage({ email: s.email, ready: s.ready, sent, next: safeNext }));
   $('code')?.focus();
   $('verifyForm')?.addEventListener('submit', async e => {
     e.preventDefault();
@@ -22,6 +22,7 @@ export async function verifyPage() {
     } catch (er) { err.textContent = er.message; err.hidden = false; btn.disabled = false; }
   });
   $('resendBtn')?.addEventListener('click', async e => {
+    e.preventDefault();
     const err = $('verifyErr'); err.hidden = true; e.target.disabled = true;
     try { const r = await api('me/email/code', { method: 'POST' }); toast(r.sent ? 'New code sent' : 'Email sending isn\'t set up yet'); }
     catch (er) { err.textContent = er.message; err.hidden = false; }

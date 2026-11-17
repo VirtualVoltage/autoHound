@@ -1,25 +1,20 @@
 import { $, toast, shrink } from '../util.js';
 import { view } from '../theme.js';
 import { api, upload, session, getOptions } from '../api.js';
-import { go, needLogin } from '../app.js';
+import { go, needLogin, paint } from '../app.js';
 import { mountSpotPicker } from '../spot.js';
+import { MAX_PHOTOS, ESTIMATES, blankDraft, estimateOf, previewCard, missingForSale, listingBody } from '../shared.js';
 
-const MAX = 8;
-// Rough estimates, used for the price guide.
-const ESTIMATES = [['Coilovers', 900, 'Suspension'], ['Clutch kit', 420, 'Drivetrain'], ['Wheels, set of 4', 1100, 'Wheels & Tires'], ['Turbocharger', 1250, 'Engine'], ['Standalone ECU', 700, 'Electrical'], ['Headlight pair', 260, 'Lighting'], ['Tires, set of 4', 520, 'Wheels & Tires'], ['Big brake kit', 980, 'Brakes'], ['Intake', 180, 'Engine'], ['Bucket seats, pair', 650, 'Interior'], ['Interior panels', 220, 'Interior']];
-const COND_FACTOR = { New: 1.2, 'Like new': 1.05, Excellent: 1, Good: .9, Fair: .7, 'Parts only': .4 };
-const blank = () => ({ kind: 'parts', part: 'other', category: 'Engine', tier: 'Daily', year: '', miles: '', title_status: 'Clean', condition: 'Good', sell_type: 'post', price: '', title: '', fits: '', city: 'Lynden', handoff: 'Meet up or pick up', description: '', photos: [], spot: null });
-let D = blank();
-const estimate = () => { if (D.kind !== 'parts' || D.part === 'other') return null; const e = ESTIMATES[+D.part]; return e ? Math.round(e[1] * COND_FACTOR[D.condition] / 5) * 5 : null; };
-const category = () => D.kind === 'cars' ? D.tier : (D.part !== 'other' && ESTIMATES[+D.part]) ? ESTIMATES[+D.part][2] : D.category;
+const MAX = MAX_PHOTOS;
+let D = blankDraft();
+const estimate = () => estimateOf(D);
 function read() {
   for (const [k, id] of Object.entries({ kind: 'sKind', part: 'sPart', category: 'sCategory', tier: 'sTier', year: 'sYear', miles: 'sMiles', title_status: 'sTitleS', condition: 'sCond', sell_type: 'sMode', price: 'sPrice', title: 'sTitle', fits: 'sFit', city: 'sCity', handoff: 'sHandoff', description: 'sDesc' })) { const el = $(id); if (el) D[k] = el.value; }
 }
 const photoGrid = () => view.sellPhotoGrid(D.photos, MAX);
 function preview() {
-  const price = Math.max(0, +D.price || 0);
-  const card = { preview: true, id: 'x', title: D.title.trim() || 'Your listing title', description: D.description.trim() || 'Your description shows up here.', price, kind: D.kind, category: category(), city: D.city, photo: D.photos[0]?.url || null, sell_type: D.sell_type, auction_ends: 0 };
-  return view.sellPreview({ card, value: estimate(), price });
+  const card = previewCard(D);
+  return view.sellPreview({ card, value: estimate(), price: card.price });
 }
 const refresh = () => { read(); $('sellPreview').innerHTML = preview(); document.querySelectorAll('[data-for]').forEach(el => { el.hidden = el.dataset.for !== D.kind; }); if ($('sCategoryField')) $('sCategoryField').hidden = D.kind === 'cars' || D.part !== 'other'; if ($('sPriceLabel')) $('sPriceLabel').textContent = D.sell_type === 'auction' ? 'Starting bid' : 'Price'; };
 async function addFiles(files) {
@@ -37,7 +32,7 @@ async function addFiles(files) {
 export async function sellPage() {
   if (!session.account) return needLogin();
   const o = await getOptions();
-  $('main').innerHTML = view.sellPage({ draft: D, options: o, estimates: ESTIMATES, max: MAX });
+  paint(view.sellPage({ draft: D, options: o, estimates: ESTIMATES, max: MAX }));
   refresh();
   // Optional pickup pin. The map loads in the background.
   let picker = null;
@@ -60,18 +55,12 @@ export async function sellPage() {
   grid.addEventListener('drop', e => { e.preventDefault(); grid.classList.remove('drag'); addFiles(e.dataTransfer.files); });
   form.addEventListener('submit', async e => {
     e.preventDefault(); read();
-    const err = $('sellErr'), btn = $('pubBtn'), bad = [];
-    if (!D.photos.length) bad.push('at least one photo');
-    if (D.title.trim().length < 4) bad.push('a title');
-    if (!(+D.price > 0)) bad.push('a price');
-    if (D.kind === 'cars' && !(+D.year >= 1900)) bad.push('the year');
-    if (D.kind === 'cars' && D.miles === '') bad.push('the miles');
-    if (D.description.trim().length < 10) bad.push('a short description');
+    const err = $('sellErr'), btn = $('pubBtn'), bad = missingForSale(D, D.photos.length);
     if (bad.length) { err.textContent = `Add ${bad.join(', ')} to publish.`; err.hidden = false; return; }
     btn.disabled = true; err.hidden = true;
     try {
       btn.textContent = 'Creating listing...';
-      const { id } = await api('listings', { json: { kind: D.kind, title: D.title, description: D.description, price: +D.price, category: category(), city: D.city, condition: D.condition, handoff: D.handoff, fits: D.fits, sell_type: D.sell_type, market_value: estimate(), year: +D.year, miles: +D.miles, title_status: D.title_status, spot: D.spot } });
+      const { id } = await api('listings', { json: listingBody(D) });
       for (let i = 0; i < D.photos.length; i++) {
         btn.textContent = `Uploading photo ${i + 1} of ${D.photos.length}...`;
         const p = await upload(`listings/${id}/photos`, D.photos[i].full);
@@ -79,7 +68,7 @@ export async function sellPage() {
       }
       btn.textContent = 'Publishing...';
       await api(`listings/${id}/publish`, { method: 'POST' });
-      D = blank(); toast('Your listing is live'); go('/listing/' + id);
+      D = blankDraft(); toast('Your listing is live'); go('/listing/' + id);
     } catch (er) { err.textContent = er.message; err.hidden = false; btn.disabled = false; btn.textContent = 'Publish listing'; }
   });
   return () => picker?.stop();

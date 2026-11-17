@@ -1,11 +1,12 @@
 import { $ } from '../util.js';
 import { view } from '../theme.js';
+import { paint } from '../app.js';
 import { api } from '../api.js';
 import { makeMap, pinElement } from '../maplib.js';
 
 // The map page: sellers' pins, a pin per town for listings without one, and businesses.
 export async function mapPage() {
-  $('main').innerHTML = view.mapPage();
+  paint(view.mapPage());
   const box = $('mapBox');
   let data, made;
   const fail = e => { if ($('mapErr')) { $('mapErr').textContent = e.message; $('mapErr').hidden = false; } };

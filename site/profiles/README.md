@@ -29,4 +29,14 @@ Copy a profile folder to start a new one. Most changes belong in both `desktop` 
 | Confirm email | `#verifyForm`, `#code`, `#verifyErr`, `#resendBtn` |
 | Site inbox (admins) | Nothing required. Link rows to `/admin/<id>`, and keep email text as plain text, never HTML |
 
+## HTML first
+
+`views.js` runs in the browser and on the server (`server/pages.js` builds every page with it), so pages must work as plain HTML with JavaScript off (see `AGENTS.md`):
+
+- Never touch `window` or `document` at the top of `views.js`. Use `pagePath()` and `profileAsset()` from `site/js/util.js`. Effects like `logo.js` only start in the browser.
+- Every action is a link or a form with a real `action`, `method` and `name`d fields. The forms post to page addresses the server knows: `/login`, `/login/code`, `/signup`, `/logout`, `/verify`, `/verify/resend`, `/saved`, `/sell`, `/listing/<address>/message`, `/bid`, `/sold`, `/delete`, `/admin-delete`, `/edit`, `/messages/<chat>`, `/account/photo`, `/account/email`, `/account/login-codes`. The header search is a GET form to `/` with `q`.
+- Things the server fills in: the home grid (`listings`, `favorites`, `moreHref`), the chat box (`chat.messages`, `chat.action`), the photo shown (`at`, from `?photo=`), the delete and admin delete steps (`confirmDelete`, `adminOpen`), the sell preview (`preview`) and the map list (`mapPage(data)`). Error lines (`#authErr` and the rest) and `#toast` get filled by ID, so keep those IDs.
+- Thumbnails and photo arrows are `?photo=` links, sort buttons are submit buttons, buyer tabs are `?chat=` links. The shared logic stops these from reloading the page when JavaScript runs.
+- Give controls that only work with JavaScript the `js-only` class, and no-JavaScript extras `nojs-only` (each `site.css` hides them at the right time).
+
 Favorite buttons use `data-act="favorite"`, `data-id` and `data-style`. Keep to the owner's rules in `AGENTS.md`, like never showing IDs in page text or market value on auctions.

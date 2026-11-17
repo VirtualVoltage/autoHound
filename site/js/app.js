@@ -11,6 +11,7 @@ import { adminInboxPage, adminMessagePage } from './pages/admin.js';
 import { verifyPage } from './pages/verify.js';
 import { editListingPage } from './pages/edit.js';
 import { mapPage } from './pages/map.js';
+import { pageName, tabTitle } from './shared.js';
 
 const ROUTES = [
   [/^\/$/, homePage], [/^\/listing\/([^/]+)$/, listingPage], [/^\/listing\/([^/]+)\/edit$/, editListingPage], [/^\/sell$/, sellPage], [/^\/map$/, mapPage],
@@ -21,6 +22,12 @@ const ROUTES = [
   [/^\/admin$/, adminInboxPage], [/^\/admin\/([^/]+)$/, adminMessagePage],
 ];
 let leave = null, token = 0, opened = false;
+// The server sends every page as finished HTML (server/pages.js), marked with data-ssr. That first page stays as it
+// arrived: its code only adds what it does (photos, chat, saving). Pages opened after that are built here as before.
+const fromServer = document.getElementById('app')?.dataset.ssr ?? null;
+let keepFirst = fromServer !== null;
+// Puts a page into #main. Returns false when it kept the server's HTML instead.
+export function paint(html) { if (keepFirst) { keepFirst = false; return false; } $('main').innerHTML = html; return true; }
 export function go(path, replace) { history[replace ? 'replaceState' : 'pushState']({}, '', path); route(); }
 export function needLogin() { go('/login?next=' + encodeURIComponent(location.pathname + location.search), true); }
 // --head-h always matches the header's real height, so things anchored under it (like the side menu) line up at any window size.
@@ -47,24 +54,24 @@ function setMenu(open) {
 addEventListener('keydown', e => { if (e.key === 'Escape' && document.body.classList.contains('menu-open')) setMenu(false); });
 // Each page gets its own tab title, so browser tabs, history and address bar suggestions show a name
 // instead of the page's address. Listing, seller, chat and email pages name themselves once they load.
-const NAMES = [[/^\/map$/, 'Map'], [/^\/sell$/, 'Sell'], [/^\/messages/, 'Messages'], [/^\/account$/, 'Account settings'], [/^\/my-listings$/, 'My listings'],
-  [/^\/saved$/, 'Saved'], [/^\/login$/, 'Log in'], [/^\/signup$/, 'Sign up'], [/^\/verify$/, 'Confirm email'], [/^\/admin/, 'Site inbox'], [/\/edit$/, 'Edit']];
-export function pageTitle(name) { document.title = name ? `${name} - Autohound` : 'Autohound'; }
+export function pageTitle(name) { document.title = tabTitle(name); }
 async function route() {
   setMenu(false);
   if (leave) { try { leave(); } catch {} leave = null; }
   const mine = ++token, path = location.pathname.replace(/(.)\/$/, '$1');
+  if (mine > 1 || path !== fromServer) keepFirst = false;
   // Email confirmation is required: until then only the confirm page, account settings (to fix the email) and log in pages open.
   if (session.account?.must_verify && !/^\/(verify|account|login|signup)$/.test(path)) { history.replaceState({}, '', '/verify?next=' + encodeURIComponent(path + location.search)); return route(); }
   const m = ROUTES.map(([re, fn]) => ({ fn, hit: path.match(re) })).find(x => x.hit);
   const q = path === '/' && new URLSearchParams(location.search).get('q');
-  pageTitle(q ? q : NAMES.find(([re]) => re.test(path))?.[1]);
+  // The server's page already has its own title (a listing's comes from its data), so the first page keeps it.
+  if (!keepFirst) pageTitle(pageName(path, q));
   // The first page arrives with its own search engine details from the server (server/pagemeta.js). They don't belong to later pages.
   if (opened) document.head.querySelectorAll('[data-page]').forEach(n => n.remove());
   opened = true;
   scrollTo(0, 0);
   renderHeader();
-  if (!m) { $('main').innerHTML = view.notFound(); return; }
+  if (!m) { paint(view.notFound()); return; }
   try {
     const result = await m.fn(...m.hit.slice(1).map(decodeURIComponent));
     if (mine === token) leave = result || null; else if (result) result();
@@ -89,6 +96,8 @@ document.addEventListener('click', async e => {
   if (e.target.closest('[data-act="menu"]')) { e.preventDefault(); return setMenu($('drawer')?.hidden ?? false); }
   if (e.target.closest('[data-act="menu-close"]')) { e.preventDefault(); return setMenu(false); }
   const a = e.target.closest('a[href]');
+  // Links that a page's own code handled (photo thumbnails, sort buttons, chat tabs) stay on the page.
+  if (e.defaultPrevented) return;
   if (a && a.origin === location.origin && !a.target && !e.metaKey && !e.ctrlKey && !e.shiftKey) { e.preventDefault(); go(a.pathname + a.search); }
 });
 // Log out from any page (the header button, or the one in account settings).
@@ -105,9 +114,9 @@ setInterval(() => document.querySelectorAll('[data-end]').forEach(n => { n.textC
 setInterval(async () => { if (session.account && !document.hidden) { try { const d = await api('me'); if (d.unread !== session.unread || (d.admin_inbox?.unread || 0) !== (session.adminInbox?.unread || 0)) { session.unread = d.unread; session.adminInbox = d.admin_inbox || null; renderHeader(); } } catch {} } }, 30000);
 
 (async function start() {
-  $('app').innerHTML = view.shell();
+  // A page from the server already has its frame and header filled in.
+  if (fromServer === null) { $('app').innerHTML = view.shell(); renderHeader(); }
   $('searchForm')?.addEventListener('submit', e => { e.preventDefault(); setSearch($('searchInput').value.trim()); });
-  renderHeader();
   try { await refreshSession(); } catch (e) { if (e.restart) await refreshSession().catch(() => {}); }
   renderHeader();
   route();

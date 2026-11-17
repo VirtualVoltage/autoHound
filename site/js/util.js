@@ -1,4 +1,8 @@
-export const profileAsset = name => `${window.AUTOHOUND_LOOK}/img/${name}`;
+// The server sets these while it builds a page (server/pages.js). In the browser they come from the window.
+const page = { look: null, path: null, timeZone: undefined };
+export const setPage = (look, path, timeZone) => { page.look = look; page.path = path; page.timeZone = timeZone; };
+export const pagePath = () => page.path ?? location.pathname;
+export const profileAsset = name => `${page.look ?? window.AUTOHOUND_LOOK}/img/${name}`;
 export const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 export const money = n => '$' + Math.round(n).toLocaleString('en-US');
 export const $ = id => document.getElementById(id);
@@ -9,8 +13,8 @@ export function timeLeft(ms) {
   const m = Math.floor(ms / 6e4), h = Math.floor(m / 60), d = Math.floor(h / 24);
   return d > 0 ? `${d}d ${h % 24}h left` : h > 0 ? `${h}h ${m % 60}m left` : `${m}m ${Math.floor(ms / 1e3) % 60}s left`;
 }
-export const shortDate = iso => new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-export const clock = iso => new Date(iso).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+export const shortDate = iso => new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: page.timeZone });
+export const clock = iso => new Date(iso).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: page.timeZone });
 let toastTimer;
 export function toast(msg) {
   const t = $('toast'); if (!t) return;

@@ -28,6 +28,12 @@ export async function api(path, opts = {}) {
 export const upload = (path, blob) => api(path, { method: 'POST', headers: { 'content-type': blob.type || 'image/jpeg' }, body: blob });
 export const session = { account: null, unread: 0, adminInbox: null, favorites: new Set(), options: null };
 export async function refreshSession() {
+  // A page from the server carries the session it was built for, so the first page needs no extra request.
+  const pre = document.getElementById('sessionData');
+  if (pre) {
+    pre.remove();
+    try { const d = JSON.parse(pre.textContent); session.account = d.account; session.unread = d.unread; session.adminInbox = d.admin_inbox || null; session.favorites = new Set(d.favorites || []); return; } catch {}
+  }
   const d = await api('me');
   session.account = d.account; session.unread = d.unread; session.adminInbox = d.admin_inbox || null;
   session.favorites = new Set(session.account ? (await api('favorites')).ids : []);

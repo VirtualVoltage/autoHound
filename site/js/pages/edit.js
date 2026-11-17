@@ -1,19 +1,19 @@
 import { $, toast } from '../util.js';
 import { view } from '../theme.js';
 import { api, session, getOptions } from '../api.js';
-import { go, needLogin } from '../app.js';
+import { go, needLogin, paint } from '../app.js';
 import { mountSpotPicker } from '../spot.js';
 
 // Owners change the words, price and details of a live listing. Photos stay as they are.
 export async function editListingPage(id) {
   if (!session.account) return needLogin();
   let d;
-  try { d = await api('listings/' + encodeURIComponent(id)); } catch (e) { if (e.restart) throw e; $('main').innerHTML = view.notFound(e.message); return; }
+  try { d = await api('listings/' + encodeURIComponent(id)); } catch (e) { if (e.restart) throw e; paint(view.notFound(e.message)); return; }
   const l = d.listing;
-  if (!l.mine) { $('main').innerHTML = view.notFound('That isn\'t your listing.'); return; }
-  if (l.status !== 'live') { $('main').innerHTML = view.notFound('Only live listings can be edited.'); return; }
+  if (!l.mine) { paint(view.notFound('That isn\'t your listing.')); return; }
+  if (l.status !== 'live') { paint(view.notFound('Only live listings can be edited.')); return; }
   const options = await getOptions(), priceLocked = l.sell_type === 'auction' && l.bids > 0;
-  $('main').innerHTML = view.editListingPage({ listing: l, options, priceLocked });
+  paint(view.editListingPage({ listing: l, options, priceLocked }));
   let picker = null;
   mountSpotPicker({ spot: l.spot, town: l.city, options, onChange: () => {} }).then(p => { picker = p; });
   $('eCity')?.addEventListener('change', e => picker?.town(e.target.value));

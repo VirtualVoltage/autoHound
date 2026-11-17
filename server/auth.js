@@ -21,6 +21,15 @@ export async function checkPassword(ctx, a, proof) {
   const secret = await readJsonFile(ctx.store, `${a.path}/private.json`);
   if (!secret || await sha256Hex(secret.password.salt + proof) !== secret.password.hash) fail(401, 'That password isn\'t right.');
 }
+// The same slow PBKDF2 step the browser runs (site/js/api.js), for forms sent without JavaScript.
+// The password arrives over HTTPS like on most sites, is stretched here, and is never stored or logged.
+export async function passwordProof(salt, password) {
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey('raw', enc.encode(String(password)), 'PBKDF2', false, ['deriveBits']);
+  const bits = await crypto.subtle.deriveBits({ name: 'PBKDF2', hash: 'SHA-256', salt: enc.encode(salt), iterations: 100000 }, key, 256);
+  return [...new Uint8Array(bits)].map(x => x.toString(16).padStart(2, '0')).join('');
+}
+export const newClientSalt = () => randomHex(16);
 const browserSalt = (secret, a) => secret?.password?.client_salt ? `autohound:acct:${secret.password.client_salt}` : `autohound:${usernameKey(a.username)}`;
 // People log in with their email. Accounts that have no email can still use their username.
 export async function findLogin(db, login) {

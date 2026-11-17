@@ -7,11 +7,16 @@ Local marketplace for car parts, project cars and auctions. Demo stage.
 ```text
 site/      Pages and scripts the browser loads
   profiles/profile1/   The original look, with desktop/ and mobile/ folders
-  profiles/profile2/   The active look, with desktop/ and mobile/ folders
-server/    Code that reads and writes accounts, listings and chats
+  profiles/profile2/   An earlier look, with desktop/ and mobile/ folders
+  profiles/profile3/   The active look, with desktop/ and mobile/ folders
+server/    Code that reads and writes accounts, listings and chats, and builds every page as HTML (pages.js)
 functions/ Connects the server to Cloudflare
 scripts/   Index rebuild and demo account builder
 ```
+
+## How pages work
+
+HTML first (see `AGENTS.md`): every page address is answered by `server/pages.js`, which builds the finished page with the active profile's `views.js`, so the words, links, photos and forms are all in the HTML and the site works with JavaScript off. Forms post to page addresses (like `POST /login` or `POST /listing/<address>/bid`) and get a redirect back. With JavaScript on, the browser keeps that first page, adds photo swiping, live chat and the rest, builds later pages itself and talks to `/api/` directly.
 
 ## Visual profiles
 
@@ -75,7 +80,7 @@ Set `PORT`, `AUTOHOUND_DIR` and `ADMIN_KEY` to change the defaults. To move off 
 
 ## Cloudflare
 
-Output folder is `site`. Bindings: `DB` (D1 index) and optionally `FILES` (R2). Without `FILES`, the same paths are kept in a D1 table called `vfs`, and attachments are limited to 1.5 MB. `POST /api/admin/rebuild` stays off until an `ADMIN_KEY` is set.
+Output folder is `site`. `functions/[[path]].js` answers every page address, `functions/api/` the API and `functions/sitemap.xml.js` the sitemap. `site/_routes.json` keeps code, styles and photos (`/v/`, `/js/`, `/profiles/`, `/seed/`, `/vendor/`, `robots.txt`) as plain files that never start a function. Bindings: `DB` (D1 index) and optionally `FILES` (R2). Without `FILES`, the same paths are kept in a D1 table called `vfs`, and attachments are limited to 1.5 MB. `POST /api/admin/rebuild` stays off until an `ADMIN_KEY` is set.
 
 ## Search engines
 
@@ -83,7 +88,7 @@ Output folder is `site`. Bindings: `DB` (D1 index) and optionally `FILES` (R2). 
 
 Public pages are addressed by name, not ID: `/listing/all-terrain-tire-285-70r17-7p9` and `/seller/boost_brandon` (`listingPath`, `sellerPath` in `server/ids.js`). The short code ending a listing's address is its ID's date and count in base 36, so nothing extra is stored and the index stays rebuildable. Addresses with the ID, or with an old title, redirect (301) to the current one, and the API accepts either form when reading a listing or seller.
 
-Listing and seller pages are sent with their own title, description, link preview tags, product details and a plain text copy already in the HTML (`server/pagemeta.js`), because the pages themselves are built in the browser. `server/node-server.js` does it locally, `functions/listing/[id].js` and `functions/seller/[id].js` on Cloudflare. Sold listings are marked `noindex`; missing, hidden and removed ones answer 404. All other pages get the plain `site/index.html`.
+Every page is finished HTML (`server/pages.js`). Listing and seller pages also carry their own title, description, link preview tags and product details (`server/pagemeta.js`). Sold listings and private pages (account, chats, sell, log in) are marked `noindex`; missing, hidden and removed ones answer 404.
 
 ## Preview
 

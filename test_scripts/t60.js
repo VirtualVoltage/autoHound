@@ -8,7 +8,7 @@ let hold=true;const held=[];
 await ctx.route(/\/photos?\/|\/files?\//,async r=>{const u=r.request().url();if(r.request().resourceType()==='image'&&!u.includes('size=thumb')&&hold){held.push(r);return}await r.continue()});
 await p.goto(U+'/');await p.waitForSelector('.window');
 const id=await p.evaluate(async()=>{const d=await (await fetch('/api/listings?limit=100')).json();for(const l of d.listings){const x=(await (await fetch('/api/listings/'+l.id)).json()).listing;if(x.photos.length>1)return x.id}});
-await p.goto(U+'/listing/'+id);await p.waitForSelector('#mainPhoto .ph-thumb');await p.waitForTimeout(800);
+await p.goto(U+'/listing/'+id,{waitUntil:'domcontentloaded'});await p.waitForSelector('#mainPhoto .ph-thumb');await p.waitForTimeout(800);
 const st=()=>p.$eval('#mainPhoto',m=>{const t=m.querySelector('.ph-thumb'),f=m.querySelector('.ph-full'),r=m.getBoundingClientRect(),tr=t.getBoundingClientRect();return {thumbLoaded:t.complete&&t.naturalWidth>0,thumbNatural:t.naturalWidth,thumbFills:Math.abs(tr.width-r.width)<3&&Math.abs(tr.height-r.height)<3,full:+getComputedStyle(f).opacity,fullIn:f.classList.contains('in')}});
 let s=await st();ok(held.length>0&&s.thumbLoaded&&s.thumbFills&&s.full===0,`${name}: full photo held back, thumbnail (${s.thumbNatural}px wide) fills the photo area`);
 await p.screenshot({path:`${O}/thumb-first-${name}.png`});
