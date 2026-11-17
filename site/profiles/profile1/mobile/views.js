@@ -123,8 +123,8 @@ export function listingPage({ listing: l, favorite, closed, minBid, admin }) {
         ${attrs(l)}
         <div class="panel"><a class="seller-card" href="${esc(l.seller.url)}">${avatar(l.seller.photo, '')}<b>${esc(l.seller.username)}</b></a>
         </div>
-        ${admin && !closed ? adminDeleteBox() : ''}
         ${chatPanel(l, closed)}
+        ${admin && !closed ? adminDeleteBox() : ''}
       </div>
     </div></div>`;
 }
@@ -181,7 +181,7 @@ export const threadPage = (d, days) => `<div class="wrap page">
       <label class="btn plain" for="attachInput" aria-label="Attach a photo, video or PDF">Attach</label><input id="attachInput" class="sr" type="file" accept="image/*,video/mp4,video/webm,application/pdf">
       <textarea id="msgText" rows="2" maxlength="2000" placeholder="Message" aria-label="Message"></textarea>
       <button class="btn" type="submit">Send</button>
-    </form><p class="note" style="margin-top:7px">Meet in a public place, inspect before you pay, and never wire money.</p></div>`;
+    </form></div>`;
 
 /* ---------- profile pages ---------- */
 export const accountPage = ({ account: a, photo, listings, favorites, security }) => `<div class="wrap page">
@@ -280,8 +280,7 @@ export function chatPanel(l, closed) {
   const talk = !l.mine || l.chats?.length;
   return `<div class="panel chat-box" id="chatBox">
     ${tabs}
-    ${talk ? `<div class="chat-window"><div class="thread chat-thread" id="thread" aria-live="polite"></div><div class="attach-preview" id="attachPreview"></div>${composer('Message')}</div>
-    <p class="note">Meet in a public place, inspect before you pay, and never wire money.</p>` : ''}
+    ${talk ? `<div class="chat-window"><div class="thread chat-thread" id="thread" aria-live="polite"></div><div class="attach-preview" id="attachPreview"></div>${composer('Message')}</div>` : ''}
   </div>`;
 }
 
