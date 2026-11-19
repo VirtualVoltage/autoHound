@@ -33,6 +33,7 @@ Older scripts were written for earlier versions of the site, so some no longer m
 | `t62.js` | Tab titles: listing pages use the listing's title (no IDs), other pages their name, updated while clicking around and with the back button. |
 | `t61.js` | Crawler-friendly pages: listing and seller addresses use the title and username (no IDs), old ID addresses redirect, each page arrives with its own title, description, preview tags and product details, with the listing itself in the HTML, the sitemap matches, sold is `noindex`, missing is 404. Run as `t61.js <url>`, on node after `fresh-store.sh` or on wrangler. |
 | `t60.js` | Big listing photos start as their thumbnail stretched to fill the area, then the full photo fades in; also next photo and full screen, desktop and phone. |
+| `t65.js` | Phones: chat box right under the seller's name on listing pages; no note under the chat's Attach and Send buttons. |
 | `t57.js` | Mouse wheel: the chat frame's springy pull past the end (page doesn't scroll), and the wheel changing listing photos, in the page and full screen. |
 | `t54.js` | Admin delete: red button for admins only, wrong password refused, listing moved to backups with `removed_by_admin`. Run as `t54.js <url> <store folder>` after `fresh-store.sh`. |
 | `t51.js` | profile3 phones: square magnifying-glass button and the waffle slide-out menu. |

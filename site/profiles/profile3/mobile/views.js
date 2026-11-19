@@ -109,12 +109,13 @@ function attrs(l) {
 export function listingPage({ listing: l, favorite, closed, minBid, admin, at = 0, chat = {}, confirmDelete = false, adminOpen = false }) {
   const statusNote = l.status === 'sold' ? '<p class="err">This listing has sold.</p>' : l.status === 'draft' ? '<p class="err">This draft never finished publishing.</p>' : closed ? '<p class="err">This listing is no longer public.</p>' : '';
   const actions = l.mine ? (closed ? '' : `<a class="btn plain" href="/listing/${esc(l.id)}/edit">Edit</a><form class="inline-form" method="post" action="${esc(l.url)}/sold"><button class="btn plain" id="soldBtn">Mark sold</button></form><form class="inline-form" method="post" action="${esc(l.url)}/delete">${confirmDelete ? '<input type="hidden" name="sure" value="1">' : ''}<button class="btn plain" id="deleteBtn" ${confirmDelete ? 'data-sure="1"' : ''}>${confirmDelete ? 'Press again to delete' : 'Delete'}</button></form>`) : `${favoriteButton(l.id, favorite)}${closed ? '' : '<button class="btn plain" id="reportBtn" disabled title="Coming soon">Report</button>'}`;
-  // Left: photos, then the seller. Right: title and price, chat, details, and the price check last.
+  // Phones: photos, the seller, the chat right under them, then title and price, details, and the price check last.
   return `<div class="page">
     <div class="back-row"><a class="btn plain" href="/">Back</a></div>
     <div class="post">
       <div class="gallery"><div class="photo-frame">${photoFullButton()}<div id="mainPhoto">${bigPhoto(l.photos[at], l.title)}</div>${l.photos.length > 1 ? `<a class="photo-arrow prev" id="photoPrev" href="?photo=${(at + l.photos.length - 1) % l.photos.length}" aria-label="Previous photo">&#8249;</a><a class="photo-arrow next" id="photoNext" href="?photo=${(at + 1) % l.photos.length}" aria-label="Next photo">&#8250;</a><span class="photo-count" id="photoCount">${at + 1} / ${l.photos.length}</span>` : ''}</div>${photoViewer(l)}${l.photos.length > 1 ? `<div class="thumbs" id="thumbs">${l.photos.map((p, i) => `<a href="?photo=${i}" data-i="${i}" class="${i === at ? 'on' : ''}" aria-label="Show photo ${i + 1}">${ph(p + '?size=thumb', true)}</a>`).join('')}</div>` : ''}
         <a class="btn plain seller-btn" href="${esc(l.seller.url)}">${avatar(l.seller.photo, '')}<span>${esc(l.seller.username)}</span></a>
+        ${chatPanel(l, closed, chat)}
       </div>
       <div class="side">
         <div class="panel">
@@ -128,7 +129,6 @@ export function listingPage({ listing: l, favorite, closed, minBid, admin, at = 
         </div>
         ${buyBox(l, minBid)}
         ${attrs(l)}
-        ${chatPanel(l, closed, chat)}
         ${l.sell_type === 'post' && l.market_value ? meter(l.price / l.market_value, l.market_value) : ''}
       </div>
     </div></div>`;
@@ -187,7 +187,7 @@ export const threadPage = (d, days) => `<div class="page">
       <label class="btn plain" for="attachInput" aria-label="Attach a photo, video or PDF">Attach</label><input id="attachInput" name="file" class="sr" type="file" accept="image/*,video/mp4,video/webm,application/pdf">
       <textarea id="msgText" name="text" rows="1" maxlength="2000" placeholder="Message" aria-label="Message"></textarea>
       <button class="btn" type="submit">Send</button>
-    </form><p class="note safety">Meet in a public place, inspect before you pay, and never wire money.</p></div>`;
+    </form></div>`;
 
 /* ---------- profile pages ---------- */
 export const accountPage = ({ account: a, photo, listings, favorites, security }) => `<div class="page">
@@ -286,8 +286,7 @@ export function chatPanel(l, closed, chat = {}) {
   const talk = !l.mine || l.chats?.length;
   return `<div class="panel chat-box" id="chatBox">
     ${tabs}
-    ${talk ? `<div class="chat-window"><div class="thread chat-thread" id="thread" aria-live="polite">${(chat.messages || []).map(m => bubble(m, chat.me)).join('')}</div><div class="attach-preview" id="attachPreview"></div>${composer('Message', chat.action)}</div>
-    <p class="note">Meet in a public place, inspect before you pay, and never wire money.</p>` : ''}
+    ${talk ? `<div class="chat-window"><div class="thread chat-thread" id="thread" aria-live="polite">${(chat.messages || []).map(m => bubble(m, chat.me)).join('')}</div><div class="attach-preview" id="attachPreview"></div>${composer('Message', chat.action)}</div>` : ''}
   </div>`;
 }
 
